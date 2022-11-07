@@ -38,7 +38,7 @@ Follow steps:
 `./venv/bin/activate`
 
 5. Install requirements
-`pip install  -r requirements.txt`
+`pip install  -r requirements.txt` #leo: THIS FAILS ON MY machine - you have to do: pip install scikit-build before that. Also need pip install opencv-python. After this the python script works for me
 
 6. run speed_check.py script
 `python speed_check.py`
