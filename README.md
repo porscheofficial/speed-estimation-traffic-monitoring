@@ -1,5 +1,7 @@
 # porsche_digital_hpi
 
+[Google Doc](https://docs.google.com/document/d/1Aflw2Ysx4cUf3YdxHo8Sdlf6sds1JJRBF54pdv3yV3s/edit)
+
 ## *Objective*: Using real-time video footage from traffic cameras, estimate the speed at which a Porsche might be able to travel there right now.
 
 ### Milestone 1 (Exploration)
