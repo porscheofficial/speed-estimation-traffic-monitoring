@@ -22,6 +22,8 @@ HEIGHT = 720
 # pixel per meter are estimated / measured manually
 
 
+(major_ver, minor_ver, subminor_ver) = (cv2.__version__).split('.')
+
 # %%
 def trackMultipleObjects():
     rectangleColor = (0, 255, 0)
@@ -141,7 +143,17 @@ def trackMultipleObjects():
             if not (end_time == start_time):
                 fps = 1.0 / (end_time - start_time)
 
-            cv2.putText(resultImage, 'FPS: ' + str(int(fps)), (7, 70),cv2.FONT_HERSHEY_SIMPLEX, 0.95, (255, 255, 255), 1)
+
+            if int(major_ver)  < 3 :
+                fps_global = video.get(cv2.cv.CV_CAP_PROP_FPS)
+                print ("Frames per second using video.get(cv2.cv.CV_CAP_PROP_FPS): {0}".format(fps_global))
+            else :
+                fps_global = video.get(cv2.CAP_PROP_FPS)
+                print ("Frames per second using video.get(cv2.CAP_PROP_FPS) : {0}".format(fps_global))
+
+
+            cv2.putText(resultImage, 'FPS: ' + str(int(fps_global)), (7, 70),cv2.FONT_HERSHEY_SIMPLEX, 0.95, (255, 255, 255), 1)
+            #cv2.putText(resultImage, 'FPS: ' + str(int(fps)), (7, 70),cv2.FONT_HERSHEY_SIMPLEX, 0.95, (255, 255, 255), 1)
 
             for i in carLocation1.keys():
                 if frameCounter % 1 == 0:
@@ -155,10 +167,11 @@ def trackMultipleObjects():
             out.write(resultImage)
             
 
-            if cv2.waitKey(33) == 27 & 0xFF == ord('q'):
+            if cv2.waitKey(1) == 27 & 0xFF == ord('q'):
                 break
-            
+
     except KeyboardInterrupt:
+        video.release()
         out.release()
         cv2.destroyAllWindows()
         pass
