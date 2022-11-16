@@ -1,3 +1,8 @@
+datasets/
+notebooks/frames
+.DS_STORE
+.idea
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
