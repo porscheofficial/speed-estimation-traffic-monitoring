@@ -1,7 +1,12 @@
 import cv2
 import numpy as np
 from object_detection import ObjectDetection
+from autobird import transform_to_birds_eye
 import math
+import os
+
+os.environ["IMAGEIO_FFMPEG_EXE"] = "/opt/homebrew/bin/ffmpeg"
+from moviepy.editor import *
 
 
 def run():
@@ -9,6 +14,8 @@ def run():
     od = ObjectDetection()
 
     cap = cv2.VideoCapture("ori.avi")
+
+    fps = get_fps_from_video("ori.avi")
 
     # Initialize count
     count = 0
@@ -85,6 +92,7 @@ def run():
         print(center_points_cur_frame)
 
         cv2.imshow("Frame", frame)
+        cv2.imwrite("frames_detected/frame%d.jpg" % count, frame)
 
         # Make a copy of the points
         center_points_prev_frame = center_points_cur_frame.copy()
@@ -93,8 +101,41 @@ def run():
         if key == 27:
             break
 
+    render_detected_frames_to_video(count, fps, 'detected.mp4', 'frames_detected/frame%d.jpg')
+    count_birds_eye = transform_to_birds_eye('detected.mp4')
+    render_detected_frames_to_video(count_birds_eye, fps, 'birdseye.mp4', 'birds_eye_frames/birdframe%d.jpg')
+
     cap.release()
     cv2.destroyAllWindows()
+
+
+def render_detected_frames_to_video(count, fps, out_video_name, path_to_frames):
+    img_array = []
+    for c in range(0, count):
+        c += 1
+        img = cv2.imread(path_to_frames % c)
+
+        if img is None:
+            continue
+
+        height, width, layers = img.shape
+        size = (width, height)
+        img_array.append(img)
+
+    out = cv2.VideoWriter(out_video_name, cv2.VideoWriter_fourcc(*'MP4V'), fps,
+                          size)  # fps have to get set automatically from orignal video
+    for i in range(len(img_array)):
+        out.write(img_array[i])
+    out.release()
+
+
+def get_fps_from_video(path_to_video):
+    # loading video dsa gfg intro video
+    # clip = VideoFileClip(path_to_video).subclip(0, 10)
+    clip = VideoFileClip(path_to_video)
+
+    # getting frame rate of the clip
+    return clip.fps
 
 
 if __name__ == '__main__':

@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 
 
+
 class ObjectDetection:
     def __init__(self, weights_path="dnn_model/yolov4.weights", cfg_path="dnn_model/yolov4.cfg"):
         print("Loading Object Detection")
