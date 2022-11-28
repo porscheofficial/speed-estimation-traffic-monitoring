@@ -3,21 +3,26 @@ import numpy as np
 from object_detection import ObjectDetection
 from autobird import transform_to_birds_eye
 from moviepy.editor import *
+from pre_pro_fps_ppm import get_fps_and_ppm
 import math
 import os
 
 os.environ["IMAGEIO_FFMPEG_EXE"] = "/opt/homebrew/bin/ffmpeg"
 
-ppm = 29
+# path_to_dataset = "../datasets/yt_video1.mp4"
+path_to_dataset = "../datasets/test.m4v"
+# path_to_dataset = "los_angeles.mp4"
 
 
 def run():
     # Initialize Object Detection
     od = ObjectDetection()
 
-    cap = cv2.VideoCapture("../datasets/yt_video1.mp4")
+    cap = cv2.VideoCapture(path_to_dataset)
 
-    fps = get_fps_from_video("../datasets/yt_video1.mp4")
+    fps, ppm = get_fps_and_ppm(path_to_dataset)
+
+    # fps = get_fps_from_video("../datasets/yt_video1.mp4")
 
     # Initialize count
     count = 0
@@ -60,7 +65,6 @@ def run():
                         tracking_objects[track_id] = pt
                         track_id += 1
         else:
-
             tracking_objects_copy = tracking_objects.copy()
             center_points_cur_frame_copy = center_points_cur_frame.copy()
 
