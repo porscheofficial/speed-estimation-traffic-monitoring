@@ -1,18 +1,52 @@
 import cv2
 import numpy as np
 from object_detection import ObjectDetection
-from autobird import transform_to_birds_eye
-from moviepy.editor import *
+#from moviepy.editor import *
 from pre_pro_fps_ppm import get_fps_and_ppm
 import math
 import os
+from get_fps import give_me_fps
+import pandas as pd
+import logging
+import json
+from sklearn.metrics.pairwise import euclidean_distances
+
+logging.basicConfig(filename='example.log', encoding='utf-8', level=logging.DEBUG)
 
 os.environ["IMAGEIO_FFMPEG_EXE"] = "/opt/homebrew/bin/ffmpeg"
 
-# path_to_dataset = "../datasets/yt_video1.mp4"
-path_to_dataset = "../datasets/test.m4v"
+cars_path = "/Users/saver/Documents/master/semester-1/AIP/brno_complete/2016-ITS-BrnoCompSpeed/dataset/session0_right/"
+
+path_to_dataset = "datasets/yt_video1.mp4"
+path_to_dataset = "datasets/test.m4v"
+path_to_dataset = cars_path + "video.mp4"
+#path_to_dataset = "../datasets/test.m4v"
 # path_to_dataset = "los_angeles.mp4"
 
+sliding_window = 15
+
+#text_color = (255,255,255)
+text_color = (0,0,0)
+
+cars = pd.read_csv(cars_path + "cars.csv")
+
+def avg_speed_for_time(timeStart, timeEnd):
+    cars_to_avg = cars.loc[cars['start'].gt(timeStart) & cars['end'].le(timeEnd)]
+    return cars_to_avg['speed'].mean()
+
+class Car:
+    def __init__(self, pixels_moved, frames_seen, frame_start, frame_end) -> None:
+        self.pixels_moved = pixels_moved
+        self.frames_seen = frames_seen
+        self.frame_start = frame_start
+        self.frame_end = frame_end
+
+
+class Point:
+    def __init__(self, x, y, ppm) -> None:
+        self.x = x
+        self.y = y
+        self.ppm = ppm
 
 def run():
     # Initialize Object Detection
@@ -21,27 +55,29 @@ def run():
     cap = cv2.VideoCapture(path_to_dataset)
 
     fps, ppm = get_fps_and_ppm(path_to_dataset)
+    fps = give_me_fps(path_to_dataset)
+    ppm = 55
 
     # fps = get_fps_from_video("../datasets/yt_video1.mp4")
 
     # Initialize count
-    count = 0
-    center_points_prev_frame = []
+    frame_count = 0
 
     tracking_objects = {}
     tracking_objects_prev = {}
-    pixel_movement_per_object = {}
-    frames_per_object = {}
+    cars = {}
     track_id = 0
+    avg_speed = "calculating"
 
     while True:
         ret, frame = cap.read()
-        count += 1
+        frame_count += 1
         if not ret:
             break
 
         # Point current frame
         center_points_cur_frame = []
+        center_points_prev_frame = []
 
         # Detect objects on frame
         (class_ids, scores, boxes) = od.detect(frame)
@@ -49,36 +85,46 @@ def run():
             (x, y, w, h) = box
             cx = int((x + x + w) / 2)
             cy = int((y + y + h) / 2)
-            center_points_cur_frame.append((cx, cy))
+            center_points_cur_frame.append(Point(cx, cy, w/1.9))
             # print("FRAME N°", count, " ", x, y, w, h)
 
             # cv2.circle(frame, (cx, cy), 5, (0, 0, 255), -1)
             cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            cv2.putText(
+                    frame,
+                    f"Breite: {w:.2f}",
+                    (int(x + w), int(y + h)),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.95,
+                    (255, 255, 255),
+                    1,
+                )
+
 
         # Only at the beginning we compare previous and current frame
-        if count <= 2:
-            for pt in center_points_cur_frame:
-                for pt2 in center_points_prev_frame:
-                    distance = math.hypot(pt2[0] - pt[0], pt2[1] - pt[1])
+        if frame_count <= 2:
+            for point in center_points_cur_frame:
+                for point2 in center_points_prev_frame:
+                    distance = math.hypot(point2.x - point.x, point2.y - point.y)
 
                     if distance < 20:
-                        tracking_objects[track_id] = pt
+                        tracking_objects[track_id] = point
                         track_id += 1
         else:
             tracking_objects_copy = tracking_objects.copy()
             center_points_cur_frame_copy = center_points_cur_frame.copy()
 
-            for object_id, pt2 in tracking_objects_copy.items():
+            for object_id, point2 in tracking_objects_copy.items():
                 object_exists = False
-                for pt in center_points_cur_frame_copy:
-                    distance = math.hypot(pt2[0] - pt[0], pt2[1] - pt[1])
+                for point in center_points_cur_frame_copy:
+                    distance = math.hypot(point2.x - point.x, point2.y - point.y)
 
                     # Update IDs position
-                    if distance < 20:
-                        tracking_objects[object_id] = pt
+                    if distance < 50:
+                        tracking_objects[object_id] = point
                         object_exists = True
-                        if pt in center_points_cur_frame:
-                            center_points_cur_frame.remove(pt)
+                        if point in center_points_cur_frame:
+                            center_points_cur_frame.remove(point)
                         continue
 
                 # Remove IDs lost
@@ -86,63 +132,121 @@ def run():
                     tracking_objects.pop(object_id)
 
             # Add new IDs found
-            for pt in center_points_cur_frame:
-                tracking_objects[track_id] = pt
+            for point in center_points_cur_frame:
+                tracking_objects[track_id] = point
                 track_id += 1
 
-        for object_id, pt in tracking_objects.items():
+        for object_id, point in tracking_objects.items():
             if object_id in tracking_objects_prev:
-                x_movement = tracking_objects[object_id][0] - tracking_objects_prev[object_id][0]
-                y_movement = tracking_objects[object_id][1] - tracking_objects_prev[object_id][1]
+                x_movement = tracking_objects[object_id].x - tracking_objects_prev[object_id].x
+                y_movement = tracking_objects[object_id].y - tracking_objects_prev[object_id].y
+                avg_ppm = (tracking_objects[object_id].ppm + tracking_objects_prev[object_id].ppm)/2
 
-                total_movement = math.sqrt(x_movement ** 2 + y_movement ** 2)
+                total_movement = math.sqrt(math.pow(x_movement, 2) + math.pow(y_movement, 2))
 
-                cv2.putText(frame, str(total_movement), (pt[0], pt[1] - 30), 0, 1, (0, 0, 255), 2)
+                cv2.putText(frame, str(total_movement), (point.x, point.y - 30), 0, 1, (0, 0, 255), 2)
+                logging.info(json.dumps(dict(fps=fps, carId=object_id, ppm=avg_ppm, metersMoved=total_movement/avg_ppm,
+                pixelsMoved=total_movement)))
 
-                pixels_till_now = 0
-                frames_till_now = 0
+                if object_id in cars:
+                    cars[object_id].pixels_moved = total_movement/avg_ppm
+                    cars[object_id].frames_seen = 1
+                    cars[object_id].frame_end += 1                    
+                else:
+                    cars[object_id] = Car(total_movement, 1, frame_count, frame_count)
 
-                if object_id in pixel_movement_per_object:
-                    pixels_till_now = pixel_movement_per_object[object_id]
-
-                if object_id in frames_per_object:
-                    frames_till_now = frames_per_object[object_id]
-
-                pixel_movement_per_object[object_id] = pixels_till_now + total_movement
-                frames_per_object[object_id] = frames_till_now + 1
             else:
-                cv2.putText(frame, str(-1), (pt[0], pt[1] - 30), 0, 1, (0, 0, 255), 2)
+                cv2.putText(frame, str(-1), (point.x, point.y - 30), 0, 1, (0, 0, 255), 2)
 
-            cv2.circle(frame, pt, 5, (0, 0, 255), -1)
-            cv2.putText(frame, str(object_id), (pt[0], pt[1] - 7), 0, 1, (0, 0, 255), 2)
+            cv2.circle(frame, (point.x, point.y), 5, (0, 0, 255), -1)
+            cv2.putText(frame, str(object_id), (point.x, point.y - 7), 0, 1, (0, 0, 255), 2)
 
-        print("Tracking objects")
-        print(tracking_objects)
-
-        print("CUR FRAME LEFT PTS")
-        print(center_points_cur_frame)
-
-        cv2.imshow("Frame", frame)
-        cv2.imwrite("frames_detected/frame%d.jpg" % count, frame)
 
         # Make a copy of the points
         center_points_prev_frame = center_points_cur_frame.copy()
         tracking_objects_prev = tracking_objects.copy()
 
+
+        cv2.putText(
+            frame,
+            f"Timestamp: {(frame_count / fps):.2f} s",
+            (7, 70),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            1,
+            text_color,
+            2,
+        )
+
         key = cv2.waitKey(1)
         if key == 27:
             break
+        
+        
+        # if count >= 15 * fps/15 and count % (5 * fps/10) == 0:
 
-    total_speed = 0
+        #     total_speed = 0
+        #     car_count = 0
 
-    for item in pixel_movement_per_object.items():
-        total_speed += (item[1] / ppm) / (frames_per_object[item[0]] / fps)
+        #     for car in cars.values():
 
-    print("Average speed: " + str(total_speed / len(pixel_movement_per_object)) + "m/s")
+        #         if car.frame_end >= count - sliding_window:
+        #             car_count += 1
+        #             total_speed += (car.pixels_moved / ppm) / (car.frames_seen / fps)
 
-    render_detected_frames_to_video(count, fps, 'detected.mp4', 'frames_detected/frame%d.jpg')
-    count_birds_eye = transform_to_birds_eye('detected.mp4')
-    render_detected_frames_to_video(count_birds_eye, fps, 'birdseye.mp4', 'birds_eye_frames/birdframe%d.jpg')
+        #     print(f"Average speed: {(total_speed / car_count):.2f} m/s")
+        #     print(f"Average speed: {(total_speed / car_count) * 3.6:.2f} km/h")
+        #     avg_speed = f"{(total_speed / car_count) * 3.6:.2f}"
+
+
+
+        total_speed = 0
+        car_count = 0
+
+        if len(cars) >0:
+            for car in cars.values():
+
+                if car.pixels_moved > 0.05:
+                    car_count += 1
+                    total_speed += (car.pixels_moved) / (car.frames_seen / fps)
+            if car_count > 0:
+                print(f"Average speed: {(total_speed / car_count):.2f} m/s")
+                print(f"Average speed: {(total_speed / car_count) * 3.6:.2f} km/h")
+                avg_speed = f"{(total_speed / car_count) * 3.6:.2f}"
+
+        cv2.putText(
+            frame,
+            f"Average speed: {avg_speed} km/h",
+            (7, 90),    
+            cv2.FONT_HERSHEY_SIMPLEX,
+            1,
+            text_color,
+            2
+        )
+        cv2.putText(
+            frame,
+            f"Ground truth: {avg_speed_for_time(0,10):.2f} km/h",
+            (7, 110),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            1,
+            text_color,
+            2
+        )
+        cv2.putText(
+            frame,
+            f"FPS: {fps}",
+            (7, 130),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            1,
+            text_color,
+            2
+        )
+
+        cv2.imshow("Frame", frame)
+        cv2.imwrite("frames_detected/frame%d.jpg" % frame_count, frame)
+
+    #render_detected_frames_to_video(count, fps, 'detected.mp4', 'frames_detected/frame%d.jpg')
+    #count_birds_eye = transform_to_birds_eye('detected.mp4')
+    #render_detected_frames_to_video(count_birds_eye, fps, 'birdseye.mp4', 'birds_eye_frames/birdframe%d.jpg')
 
     cap.release()
     cv2.destroyAllWindows()

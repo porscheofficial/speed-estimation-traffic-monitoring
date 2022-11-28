@@ -5,7 +5,7 @@
 
 
 path = '../datasets/video.mp4'
-give_me_fps(path)
+#give_me_fps(path)
 
 
 # In[30]:
@@ -15,12 +15,12 @@ import numpy as np
 import pandas as pd
 import cv2
 import time
-import ffmpeg
+#import ffmpeg
 import os
 
 def give_me_fps(path_to_dataset):
-    fps_a = read_fps_cv2(path)
-    fps_b = read_fps_strange(path)
+    fps_a = read_fps_cv2(path_to_dataset)
+    fps_b = read_fps_strange(path_to_dataset)
     fps = fps_a
     print("a:" + str(fps_a))
     print("b:" +str(fps_b))
