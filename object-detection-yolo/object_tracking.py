@@ -26,7 +26,6 @@ cars = pd.read_csv(cars_path + "cars.csv")
 def avg_speed_for_time(timeStart, timeEnd):
     cars_to_avg = cars.loc[cars['start'].gt(timeStart) & cars['end'].le(timeEnd)]
     return cars_to_avg['speed'].mean()
-    return 80
 
 
 class Car:
