@@ -2,11 +2,12 @@
 import cv2
 import dlib
 import time
+from paths import path_to_haar_file
 
 
 def get_fps_and_ppm(path_to_dataset):
     # haar cascade for vehicle tracking
-    carCascade = cv2.CascadeClassifier("object-detection-yolo/dnn_model/myhaar.xml")
+    carCascade = cv2.CascadeClassifier(path_to_haar_file)
     video = cv2.VideoCapture(path_to_dataset)
 
     # output video format
@@ -191,6 +192,3 @@ def get_fps_and_ppm(path_to_dataset):
     # %%
     avg_fps, avg_ppm = trackMultipleObjects()
     return avg_fps, avg_ppm
-
-
-#print(get_fps_and_ppm("../datasets/ori.avi"))
