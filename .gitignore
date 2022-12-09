@@ -134,3 +134,5 @@ dmypy.json
 .pyre/
 
 *.weights
+
+object-detection-yolo/frames_detected/*
