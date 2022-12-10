@@ -169,9 +169,9 @@ def run():
 
             #cv2.circle(frame, (point.x, point.y), 5, (0, 0, 255), -1)
             if not meters_moved or meters_moved < 0.001:
-                cv2.putText(frame, f"ID:{object_id}", (point.w + point.wid + 5, point.h + point.hei), 0, 1, (0,0,255), 2)
+                cv2.putText(frame, f"ID:{object_id}", (point.x + point.w + 5, point.y + point.h), 0, 1, (0,0,255), 2)
             else:
-                cv2.putText(frame, f"ID:{object_id}", (point.w + point.wid + 5, point.h + point.hei), 0, 1, (0,255,0), 2)
+                cv2.putText(frame, f"ID:{object_id}", (point.x + point.w + 5, point.y + point.h), 0, 1, (0,255,0), 2)
 
         # Make a copy of the points
         center_points_prev_frame = copy.deepcopy(center_points_cur_frame)
