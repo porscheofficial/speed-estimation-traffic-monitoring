@@ -1,5 +1,4 @@
 import cv2
-from moviepy.video.io.VideoFileClip import VideoFileClip
 
 from object_detection import ObjectDetection
 from pre_pro_fps_ppm import get_fps_and_ppm
@@ -72,6 +71,11 @@ def run():
     frame_count = 0
 
     tracking_objects = {}
+
+    # TODO: Remove if unused
+    tolerance_px = 3
+    tracking_objects_diff_map = {}
+
     tracking_objects_prev = {}
     cars = {}
     track_id = 0
@@ -115,13 +119,17 @@ def run():
 
         # Only at the beginning we compare previous and current frame
         if frame_count <= 2:
+            center_points_prev_frame_copy = center_points_prev_frame.copy()
             for point in center_points_cur_frame:
-                for point2 in center_points_prev_frame:
+                for point2 in center_points_prev_frame_copy:
                     distance = math.hypot(point2.x - point.x, point2.y - point.y)
 
                     if distance < 20:
                         tracking_objects[track_id] = point
+                        tracking_objects_diff_map[track_id] = (point2.x - point.x, point2.y - point.y)
                         track_id += 1
+                        center_points_prev_frame_copy.remove(point2)
+                        break
         else:
             tracking_objects_copy = tracking_objects.copy()
             center_points_cur_frame_copy = center_points_cur_frame.copy()
@@ -137,6 +145,10 @@ def run():
                         object_exists = True
                         if point in center_points_cur_frame:
                             center_points_cur_frame.remove(point)
+                            # Point should not match to multiple boxes
+                            # TODO: Only take closest!
+                            center_points_cur_frame_copy.remove(point)
+                        break
                         continue
 
                 # Remove IDs lost
