@@ -1,9 +1,13 @@
 import cv2
+import os
+
+os.environ["IMAGEIO_FFMPEG_EXE"] = "/opt/homebrew/bin/ffmpeg"
+
+from moviepy.video.io.VideoFileClip import VideoFileClip
 
 from object_detection import ObjectDetection
 from pre_pro_fps_ppm import get_fps_and_ppm
 import math
-import os
 from get_fps import give_me_fps
 import pandas as pd
 import logging
@@ -11,16 +15,16 @@ import json
 from paths import cars_path, path_to_dataset
 import copy
 import numpy as np
+import imutils
 
 logging.basicConfig(filename='example.log', encoding='utf-8', level=logging.DEBUG)
 
-os.environ["IMAGEIO_FFMPEG_EXE"] = "/opt/homebrew/bin/ffmpeg"
 cars = pd.read_csv(cars_path + "cars.csv")
 
 # white
-#text_color = (255,255,255)
+text_color = (255,255,255)
 # black
-text_color = (0,0,0)
+#text_color = (0,0,0)
 
 with open('datasets/our_meters.npy', 'rb') as f:
     our_meters = np.load(f)
@@ -83,10 +87,15 @@ def run():
 
     while True:
         ret, frame = input_video.read()
+        #frame = frame[890-352:890]
+        #frame = image_resize(frame, width=1900)
+        #frame = cv2.resize(frame, (1900, 1056))
+        frame = imutils.resize(frame, height=352)
+        frame = cv2.copyMakeBorder(frame, left=295, right=296, top=0, bottom=0, borderType=cv2.BORDER_CONSTANT)
+        #cv2.imwrite("object-detection-yolo/frames_detected/frame%d_new_scaled.jpg" % frame_count, frame)
         frame_count += 1
         if not ret:
             break
-
         # Point current frame
         center_points_cur_frame = []
         center_points_prev_frame = []
@@ -202,10 +211,10 @@ def run():
                 if car.frame_end >= frame_count - sliding_window and car.frames_seen > 5 and car.meters_moved > 0.05:
                     car_count += 1
                     total_speed += (car.meters_moved) / (car.frames_seen / fps)
-
-            print(f"Average speed: {(total_speed / car_count):.2f} m/s")
-            print(f"Average speed: {(total_speed / car_count) * 3.6:.2f} km/h")
-            avg_speed = f"{(total_speed / car_count) * 3.6:.2f}"
+            if car_count > 0:
+                print(f"Average speed: {(total_speed / car_count):.2f} m/s")
+                print(f"Average speed: {(total_speed / car_count) * 3.6:.2f} km/h")
+                avg_speed = f"{(total_speed / car_count) * 3.6:.2f}"
 
         cv2.putText(
             frame,
