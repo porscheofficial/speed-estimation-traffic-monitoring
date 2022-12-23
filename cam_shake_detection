@@ -64,6 +64,8 @@ def run():
             if percentage_of_zeros < starter_threshold/4: #divided by 4 for hard move
                 cont = ("probably HARD MOVE HAPPENED")
                 cont_hard = cont +" at frame: " + str(count)
+
+                full_changes = []
                 print(cont_hard)
 
             # break
