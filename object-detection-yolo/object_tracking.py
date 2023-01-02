@@ -16,8 +16,9 @@ from paths import cars_path, path_to_dataset
 import copy
 import numpy as np
 import imutils
+import time
+import uuid
 
-logging.basicConfig(filename='example.log', encoding='utf-8', level=logging.DEBUG)
 
 cars = pd.read_csv(cars_path + "cars.csv")
 
@@ -26,7 +27,7 @@ text_color = (255,255,255)
 # black
 #text_color = (0,0,0)
 
-with open('datasets/our_meters.npy', 'rb') as f:
+with open('datasets/our_meters_left.npy', 'rb') as f:
     our_meters = np.load(f)
 
 def clamp(n, smallest, largest): return max(smallest, min(n, largest)) 
@@ -35,6 +36,10 @@ def avg_speed_for_time(timeStart, timeEnd):
     cars_to_avg = cars.loc[cars['start'].gt(timeStart) & cars['end'].le(timeEnd)]
     return cars_to_avg['speed'].mean()
 
+run_id = uuid.uuid4().hex[:10]
+print(f"Run No.: {run_id}")
+
+logging.basicConfig(filename=f'logs/run_log_{run_id}.log', level=logging.DEBUG)
 
 class Car:
     def __init__(self, meters_moved, frames_seen, frame_start, frame_end) -> None:
@@ -60,6 +65,7 @@ class Point:
 
 def run():
     # Initialize Object Detection
+    start = time.time()
     od = ObjectDetection()
 
     input_video = cv2.VideoCapture(path_to_dataset)
@@ -87,7 +93,7 @@ def run():
         #frame = cv2.resize(frame, (1900, 1056))
         frame = imutils.resize(frame, height=352)
         frame = cv2.copyMakeBorder(frame, left=295, right=296, top=0, bottom=0, borderType=cv2.BORDER_CONSTANT)
-        #cv2.imwrite("object-detection-yolo/frames_detected/frame%d_new_scaled.jpg" % frame_count, frame)
+        #cv2.imwrite("left_scaled.jpg", frame)
         frame_count += 1
         if not ret:
             break
@@ -165,7 +171,7 @@ def run():
 
                 meters_moved = abs(tracking_objects[object_id].meters_moved - tracking_objects_prev[object_id].meters_moved)
                 #cv2.putText(frame, str(total_movement), (point.x, point.y - 30), 0, 1, (0, 0, 255), 2)
-                logging.info(json.dumps(dict(fps=fps, frameId=frame_count, carId=object_id, metersMoved=str(meters_moved))))
+                #logging.info(json.dumps(dict(fps=fps, frameId=frame_count, carId=object_id, metersMoved=str(meters_moved))))
 
                 if object_id in cars:
                     cars[object_id].meters_moved += clamp(meters_moved, 0.0, 0.7)
@@ -185,23 +191,50 @@ def run():
         center_points_prev_frame = copy.deepcopy(center_points_cur_frame)
         tracking_objects_prev = copy.deepcopy(tracking_objects)
 
-        key = cv2.waitKey(1)
-        if key == 27:
-            break
-        
-        if frame_count >= fps and frame_count % (fps) == 0:
-
+        #key = cv2.waitKey(1)
+        # if key == 27:
+        #     break
+        if frame_count >= fps and frame_count % (60 * fps) == 0:
+            # every minute
             total_speed = 0
             car_count = 0
+        
+            for car_id, car in cars.items():
+                # logging.info(json.dumps(dict(frameId=frame_count, carId=car_id, 
+                #                             metersMoved=str(car.meters_moved), 
+                #                             framesSeen=car.frames_seen,
+                #                             frameStart=car.frame_start,
+                #                             frameEnd=car.frame_end)))
 
-            for car in cars.values():
+                if car.frame_end >= frame_count - 60 * fps and car.frames_seen > 5 and car.meters_moved > 0.05:
+                    car_count += 1
+                    total_speed += (car.meters_moved) / (car.frames_seen / fps)
+            if car_count > 0:
+                print(f"Average speed last minute: {(total_speed / car_count) * 3.6:.2f} km/h")
+                avg_speed = round((total_speed / car_count) * 3.6, 2)
+                logging.info(json.dumps(dict(frameId=frame_count, avgSpeedLastMinute=avg_speed)))
+
+        
+        if frame_count >= fps and frame_count % (5 * fps) == 0:
+            # every 5 seconds
+            total_speed = 0
+            car_count = 0
+        
+            for car_id, car in cars.items():
+                # logging.info(json.dumps(dict(frameId=frame_count, carId=car_id, 
+                #                             metersMoved=str(car.meters_moved), 
+                #                             framesSeen=car.frames_seen,
+                #                             frameStart=car.frame_start,
+                #                             frameEnd=car.frame_end)))
+
                 if car.frame_end >= frame_count - sliding_window and car.frames_seen > 5 and car.meters_moved > 0.05:
                     car_count += 1
                     total_speed += (car.meters_moved) / (car.frames_seen / fps)
             if car_count > 0:
-                print(f"Average speed: {(total_speed / car_count):.2f} m/s")
                 print(f"Average speed: {(total_speed / car_count) * 3.6:.2f} km/h")
-                avg_speed = f"{(total_speed / car_count) * 3.6:.2f}"
+                avg_speed = round((total_speed / car_count) * 3.6, 2)
+                logging.info(json.dumps(dict(frameId=frame_count, avgSpeedLast15s=avg_speed)))
+
 
         cv2.putText(
             frame,
@@ -223,15 +256,26 @@ def run():
             2
         )
 
-        cv2.putText(
-            frame,
-            f"Ground truth: {avg_speed_for_time(0,10):.2f} km/h",
-            (7, 130),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            1,
-            text_color,
-            2
-        )
+        try:
+            cv2.putText(
+                frame,
+                f"Ground truth: {avg_speed_for_time((frame_count/fps)-sliding_window,frame_count/fps):.2f} km/h",
+                (7, 130),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                1,
+                text_color,
+                2
+            )
+        except:
+            cv2.putText(
+                frame,
+                f"Problems retrieving ground truth for frame: {frame_count}.",
+                (7, 130),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                1,
+                text_color,
+                2
+            )
 
         cv2.putText(
             frame,
@@ -242,9 +286,12 @@ def run():
             text_color,
             2
         )
+        if frame_count % 500 == 0:
+            print(f"Frame no. {frame_count} time since start: {(time.time()-start):.2f}s")
 
-        cv2.imshow("Frame", frame)
-        #cv2.imwrite("object-detection-yolo/frames_detected/frame%d.jpg" % frame_count, frame)
+        #cv2.imshow("Frame", frame)
+        if frame_count % 3000 == 0:
+            cv2.imwrite(f"object-detection-yolo/frames_detected/{run_id}_frame_{frame_count}.jpg", frame)
 
     #render_detected_frames_to_video(frame_count, fps, 'detected.avi', 'object-detection-yolo/frames_detected/frame%d.jpg')
     #count_birds_eye = transform_to_birds_eye('detected.mp4')

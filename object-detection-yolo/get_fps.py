@@ -124,8 +124,8 @@ def read_fps_strange(path_to_dataset):
         #cv2.imshow('frame', gray)
 
         # press 'Q' if you want to exit
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+        #if cv2.waitKey(1) & 0xFF == ord('q'):
+         #   break
 
     # When everything done, release the capture
     cap.release()
