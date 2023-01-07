@@ -8,24 +8,54 @@ import os
 import numpy as np
 from contours import draw_contours, draw_circles, draw_circles_sklearn, get_pixel_length_of_carr
 
-WIDTH = 1280
-HEIGHT = 720
 
-#Load the model
-model = tf.keras.applications.VGG16()
+def background_removal(filename):
+    # Read image
+    img = cv2.imread("extracted_cars/" + filename)
 
-# Summary of the model
-#model.summary()
+    # threshold on white
+    # Define lower and uppper limits
+    lower = np.array([100, 100, 100])
+    upper = np.array([255, 255, 255])
 
-# for i in range(len(model.layers)):
-#     layer = model.layers[i]
-#     if 'conv' not in layer.name:
-#         continue    
-#     print(i , layer.name , layer.output.shape)
+    # Create mask to only select black
+    thresh = cv2.inRange(img, lower, upper)
 
-model = tf.keras.Model(inputs=model.inputs , outputs=model.layers[1].output)
+    # apply morphology
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (20,20))
+    morph = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
 
-for idx, filename in enumerate(sorted(os.listdir("extracted_cars"))):
+    # invert morp image
+    mask = 255 - morph
+
+    # apply mask to image
+    result = cv2.bitwise_and(img, img, mask=mask)
+
+    # save results
+    cv2.imwrite('background_removal/thresh.png', thresh)
+    cv2.imwrite('background_removal/morph.png', morph)
+    cv2.imwrite('background_removal/mask.png', mask)
+    cv2.imwrite('background_removal/result.png', result)
+
+
+def cnn(filename):
+    WIDTH = 1280
+    HEIGHT = 720
+
+    #Load the model
+    model = tf.keras.applications.VGG16()
+
+    # Summary of the model
+    model.summary()
+
+    # for i in range(len(model.layers)):
+    #     layer = model.layers[i]
+    #     if 'conv' not in layer.name:
+    #         continue    
+    #     print(i , layer.name , layer.output.shape)
+
+    model = tf.keras.Model(inputs=model.inputs , outputs=model.layers[1].output)
+
     image = tf.keras.preprocessing.image.load_img("extracted_cars/" + filename , target_size=(224,224))
 
     # convert the image to an array
@@ -42,13 +72,13 @@ for idx, filename in enumerate(sorted(os.listdir("extracted_cars"))):
     #calculating features_map
     features = model.predict(image)
 
-    # fig = pyplot.figure(figsize=(20,15))
-    # for i in range(1,features.shape[3]+1):
-    #     pyplot.subplot(8,8,i)
-    #     pyplot.imshow(features[0,:,:,i-1] , cmap='gray')
+    fig = pyplot.figure(figsize=(20,15))
+    for i in range(1,features.shape[3]+1):
+        pyplot.subplot(8,8,i)
+        pyplot.imshow(features[0,:,:,i-1] , cmap='gray')
     
-    # pyplot.savefig('vgg_' + filename)
-    # pyplot.close('all')
+    pyplot.savefig('vgg_' + filename)
+    pyplot.close('all')
     
     high_contrast_image = features[0,:,:,61]
     high_contrast_image = np.array(high_contrast_image)[..., None]
@@ -96,6 +126,11 @@ for idx, filename in enumerate(sorted(os.listdir("extracted_cars"))):
     #draw_contours()
     #draw_circles(filename)
     #draw_circles_sklearn(filename)
-    car_length = get_pixel_length_of_carr()
-    print("")
+    #car_length = get_pixel_length_of_carr()
 
+base_path = "yolov5/runs/detect/exp10/crops/cars/"
+
+for idx, filename in enumerate(sorted(os.listdir(base_path))):
+    #background_removal(filename)
+    #cnn(filename)
+    car_length = get_pixel_length_of_carr(base_path + filename)
