@@ -95,7 +95,7 @@ def run():
         frame = cv2.copyMakeBorder(frame, left=295, right=296, top=0, bottom=0, borderType=cv2.BORDER_CONSTANT)
         #cv2.imwrite("left_scaled.jpg", frame)
         frame_count += 1
-        if not ret:
+        if not ret: 
             break
         # Point current frame
         center_points_cur_frame = []
