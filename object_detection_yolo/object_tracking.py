@@ -262,7 +262,6 @@ def run(video_folder=None, max_depth=None):
                 print(f"Average speed last minute: {(total_speed / car_count) * 3.6:.2f} km/h")
                 avg_speed = round((total_speed / car_count) * 3.6, 2)
                 logging.info(json.dumps(dict(frameId=frame_count, avgSpeedLastMinute=avg_speed)))
-                break
 
         
         if frame_count >= fps and frame_count % (5 * fps) == 0:
@@ -393,6 +392,7 @@ if __name__ == '__main__':
     video = "/scratch2/video_samples/session4_right/"
     # video = "/scratch2/video_samples/session1_center/"
     # video = "/scratch2/video_samples/session6_left/"
-    # run(video, 80)
+    
+    run(video, 80)
     run(video, 100)
     run(video, 120)
