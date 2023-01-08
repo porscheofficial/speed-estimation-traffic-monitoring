@@ -1,12 +1,9 @@
-import pandas as pd
 import tensorflow as tf
 from matplotlib import pyplot
 from numpy import expand_dims
 from matplotlib import pyplot
 import cv2
-import os
 import numpy as np
-from contours import draw_contours, draw_circles, draw_circles_sklearn, get_pixel_length_of_car
 
 
 def background_removal(filename):
@@ -127,10 +124,3 @@ def cnn(filename):
     #draw_circles(filename)
     #draw_circles_sklearn(filename)
     #car_length = get_pixel_length_of_carr()
-
-base_path = "data/yolov5/runs/detect/exp3/crops/cars/"
-
-for idx, filename in enumerate(sorted(os.listdir(base_path))):
-    #background_removal(filename)
-    #cnn(filename)
-    car_length = get_pixel_length_of_car(base_path + filename)
