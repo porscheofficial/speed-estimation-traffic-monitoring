@@ -1,3 +1,6 @@
+from datetime import datetime
+from importlib import reload
+from multiprocessing import Pool
 import cv2
 import os
 
@@ -20,26 +23,15 @@ import time
 import uuid
 
 
-cars = pd.read_csv(cars_path + "cars.csv")
 
 # white
 text_color = (255,255,255)
 # black
 #text_color = (0,0,0)
 
-with open('datasets/our_meters_left.npy', 'rb') as f:
-    our_meters = np.load(f)
 
 def clamp(n, smallest, largest): return max(smallest, min(n, largest)) 
 
-def avg_speed_for_time(timeStart, timeEnd):
-    cars_to_avg = cars.loc[cars['start'].gt(timeStart) & cars['end'].le(timeEnd)]
-    return cars_to_avg['speed'].mean()
-
-run_id = uuid.uuid4().hex[:10]
-print(f"Run No.: {run_id}")
-
-logging.basicConfig(filename=f'logs/run_log_{run_id}.log', level=logging.DEBUG)
 
 class Car:
     def __init__(self, meters_moved, frames_seen, frame_start, frame_end) -> None:
@@ -60,18 +52,75 @@ class Point:
         self.h = h
         self.frame = frame
 
+# TODO: Move to depth map module
+def extract_frame(input: str, output_folder: str, output_file: str, frame_idx: int = 0) -> str:
+    input_video = cv2.VideoCapture(input)
+    frame_count = 0
+    while True:
+        ret, frame = input_video.read()
+        #frame = frame[890-352:890]
+        #frame = image_resize(frame, width=1900)
+        #frame = cv2.resize(frame, (1900, 1056))
+        frame = imutils.resize(frame, height=352)
+        frame = cv2.copyMakeBorder(frame, left=295, right=296, top=0, bottom=0, borderType=cv2.BORDER_CONSTANT)
+        if frame_idx == frame_count:
+            path = os.path.join(output_folder, output_file % frame_idx)
+            cv2.imwrite(path, frame)
+            return output_file % frame_idx
+        frame_count += 1
 
+# TODO: Move to depth map module
+def load_depth_map(current_folder: str, max_depth: int = None):
+    input_video = os.path.join(current_folder, 'video.mp4')
+    depth_map_path = current_folder + (f'depth_map_{max_depth}.npy' if max_depth is not None else 'depth_map.npy')
+    if not os.path.exists(depth_map_path):
+        print('Depth map generation.')
+        scaled_image_name = extract_frame(input_video, current_folder, 'frame_%d_scaled.jpg')
+        print(f'Extracted scaled frame to {scaled_image_name}')
+        from modules.depth_map.pixelformer.test import generate_depth_map
+        generate_depth_map(current_folder, scaled_image_name, max_depth_o=max_depth)
+    else:
+        print('Depth map found.')
+        
+    if not os.path.exists(depth_map_path):
+        raise Exception('Depth Map could not be generated.')
 
+    with open(depth_map_path, 'rb') as f:
+        our_meters = np.load(f)
 
-def run():
+    return our_meters
+
+def run(video_folder=None, max_depth=None):
+    reload(logging)
+    current_folder = cars_path if video_folder is None else video_folder
+    path_to_video = path_to_dataset if video_folder is None else os.path.join(video_folder, 'video.mp4')
+
+    # Load Cars
+    cars = pd.read_csv(current_folder + "cars.csv")
+
+    def avg_speed_for_time(timeStart, timeEnd):
+        cars_to_avg = cars.loc[cars['start'].gt(timeStart) & cars['end'].le(timeEnd)]
+        return cars_to_avg['speed'].mean()
+
+    run_id = uuid.uuid4().hex[:10]
+    print(f"Run No.: {run_id}")
+
+    # Initialize logging
+    now_str = datetime.now().strftime("%Y%m%d-%H%M%S")
+    logging.basicConfig(filename=f'logs/{now_str}_run_{run_id}.log', level=logging.DEBUG)
+    logging.info(f'Run No.: {run_id}, Video: {current_folder}, Max Depth: {"None" if max_depth is None else max_depth}')
+
+    # Load depth map
+    our_meters = load_depth_map(current_folder, max_depth=max_depth)
+
     # Initialize Object Detection
     start = time.time()
     od = ObjectDetection()
 
-    input_video = cv2.VideoCapture(path_to_dataset)
+    input_video = cv2.VideoCapture(path_to_video)
 
     #fps, ppm = get_fps_and_ppm(path_to_dataset)
-    fps = give_me_fps(path_to_dataset)
+    fps = give_me_fps(path_to_video)
 
     fps = 50
     sliding_window = 15
@@ -87,16 +136,16 @@ def run():
     avg_speed = "calculating"
 
     while True:
-        ret, frame = input_video.read()
+        ret, frame = input_video.read()        
+        frame_count += 1
+        if not ret:
+            break
         #frame = frame[890-352:890]
         #frame = image_resize(frame, width=1900)
         #frame = cv2.resize(frame, (1900, 1056))
         frame = imutils.resize(frame, height=352)
         frame = cv2.copyMakeBorder(frame, left=295, right=296, top=0, bottom=0, borderType=cv2.BORDER_CONSTANT)
-        #cv2.imwrite("left_scaled.jpg", frame)
-        frame_count += 1
-        if not ret: 
-            break
+        # cv2.imwrite("object-detection-yolo/frames_detected/frame%d_new_scaled.jpg" % frame_count, frame)
         # Point current frame
         center_points_cur_frame = []
         center_points_prev_frame = []
@@ -213,6 +262,7 @@ def run():
                 print(f"Average speed last minute: {(total_speed / car_count) * 3.6:.2f} km/h")
                 avg_speed = round((total_speed / car_count) * 3.6, 2)
                 logging.info(json.dumps(dict(frameId=frame_count, avgSpeedLastMinute=avg_speed)))
+                break
 
         
         if frame_count >= fps and frame_count % (5 * fps) == 0:
@@ -233,7 +283,7 @@ def run():
             if car_count > 0:
                 print(f"Average speed: {(total_speed / car_count) * 3.6:.2f} km/h")
                 avg_speed = round((total_speed / car_count) * 3.6, 2)
-                logging.info(json.dumps(dict(frameId=frame_count, avgSpeedLast15s=avg_speed)))
+                logging.info(json.dumps(dict(frameId=frame_count)))
 
 
         cv2.putText(
@@ -299,6 +349,7 @@ def run():
 
     input_video.release()
     cv2.destroyAllWindows()
+    logging.shutdown()
 
 
 def render_detected_frames_to_video(count, fps, out_video_name, path_to_frames):
@@ -331,4 +382,17 @@ def get_fps_from_video(path_to_video):
 
 
 if __name__ == '__main__':
-    run()
+    # jobs_to_run = [
+    #     ("/scratch2/video_samples/session6_left/", 80),
+    #     ("/scratch2/video_samples/session6_left/", 100),
+    #     ("/scratch2/video_samples/session6_left/", 120),
+    # ]
+
+    # with Pool(processes=8) as pool:
+    #     pool.starmap(run, jobs_to_run)
+    video = "/scratch2/video_samples/session4_right/"
+    # video = "/scratch2/video_samples/session1_center/"
+    # video = "/scratch2/video_samples/session6_left/"
+    # run(video, 80)
+    run(video, 100)
+    run(video, 120)
