@@ -136,3 +136,5 @@ dmypy.json
 *.weights
 
 object-detection-yolo/frames_detected/*
+data/*
+!data/.gitkeep

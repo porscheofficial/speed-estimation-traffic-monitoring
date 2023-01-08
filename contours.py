@@ -129,12 +129,9 @@ def draw_circles_sklearn(image_path):
 
     plt.show()
 
-def get_pixel_length_of_carr(path_to_image):
+def get_pixel_length_of_car(path_to_image):
     # a = Image.open("mask.png")
     a = Image.open(path_to_image)
-        
-
-
     b = Image.blend(a, Image.new(a.mode, a.size, "black"), .92).convert(mode="1")
     df = pd.DataFrame(((x,-y) for x in range(b.width) for y in range(b.height) if not b.getpixel((x,y))), columns=("x","y"))
     # Plot

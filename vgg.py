@@ -6,7 +6,7 @@ from matplotlib import pyplot
 import cv2
 import os
 import numpy as np
-from contours import draw_contours, draw_circles, draw_circles_sklearn, get_pixel_length_of_carr
+from contours import draw_contours, draw_circles, draw_circles_sklearn, get_pixel_length_of_car
 
 
 def background_removal(filename):
@@ -128,9 +128,9 @@ def cnn(filename):
     #draw_circles_sklearn(filename)
     #car_length = get_pixel_length_of_carr()
 
-base_path = "yolov5/runs/detect/exp10/crops/cars/"
+base_path = "data/yolov5/runs/detect/exp3/crops/cars/"
 
 for idx, filename in enumerate(sorted(os.listdir(base_path))):
     #background_removal(filename)
     #cnn(filename)
-    car_length = get_pixel_length_of_carr(base_path + filename)
+    car_length = get_pixel_length_of_car(base_path + filename)
