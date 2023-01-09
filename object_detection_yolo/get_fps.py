@@ -7,6 +7,7 @@
 path = '../datasets/video.mp4'
 #give_me_fps(path)
 
+from moviepy.video.io.VideoFileClip import VideoFileClip
 
 # In[30]:
 
@@ -17,6 +18,15 @@ import cv2
 import time
 #import ffmpeg
 import os
+
+
+def get_fps_from_video(path_to_video):
+    # loading video dsa gfg intro video
+    # clip = VideoFileClip(path_to_video).subclip(0, 10)
+    clip = VideoFileClip(path_to_video)
+
+    # getting frame rate of the clip
+    return clip.fps
 
 def give_me_fps(path_to_dataset):
     fps_a = read_fps_cv2(path_to_dataset)

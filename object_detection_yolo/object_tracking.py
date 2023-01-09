@@ -4,11 +4,6 @@ from multiprocessing import Pool
 import cv2
 import os
 import configparser
-
-os.environ["IMAGEIO_FFMPEG_EXE"] = "/opt/homebrew/bin/ffmpeg"
-
-from moviepy.video.io.VideoFileClip import VideoFileClip
-
 from object_detection import ObjectDetection
 import math
 from get_fps import give_me_fps
@@ -17,71 +12,14 @@ import logging
 import json
 from paths import session_path
 import copy
-import numpy as np
 import imutils
 import time
 import uuid
+from utils.object_tracking import Point, Car, clamp
+from modules.depth_map.depth_map_utils import load_depth_map
 
 config = configparser.ConfigParser()
 config.read('object_detection_yolo/config.ini')
-
-def clamp(n, smallest, largest): return max(smallest, min(n, largest)) 
-
-class Car:
-    def __init__(self, meters_moved, frames_seen, frame_start, frame_end) -> None:
-        self.meters_moved = meters_moved
-        self.frames_seen = frames_seen
-        self.frame_start = frame_start
-        self.frame_end = frame_end
-
-class Point:
-    def __init__(self, center_x, center_y, meters_moved, x, y, w, h, frame) -> None:
-        self.center_x = center_x
-        self.center_y = center_y
-        self.meters_moved = meters_moved
-        self.x = x
-        self.y = y
-        self.w = w
-        self.h = h
-        self.frame = frame
-
-# TODO: Move to depth map module
-def extract_frame(input: str, output_folder: str, output_file: str, frame_idx: int = 0) -> str:
-    input_video = cv2.VideoCapture(input)
-    frame_count = 0
-    while True:
-        ret, frame = input_video.read()
-        #frame = frame[890-352:890]
-        #frame = image_resize(frame, width=1900)
-        #frame = cv2.resize(frame, (1900, 1056))
-        frame = imutils.resize(frame, height=352)
-        frame = cv2.copyMakeBorder(frame, left=295, right=296, top=0, bottom=0, borderType=cv2.BORDER_CONSTANT)
-        if frame_idx == frame_count:
-            path = os.path.join(output_folder, output_file % frame_idx)
-            cv2.imwrite(path, frame)
-            return output_file % frame_idx
-        frame_count += 1
-
-# TODO: Move to depth map module
-def load_depth_map(current_folder: str, max_depth: int = None):
-    input_video = os.path.join(current_folder, 'video.mp4')
-    depth_map_path = current_folder + (f'depth_map_{max_depth}.npy' if max_depth is not None else 'depth_map.npy')
-    if not os.path.exists(depth_map_path):
-        print('Depth map generation.')
-        scaled_image_name = extract_frame(input_video, current_folder, 'frame_%d_scaled.jpg')
-        print(f'Extracted scaled frame to {scaled_image_name}')
-        from modules.depth_map.pixelformer.test import generate_depth_map
-        generate_depth_map(current_folder, scaled_image_name, max_depth_o=max_depth)
-    else:
-        print('Depth map found.')
-        
-    if not os.path.exists(depth_map_path):
-        raise Exception('Depth Map could not be generated.')
-
-    with open(depth_map_path, 'rb') as f:
-        our_meters = np.load(f)
-
-    return our_meters
 
 def run(data_dir, max_depth=None, fps=None):
     reload(logging)
@@ -103,7 +41,7 @@ def run(data_dir, max_depth=None, fps=None):
     logging.info(f'Run No.: {run_id}, Video: {data_dir}, Max Depth: {"None" if max_depth is None else max_depth}')
 
     # Load depth map
-    our_meters = load_depth_map(data_dir, max_depth=max_depth)
+    depth_map = load_depth_map(data_dir, max_depth=max_depth)
 
     # Initialize Object Detection
     start = time.time()
@@ -114,6 +52,7 @@ def run(data_dir, max_depth=None, fps=None):
     fps = give_me_fps(path_to_video) if fps is None else fps
 
     sliding_window = 15 * fps
+    text_color = (255,255,255)
 
     # Initialize count
     frame_count = 0
@@ -130,9 +69,6 @@ def run(data_dir, max_depth=None, fps=None):
 
     while True:
         ret, frame = input_video.read()
-        #frame = frame[890-352:890]
-        #frame = image_resize(frame, width=1900)
-        #frame = cv2.resize(frame, (1900, 1056))
         frame = imutils.resize(frame, height=352)
         frame = cv2.copyMakeBorder(frame, left=295, right=296, top=0, bottom=0, borderType=cv2.BORDER_CONSTANT)
         #cv2.imwrite("object-detection-yolo/frames_detected/frame%d_new_scaled.jpg" % frame_count, frame)
@@ -149,25 +85,12 @@ def run(data_dir, max_depth=None, fps=None):
             (x, y, w, h) = box
             cx = int((x + x + w) / 2)
             cy = int((y + y + h) / 2)
-            if cy < our_meters.shape[0] and cx < our_meters.shape[1]:
-                meters = our_meters[cy][cx]
+            if cy < depth_map.shape[0] and cx < depth_map.shape[1]:
+                meters = depth_map[cy][cx]
             else:
                 meters = 0
             center_points_cur_frame.append(Point(cx, cy, meters, x, y, w, h, frame_count))
-
-            # print("FRAME N°", count, " ", x, y, w, h)
-
-            # cv2.circle(frame, (cx, cy), 5, (0, 0, 255), -1)
             cv2.rectangle(frame, (x, y), (x + w, y + h), (0,255,0), 2)
-            # cv2.putText(
-            #         frame,
-            #         f"Breite: {w:.2f}",
-            #         (int(x + w), int(y + h)),
-            #         cv2.FONT_HERSHEY_SIMPLEX,
-            #         0.95,
-            #         (255, 255, 255),
-            #         1,
-            #     )
 
         # Only at the beginning we compare previous and current frame
         if frame_count <= 2:
@@ -220,8 +143,6 @@ def run(data_dir, max_depth=None, fps=None):
                 total_movement = math.sqrt(math.pow(x_movement, 2) + math.pow(y_movement, 2))
 
                 meters_moved = abs(tracking_objects[object_id].meters_moved - tracking_objects_prev[object_id].meters_moved)
-                #cv2.putText(frame, str(total_movement), (point.x, point.y - 30), 0, 1, (0, 0, 255), 2)
-                #logging.info(json.dumps(dict(fps=fps, frameId=frame_count, carId=object_id, metersMoved=str(meters_moved))))
 
                 if object_id in cars:
                     cars[object_id].meters_moved += clamp(meters_moved, 0.0, 0.7)
@@ -250,11 +171,6 @@ def run(data_dir, max_depth=None, fps=None):
             car_count = 0
         
             for car_id, car in cars.items():
-                # logging.info(json.dumps(dict(frameId=frame_count, carId=car_id, 
-                #                             metersMoved=str(car.meters_moved), 
-                #                             framesSeen=car.frames_seen,
-                #                             frameStart=car.frame_start,
-                #                             frameEnd=car.frame_end)))
 
                 if car.frame_end >= frame_count - 60 * fps and car.frames_seen > 5 and car.meters_moved > 0.05:
                     car_count += 1
@@ -271,11 +187,6 @@ def run(data_dir, max_depth=None, fps=None):
             car_count = 0
         
             for car_id, car in cars.items():
-                # logging.info(json.dumps(dict(frameId=frame_count, carId=car_id, 
-                #                             metersMoved=str(car.meters_moved), 
-                #                             framesSeen=car.frames_seen,
-                #                             frameStart=car.frame_start,
-                #                             frameEnd=car.frame_end)))
 
                 if car.frame_end >= frame_count - sliding_window and car.frames_seen > 5 and car.meters_moved > 0.05:
                     car_count += 1
@@ -292,7 +203,7 @@ def run(data_dir, max_depth=None, fps=None):
             (7, 70),
             cv2.FONT_HERSHEY_SIMPLEX,
             1,
-            config["DEFAULT"]["text_color"],
+            text_color,
             2,
         )
 
@@ -302,7 +213,7 @@ def run(data_dir, max_depth=None, fps=None):
             (7, 100),
             cv2.FONT_HERSHEY_SIMPLEX,
             1,
-            config["DEFAULT"]["text_color"],
+            text_color,
             2
         )
 
@@ -313,7 +224,7 @@ def run(data_dir, max_depth=None, fps=None):
                 (7, 130),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 1,
-                config["DEFAULT"]["text_color"],
+                text_color,
                 2
             )
         except:
@@ -323,7 +234,7 @@ def run(data_dir, max_depth=None, fps=None):
                 (7, 130),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 1,
-                config["DEFAULT"]["text_color"],
+                text_color,
                 2
             )
 
@@ -333,7 +244,7 @@ def run(data_dir, max_depth=None, fps=None):
             (7, 160),    
             cv2.FONT_HERSHEY_SIMPLEX,
             1,
-            config["DEFAULT"]["text_color"],
+            text_color,
             2
         )
         if frame_count % 500 == 0:
@@ -343,46 +254,13 @@ def run(data_dir, max_depth=None, fps=None):
         if frame_count % 3000 == 0:
             cv2.imwrite(f"object-detection-yolo/frames_detected/{run_id}_frame_{frame_count}.jpg", frame)
 
-    #render_detected_frames_to_video(frame_count, fps, 'detected.avi', 'object-detection-yolo/frames_detected/frame%d.jpg')
-    #count_birds_eye = transform_to_birds_eye('detected.mp4')
-    #render_detected_frames_to_video(count_birds_eye, fps, 'birdseye.mp4', 'birds_eye_frames/birdframe%d.jpg')
-
     input_video.release()
     cv2.destroyAllWindows()
     logging.shutdown()
 
 
-def render_detected_frames_to_video(count, fps, out_video_name, path_to_frames):
-    img_array = []
-    for c in range(0, count):
-        c += 1
-        img = cv2.imread(path_to_frames % c)
-
-        if img is None:
-            continue
-
-        height, width, layers = img.shape
-        size = (width, height)
-        img_array.append(img)
-
-    out = cv2.VideoWriter(out_video_name, cv2.VideoWriter_fourcc("M", "J", "P", "G"), fps,
-                          size)  # fps have to get set automatically from orignal video
-    for i in range(len(img_array)):
-        out.write(img_array[i])
-    out.release()
-
-
-def get_fps_from_video(path_to_video):
-    # loading video dsa gfg intro video
-    # clip = VideoFileClip(path_to_video).subclip(0, 10)
-    clip = VideoFileClip(path_to_video)
-
-    # getting frame rate of the clip
-    return clip.fps
-
-
 if __name__ == '__main__':
-    fps = config["DEFAULT"]["fps"]
+    fps = int(config["DEFAULT"]["fps"])
 
     # jobs_to_run = [
     #     ("/scratch2/video_samples/session6_left/", 80),
@@ -393,6 +271,6 @@ if __name__ == '__main__':
     # with Pool(processes=8) as pool:
     #     pool.starmap(run, jobs_to_run)
     
-    run(session_path, 80, fps)
+    run(session_path, 85, fps)
     run(session_path, 100, fps)
     run(session_path, 120, fps)
