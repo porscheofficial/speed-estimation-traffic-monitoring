@@ -22,8 +22,6 @@ import imutils
 import time
 import uuid
 
-
-
 # white
 text_color = (255,255,255)
 # black
@@ -130,22 +128,27 @@ def run(video_folder=None, max_depth=None):
     frame_count = 0
 
     tracking_objects = {}
+
+    # TODO: Remove if unused
+    tolerance_px = 3
+    tracking_objects_diff_map = {}
+
     tracking_objects_prev = {}
     cars = {}
     track_id = 0
     avg_speed = "calculating"
 
     while True:
-        ret, frame = input_video.read()        
-        frame_count += 1
-        if not ret:
-            break
+        ret, frame = input_video.read()
         #frame = frame[890-352:890]
         #frame = image_resize(frame, width=1900)
         #frame = cv2.resize(frame, (1900, 1056))
         frame = imutils.resize(frame, height=352)
         frame = cv2.copyMakeBorder(frame, left=295, right=296, top=0, bottom=0, borderType=cv2.BORDER_CONSTANT)
-        # cv2.imwrite("object-detection-yolo/frames_detected/frame%d_new_scaled.jpg" % frame_count, frame)
+        #cv2.imwrite("object-detection-yolo/frames_detected/frame%d_new_scaled.jpg" % frame_count, frame)
+        frame_count += 1
+        if not ret:
+            break
         # Point current frame
         center_points_cur_frame = []
         center_points_prev_frame = []
@@ -178,13 +181,17 @@ def run(video_folder=None, max_depth=None):
 
         # Only at the beginning we compare previous and current frame
         if frame_count <= 2:
+            center_points_prev_frame_copy = center_points_prev_frame.copy()
             for point in center_points_cur_frame:
-                for point2 in center_points_prev_frame:
+                for point2 in center_points_prev_frame_copy:
                     distance = math.hypot(point2.x - point.x, point2.y - point.y)
 
                     if distance < 20:
                         tracking_objects[track_id] = point
+                        tracking_objects_diff_map[track_id] = (point2.x - point.x, point2.y - point.y)
                         track_id += 1
+                        center_points_prev_frame_copy.remove(point2)
+                        break
         else:
             tracking_objects_copy = tracking_objects.copy()
             center_points_cur_frame_copy = center_points_cur_frame.copy()
@@ -200,6 +207,10 @@ def run(video_folder=None, max_depth=None):
                         object_exists = True
                         if point in center_points_cur_frame:
                             center_points_cur_frame.remove(point)
+                            # Point should not match to multiple boxes
+                            # TODO: Only take closest!
+                            center_points_cur_frame_copy.remove(point)
+                        break
                         continue
 
                 # Remove IDs lost
