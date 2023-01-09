@@ -70,6 +70,8 @@ def plot_absolute_error(logs: 'list[str]', save_file_path=None):
     video_id = cars_path.strip('/').split('/')[-1]
     # Calculate values per minute
     df = pd.DataFrame({'truth': truth, **estimations, 'timestamps': timestamps})
+    # Remove timestamps where no estimations or truth is available
+    df.dropna(axis=0, inplace=True)
     fig = px.line(df, x="timestamps", y=df.columns, title=f'Absolute Estimations ({cars_path})')
     id = uuid.uuid4().hex[:10]
     if save_file_path is not None:
@@ -90,10 +92,16 @@ def plot_absolute_error(logs: 'list[str]', save_file_path=None):
         df[run_id_list].mean(axis=0).to_csv(csv_path)
 
 def main():
-    plot_absolute_error(
-        ["logs/20230108-225957_run_e2c12c871e.log",
+    arr = ["logs/20230108-225957_run_e2c12c871e.log",
         "logs/20230109-010057_run_3370f63e98.log",
-        "logs/20230109-030202_run_2a8936574f.log"], 'logs/')
+        "logs/20230109-030202_run_2a8936574f.log"]
+
+    arr = [
+        "logs/20230109-155900_run_01e2343a18.log",
+        "logs/20230109-160150_run_7935551b66.log",
+        "logs/20230109-160446_run_e3584a64df.log",
+    ]
+    plot_absolute_error(arr, 'logs/')
 
 if __name__ == '__main__':
     main()

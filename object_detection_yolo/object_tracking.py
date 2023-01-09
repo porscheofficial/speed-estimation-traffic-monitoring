@@ -1,6 +1,7 @@
 from datetime import datetime
 from importlib import reload
 from multiprocessing import Pool
+import sys
 import cv2
 import os
 import configparser
@@ -10,19 +11,19 @@ from get_fps import give_me_fps
 import pandas as pd
 import logging
 import json
-from object_detection_yolo.modules.evaluation.evaluate import plot_absolute_error
 from paths import session_path
 import copy
 import imutils
 import time
 import uuid
 from utils.object_tracking import Point, Car, clamp
+from modules.evaluation.evaluate import plot_absolute_error
 from modules.depth_map.depth_map_utils import load_depth_map
 
 config = configparser.ConfigParser()
 config.read('object_detection_yolo/config.ini')
 
-def run(data_dir, max_depth=None, fps=None):
+def run(data_dir, max_depth=None, fps=None, max_frames=None):
     reload(logging)
     path_to_video = os.path.join(data_dir, 'video.mp4')
 
@@ -256,20 +257,28 @@ def run(data_dir, max_depth=None, fps=None):
         if frame_count % 3000 == 0:
             cv2.imwrite(f"object-detection-yolo/frames_detected/{run_id}_frame_{frame_count}.jpg", frame)
 
+        if max_frames is not None and frame_count >= max_frames:
+            break
+
     input_video.release()
     cv2.destroyAllWindows()
     logging.shutdown()
 
     return log_name
 
-
-if __name__ == '__main__':
+def main():
     fps = int(config["DEFAULT"]["fps"])
 
+    max_frames = 50 * 60 * 15 # fps * sec * min
+    max_depth_tests = [100]
+    session_path_local = sys.argv[1] if len(sys.argv) > 1 else session_path 
+
     logs = []
-    logs += [run(session_path, 85, fps)]
-    logs += [run(session_path, 100, fps)]
-    logs += [run(session_path, 120, fps)]
+    for max_depth in max_depth_tests:
+        logs += [run(session_path_local, max_depth, fps, max_frames=max_frames)]
 
     ### Evaluation
     plot_absolute_error(logs, 'logs/')
+
+if __name__ == '__main__':
+    main()

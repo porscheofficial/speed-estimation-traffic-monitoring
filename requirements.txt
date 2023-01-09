@@ -41,6 +41,7 @@ idna=3.4=pypi_0
 importlib-metadata=5.2.0=pypi_0
 joblib=1.1.1=py39hca03da5_0
 jpeg=9e=h1a28f6b_0
+kaleido=0.2.1=pypi_0
 keras=2.11.0=pypi_0
 kiwisolver=1.4.2=py39hc377ac9_0
 krb5=1.19.2=h3b8d789_0

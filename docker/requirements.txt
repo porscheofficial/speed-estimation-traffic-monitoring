@@ -55,6 +55,7 @@ jedi==0.18.2
 Jinja2==3.1.2
 joblib==1.2.0
 jsonschema==4.17.3
+kaleido==0.2.1
 kiwisolver==1.4.4
 kornia==0.6.8
 libclang==14.0.6
@@ -77,6 +78,7 @@ pexpect==4.8.0
 pickleshare==0.7.5
 Pillow==9.3.0
 platformdirs==2.5.4
+plotly==5.9.0
 proglog==0.1.10
 prometheus-client==0.15.0
 prompt-toolkit==3.0.33
