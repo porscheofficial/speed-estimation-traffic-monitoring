@@ -3,33 +3,29 @@ from importlib import reload
 from multiprocessing import Pool
 import cv2
 import os
+import configparser
 
 os.environ["IMAGEIO_FFMPEG_EXE"] = "/opt/homebrew/bin/ffmpeg"
 
 from moviepy.video.io.VideoFileClip import VideoFileClip
 
 from object_detection import ObjectDetection
-from pre_pro_fps_ppm import get_fps_and_ppm
 import math
 from get_fps import give_me_fps
 import pandas as pd
 import logging
 import json
-from paths import cars_path, path_to_dataset
+from paths import session_path
 import copy
 import numpy as np
 import imutils
 import time
 import uuid
 
-# white
-text_color = (255,255,255)
-# black
-#text_color = (0,0,0)
-
+config = configparser.ConfigParser()
+config.read('object_detection_yolo/config.ini')
 
 def clamp(n, smallest, largest): return max(smallest, min(n, largest)) 
-
 
 class Car:
     def __init__(self, meters_moved, frames_seen, frame_start, frame_end) -> None:
@@ -37,7 +33,6 @@ class Car:
         self.frames_seen = frames_seen
         self.frame_start = frame_start
         self.frame_end = frame_end
-
 
 class Point:
     def __init__(self, center_x, center_y, meters_moved, x, y, w, h, frame) -> None:
@@ -88,13 +83,12 @@ def load_depth_map(current_folder: str, max_depth: int = None):
 
     return our_meters
 
-def run(video_folder=None, max_depth=None):
+def run(data_dir, max_depth=None, fps=None):
     reload(logging)
-    current_folder = cars_path if video_folder is None else video_folder
-    path_to_video = path_to_dataset if video_folder is None else os.path.join(video_folder, 'video.mp4')
+    path_to_video = os.path.join(data_dir, 'video.mp4')
 
     # Load Cars
-    cars = pd.read_csv(current_folder + "cars.csv")
+    cars = pd.read_csv(data_dir + "cars.csv")
 
     def avg_speed_for_time(timeStart, timeEnd):
         cars_to_avg = cars.loc[cars['start'].gt(timeStart) & cars['end'].le(timeEnd)]
@@ -106,10 +100,10 @@ def run(video_folder=None, max_depth=None):
     # Initialize logging
     now_str = datetime.now().strftime("%Y%m%d-%H%M%S")
     logging.basicConfig(filename=f'logs/{now_str}_run_{run_id}.log', level=logging.DEBUG)
-    logging.info(f'Run No.: {run_id}, Video: {current_folder}, Max Depth: {"None" if max_depth is None else max_depth}')
+    logging.info(f'Run No.: {run_id}, Video: {data_dir}, Max Depth: {"None" if max_depth is None else max_depth}')
 
     # Load depth map
-    our_meters = load_depth_map(current_folder, max_depth=max_depth)
+    our_meters = load_depth_map(data_dir, max_depth=max_depth)
 
     # Initialize Object Detection
     start = time.time()
@@ -117,16 +111,12 @@ def run(video_folder=None, max_depth=None):
 
     input_video = cv2.VideoCapture(path_to_video)
 
-    #fps, ppm = get_fps_and_ppm(path_to_dataset)
-    fps = give_me_fps(path_to_video)
+    fps = give_me_fps(path_to_video) if fps is None else fps
 
-    fps = 50
-    sliding_window = 15
-    sliding_window *= fps
+    sliding_window = 15 * fps
 
     # Initialize count
     frame_count = 0
-
     tracking_objects = {}
 
     # TODO: Remove if unused
@@ -302,7 +292,7 @@ def run(video_folder=None, max_depth=None):
             (7, 70),
             cv2.FONT_HERSHEY_SIMPLEX,
             1,
-            text_color,
+            config["DEFAULT"]["text_color"],
             2,
         )
 
@@ -312,7 +302,7 @@ def run(video_folder=None, max_depth=None):
             (7, 100),
             cv2.FONT_HERSHEY_SIMPLEX,
             1,
-            text_color,
+            config["DEFAULT"]["text_color"],
             2
         )
 
@@ -323,7 +313,7 @@ def run(video_folder=None, max_depth=None):
                 (7, 130),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 1,
-                text_color,
+                config["DEFAULT"]["text_color"],
                 2
             )
         except:
@@ -333,7 +323,7 @@ def run(video_folder=None, max_depth=None):
                 (7, 130),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 1,
-                text_color,
+                config["DEFAULT"]["text_color"],
                 2
             )
 
@@ -343,7 +333,7 @@ def run(video_folder=None, max_depth=None):
             (7, 160),    
             cv2.FONT_HERSHEY_SIMPLEX,
             1,
-            text_color,
+            config["DEFAULT"]["text_color"],
             2
         )
         if frame_count % 500 == 0:
@@ -392,6 +382,8 @@ def get_fps_from_video(path_to_video):
 
 
 if __name__ == '__main__':
+    fps = config["DEFAULT"]["fps"]
+
     # jobs_to_run = [
     #     ("/scratch2/video_samples/session6_left/", 80),
     #     ("/scratch2/video_samples/session6_left/", 100),
@@ -400,10 +392,7 @@ if __name__ == '__main__':
 
     # with Pool(processes=8) as pool:
     #     pool.starmap(run, jobs_to_run)
-    video = "/scratch2/video_samples/session4_right/"
-    # video = "/scratch2/video_samples/session1_center/"
-    # video = "/scratch2/video_samples/session6_left/"
     
-    run(video, 80)
-    run(video, 100)
-    run(video, 120)
+    run(session_path, 80, fps)
+    run(session_path, 100, fps)
+    run(session_path, 120, fps)
