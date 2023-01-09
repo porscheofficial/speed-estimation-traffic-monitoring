@@ -135,6 +135,6 @@ dmypy.json
 
 *.weights
 
-object-detection-yolo/frames_detected/*
+object_detection_yolo/frames_detected/*
 data/*
 !data/.gitkeep

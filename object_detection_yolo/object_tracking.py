@@ -10,6 +10,7 @@ from get_fps import give_me_fps
 import pandas as pd
 import logging
 import json
+from object_detection_yolo.modules.evaluation.evaluate import plot_absolute_error
 from paths import session_path
 import copy
 import imutils
@@ -37,6 +38,7 @@ def run(data_dir, max_depth=None, fps=None):
 
     # Initialize logging
     now_str = datetime.now().strftime("%Y%m%d-%H%M%S")
+    log_name = f'logs/{now_str}_run_{run_id}.log'
     logging.basicConfig(filename=f'logs/{now_str}_run_{run_id}.log', level=logging.DEBUG)
     logging.info(f'Run No.: {run_id}, Video: {data_dir}, Max Depth: {"None" if max_depth is None else max_depth}')
 
@@ -258,19 +260,16 @@ def run(data_dir, max_depth=None, fps=None):
     cv2.destroyAllWindows()
     logging.shutdown()
 
+    return log_name
+
 
 if __name__ == '__main__':
     fps = int(config["DEFAULT"]["fps"])
 
-    # jobs_to_run = [
-    #     ("/scratch2/video_samples/session6_left/", 80),
-    #     ("/scratch2/video_samples/session6_left/", 100),
-    #     ("/scratch2/video_samples/session6_left/", 120),
-    # ]
+    logs = []
+    logs += [run(session_path, 85, fps)]
+    logs += [run(session_path, 100, fps)]
+    logs += [run(session_path, 120, fps)]
 
-    # with Pool(processes=8) as pool:
-    #     pool.starmap(run, jobs_to_run)
-    
-    run(session_path, 85, fps)
-    run(session_path, 100, fps)
-    run(session_path, 120, fps)
+    ### Evaluation
+    plot_absolute_error(logs, 'logs/')
