@@ -1,10 +1,10 @@
 import cv2
 import numpy as np
-from paths import yolo_weights, yolo_classes, yolo_config
+from paths import yolov4_weights, yolov4_classes, yolov4_config
 
 
 class ObjectDetection:
-    def __init__(self, weights_path=yolo_weights, cfg_path=yolo_config):
+    def __init__(self, weights_path=yolov4_weights, cfg_path=yolov4_config):
         print("Loading Object Detection")
         print("Running opencv dnn with YOLOv4")
         self.nmsThreshold = 0.4
@@ -25,7 +25,7 @@ class ObjectDetection:
 
         self.model.setInputParams(size=(self.image_size, self.image_size), scale=1 / 255)
 
-    def load_class_names(self, classes_path=yolo_classes):
+    def load_class_names(self, classes_path=yolov4_classes):
         with open(classes_path, "r") as file_object:
             for class_name in file_object.readlines():
                 class_name = class_name.strip()

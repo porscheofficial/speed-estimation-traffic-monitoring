@@ -5,7 +5,8 @@ import sys
 import cv2
 import os
 import configparser
-from object_detection import ObjectDetection
+from modules.object_detection.yolov5.object_detection import ObjectDetection as ObjectDetectionCustom
+from modules.object_detection.yolov4.object_detection import ObjectDetection
 import math
 from get_fps import give_me_fps
 import pandas as pd
@@ -24,7 +25,7 @@ import numpy as np
 config = configparser.ConfigParser()
 config.read('object_detection_yolo/config.ini')
 
-def run(data_dir, max_depth=None, fps=None, max_frames=None):
+def run(data_dir, max_depth=None, fps=None, max_frames=None, custom_object_detection=False):
     reload(logging)
     path_to_video = os.path.join(data_dir, 'video.mp4')
 
@@ -49,14 +50,21 @@ def run(data_dir, max_depth=None, fps=None, max_frames=None):
 
     # Initialize Object Detection
     start = time.time()
-    od = ObjectDetection()
+
+    if custom_object_detection:
+        source = "object_detection_yolo/frames_detected/frame.jpg"
+        weights = "object_detection_yolo/model_weights/yolov5/best.pt"
+        od = ObjectDetectionCustom(weights=weights, source=source)
+    else:
+        od = ObjectDetection()
 
     input_video = cv2.VideoCapture(path_to_video)
 
     fps = give_me_fps(path_to_video) if fps is None else fps
 
     sliding_window = 15 * fps
-    text_color = (255,255,255)
+    #text_color = (255,255,255)
+    text_color = (0,0,0)
 
     # Initialize count
     frame_count = 0
@@ -77,15 +85,24 @@ def run(data_dir, max_depth=None, fps=None, max_frames=None):
     starter_threshold = 0.4
     # for shake_detection
 
+    if custom_object_detection:
+        fgbg = cv2.bgsegm.createBackgroundSubtractorMOG() 
 
     while True:
         ret, frame = input_video.read()
         if not ret:
             break
+
         original_frame = frame
-        frame = imutils.resize(frame, height=352)
-        frame = cv2.copyMakeBorder(frame, left=295, right=296, top=0, bottom=0, borderType=cv2.BORDER_CONSTANT)
-        #cv2.imwrite("object-detection-yolo/frames_detected/frame%d_new_scaled.jpg" % frame_count, frame)
+
+        if custom_object_detection:
+            frame = fgbg.apply(frame)
+            path_to_frame = "object_detection_yolo/frames_detected/frame.jpg"
+            cv2.imwrite(path_to_frame, frame)
+        else:
+            frame = imutils.resize(frame, height=352)
+            frame = cv2.copyMakeBorder(frame, left=295, right=296, top=0, bottom=0, borderType=cv2.BORDER_CONSTANT)
+        #cv2.imwrite("object_detection_yolo/frames_detected/frame%d_new_scaled.jpg" % frame_count, frame)
         frame_count += 1
 
         # for shake_detection
@@ -131,9 +148,15 @@ def run(data_dir, max_depth=None, fps=None, max_frames=None):
         center_points_prev_frame = []
 
         # Detect objects on frame
-        (class_ids, scores, boxes) = od.detect(frame)
+        if custom_object_detection:
+            boxes = od.detect(path_to_frame)
+            if len(boxes) == 0:
+                continue
+
+        else:
+            (class_ids, scores, boxes) = od.detect(frame)
         for box in boxes:
-            (x, y, w, h) = box
+            (x, y, w, h) = box.astype(int)
             cx = int((x + x + w) / 2)
             cy = int((y + y + h) / 2)
             if cy < depth_map.shape[0] and cx < depth_map.shape[1]:
@@ -141,7 +164,7 @@ def run(data_dir, max_depth=None, fps=None, max_frames=None):
             else:
                 meters = 0
             center_points_cur_frame.append(Point(cx, cy, meters, x, y, w, h, frame_count))
-            cv2.rectangle(frame, (x, y), (x + w, y + h), (0,255,0), 2)
+            cv2.rectangle(frame, (x, y), (x + w, y + h), (255,0,0), 2)
 
         # Only at the beginning we compare previous and current frame
         if frame_count <= 2:
@@ -245,7 +268,7 @@ def run(data_dir, max_depth=None, fps=None, max_frames=None):
             if car_count > 0:
                 print(f"Average speed: {(total_speed / car_count) * 3.6:.2f} km/h")
                 avg_speed = round((total_speed / car_count) * 3.6, 2)
-                logging.info(json.dumps(dict(frameId=frame_count)))
+                logging.info(json.dumps(dict(frameId=frame_count, avgSpeedLast15Seconds=avg_speed)))
 
 
         cv2.putText(
@@ -301,9 +324,11 @@ def run(data_dir, max_depth=None, fps=None, max_frames=None):
         if frame_count % 500 == 0:
             print(f"Frame no. {frame_count} time since start: {(time.time()-start):.2f}s")
 
+        cv2.imwrite(f"object_detection_yolo/frames_detected/frame_after_detection.jpg", frame)
+
         #cv2.imshow("Frame", frame)
         if frame_count % 3000 == 0:
-            cv2.imwrite(f"object-detection-yolo/frames_detected/{run_id}_frame_{frame_count}.jpg", frame)
+            cv2.imwrite(f"object_detection_yolo/frames_detected/{run_id}_frame_{frame_count}.jpg", frame)
 
         if max_frames is not None and frame_count >= max_frames:
             break
@@ -315,15 +340,16 @@ def run(data_dir, max_depth=None, fps=None, max_frames=None):
     return log_name
 
 def main():
-    fps = int(config["DEFAULT"]["fps"])
+    fps = config.getint("DEFAULT", "fps")
+    custom_object_detection = config.getboolean("DEFAULT", "custom_object_detection")
 
-    max_frames = 50 * 60 * 15 # fps * sec * min
+    max_frames = fps * 60 * 15 # fps * sec * min
     max_depth_tests = [100]
     session_path_local = sys.argv[1] if len(sys.argv) > 1 else session_path 
 
     logs = []
     for max_depth in max_depth_tests:
-        logs += [run(session_path_local, max_depth, fps, max_frames=max_frames)]
+        logs += [run(session_path_local, max_depth, fps, max_frames=max_frames, custom_object_detection=custom_object_detection)]
 
     ### Evaluation
     plot_absolute_error(logs, 'logs/')
