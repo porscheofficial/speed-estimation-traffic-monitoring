@@ -11,7 +11,7 @@ class Car:
         self.frame_end = frame_end
 
 class Point:
-    def __init__(self, center_x, center_y, meters_moved, x, y, w, h, frame) -> None:
+    def __init__(self, center_x, center_y, meters_moved, x, y, w, h, frame, ppm) -> None:
         self.center_x = center_x
         self.center_y = center_y
         self.meters_moved = meters_moved
@@ -20,6 +20,7 @@ class Point:
         self.w = w
         self.h = h
         self.frame = frame
+        self.ppm = ppm
 
 def render_detected_frames_to_video(count, fps, out_video_name, path_to_frames):
     img_array = []

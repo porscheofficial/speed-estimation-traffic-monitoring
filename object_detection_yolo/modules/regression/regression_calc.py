@@ -14,9 +14,8 @@ def objective(x, a, b, c):
 # def objective(x, a, b):
 #     return a*x + b
  
-def get_pixel_length_of_car(path_to_image):
-    # a = Image.open("mask.png")
-    background_image = Image.open(path_to_image)
+def get_pixel_length_of_car(img_array):
+    background_image = Image.fromarray(img_array)
     interpolated_image = Image.blend(background_image, Image.new(background_image.mode, background_image.size, "black"), .92).convert(mode="1")
     foreground_image = ImageOps.invert(interpolated_image)
 

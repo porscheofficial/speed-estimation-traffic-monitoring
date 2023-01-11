@@ -21,6 +21,8 @@ from utils.object_tracking import Point, Car, clamp
 from modules.evaluation.evaluate import plot_absolute_error
 from modules.depth_map.depth_map_utils import load_depth_map
 import numpy as np
+from modules.regression.regression_calc import get_pixel_length_of_car
+
 
 config = configparser.ConfigParser()
 config.read('object_detection_yolo/config.ini')
@@ -63,8 +65,8 @@ def run(data_dir, max_depth=None, fps=None, max_frames=None, custom_object_detec
     fps = give_me_fps(path_to_video) if fps is None else fps
 
     sliding_window = 15 * fps
-    #text_color = (255,255,255)
-    text_color = (0,0,0)
+    text_color = (255,255,255)
+    #text_color = (0,0,0)
 
     # Initialize count
     frame_count = 0
@@ -163,7 +165,18 @@ def run(data_dir, max_depth=None, fps=None, max_frames=None, custom_object_detec
                 meters = depth_map[cy][cx]
             else:
                 meters = 0
-            center_points_cur_frame.append(Point(cx, cy, meters, x, y, w, h, frame_count))
+
+            if custom_object_detection:
+                cropped_frame = frame[y:y+h, x:x+w]
+                car_length_in_pixels = get_pixel_length_of_car(cropped_frame)
+                avg_car_in_meters = 5
+                if car_length_in_pixels is None:
+                    ppm = None
+                else:
+                    ppm = car_length_in_pixels/avg_car_in_meters
+            else:
+                ppm = None
+            center_points_cur_frame.append(Point(cx, cy, meters, x, y, w, h, frame_count, ppm))
             cv2.rectangle(frame, (x, y), (x + w, y + h), (255,0,0), 2)
 
         # Only at the beginning we compare previous and current frame
@@ -216,7 +229,17 @@ def run(data_dir, max_depth=None, fps=None, max_frames=None, custom_object_detec
                 y_movement = tracking_objects[object_id].y - tracking_objects_prev[object_id].y
                 total_movement = math.sqrt(math.pow(x_movement, 2) + math.pow(y_movement, 2))
 
-                meters_moved = abs(tracking_objects[object_id].meters_moved - tracking_objects_prev[object_id].meters_moved)
+                if custom_object_detection:
+                    if tracking_objects_prev[object_id].ppm and tracking_objects[object_id].ppm:
+                        avg_ppm = (tracking_objects_prev[object_id].ppm + tracking_objects[object_id].ppm)/2
+                    elif tracking_objects_prev[object_id].ppm or tracking_objects[object_id].ppm: 
+                        avg_ppm = tracking_objects_prev[object_id].ppm or tracking_objects[object_id].ppm
+                    else:
+                        continue
+
+                    meters_moved = total_movement/avg_ppm
+                else:
+                    meters_moved = abs(tracking_objects[object_id].meters_moved - tracking_objects_prev[object_id].meters_moved)
 
                 if object_id in cars:
                     cars[object_id].meters_moved += clamp(meters_moved, 0.0, 0.7)
