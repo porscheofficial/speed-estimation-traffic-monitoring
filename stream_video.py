@@ -6,9 +6,11 @@ import time
 
 
 def get_video_stream_from_url(url):
+    # adjust these when run on windows:
     FFMPEG_BIN = "ffmpeg"
     FFPROBE_BIN = "ffprobe"
 
+    # get the dimensions of the stream for reading the real stream later
     meta_pipe = sp.Popen([FFPROBE_BIN, "-v", "error",
                           "-select_streams", "v:0",
                           "-show_entries", "stream=width,height",  # disable audio
@@ -17,6 +19,7 @@ def get_video_stream_from_url(url):
                          stdin=sp.PIPE, stdout=sp.PIPE)
     frame_size = meta_pipe.stdout.read().decode("utf-8").split("\n")[0].split(",")
 
+    # get the actual stream through ffmpeg and return it
     stream_pipe = sp.Popen([FFMPEG_BIN, "-i", url,
                             "-loglevel", "quiet",  # no text output
                             "-an",  # disable audio
@@ -27,11 +30,13 @@ def get_video_stream_from_url(url):
     return stream_pipe, int(frame_size[0]), int(frame_size[1])
 
 
+# helper function to mask handling the input
 def retrieve_next_frame_from_stream(pipe, w, h):
     raw_image = pipe.stdout.read(w * h * 3)
     return numpy.frombuffer(raw_image, numpy.uint8).reshape((h, w, 3))
 
 
+# function to estimate fps for a stream from 1000 frames
 def count_fps_from_stream(pipe, w, h):
     n_frames = 1000
     start_time = time.time()
@@ -42,6 +47,7 @@ def count_fps_from_stream(pipe, w, h):
     return n_frames / delta_t
 
 
+# main method is only for viewing and testing the stream
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Show an m3u8 stream over http')
     parser.add_argument(
