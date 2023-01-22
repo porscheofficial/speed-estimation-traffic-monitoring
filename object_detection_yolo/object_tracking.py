@@ -62,7 +62,7 @@ def run(data_dir, max_depth=None, fps=None, max_frames=None, custom_object_detec
 
     input_video = cv2.VideoCapture(path_to_video)
 
-    # fps = give_me_fps(path_to_video) if fps is None else fps
+    fps = give_me_fps(path_to_video) if fps is None else fps
 
     sliding_window = 15 * fps
     text_color = (255,255,255)
