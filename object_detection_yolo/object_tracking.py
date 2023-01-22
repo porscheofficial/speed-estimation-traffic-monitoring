@@ -62,7 +62,7 @@ def run(data_dir, max_depth=None, fps=None, max_frames=None, custom_object_detec
 
     input_video = cv2.VideoCapture(path_to_video)
 
-    fps = give_me_fps(path_to_video) if fps is None else fps
+    # fps = give_me_fps(path_to_video) if fps is None else fps
 
     sliding_window = 15 * fps
     text_color = (255,255,255)
@@ -227,6 +227,30 @@ def run(data_dir, max_depth=None, fps=None, max_frames=None, custom_object_detec
             if object_id in tracking_objects_prev:
                 x_movement = tracking_objects[object_id].x - tracking_objects_prev[object_id].x
                 y_movement = tracking_objects[object_id].y - tracking_objects_prev[object_id].y
+
+                # car direction
+                # print(object_id, x_movement, y_movement)
+                direction_indicator = 0
+                if y_movement < 0:
+                    direction = 'away from cam'
+                    direction_indicator+=1
+                if y_movement == 0:
+                    direction = 'no y movement'
+                    direction_indicator+=0
+                if y_movement > 0:
+                    direction = 'towards cam'
+                    direction_indicator -=1
+
+                # print(“car: ” + str(object_id), direction, side, frame_count)
+                #callibr.append([object_id, direction, frame_count])
+                dictionary = {
+                                'car_id': object_id,
+                                'direction_indicator': direction_indicator,
+                                'frame_count': frame_count
+                            }
+                print(frame_count)
+                logging.info(json.dumps(dictionary))
+
                 total_movement = math.sqrt(math.pow(x_movement, 2) + math.pow(y_movement, 2))
 
                 if custom_object_detection:
