@@ -87,6 +87,10 @@ def run(data_dir, max_depth=None, fps=None, max_frames=None, custom_object_detec
     starter_threshold = 0.4
     # for shake_detection
 
+    #meta_appr
+    avg_frame_count = float(config.get('analyzer', 'avg_frame_count'))
+    speed_limit = int(config.get('analyzer', 'speed_limit'))
+
     if custom_object_detection:
         fgbg = cv2.bgsegm.createBackgroundSubtractorMOG() 
 
@@ -241,16 +245,6 @@ def run(data_dir, max_depth=None, fps=None, max_frames=None, custom_object_detec
                     direction = 'towards cam'
                     direction_indicator -=1
 
-                # print(“car: ” + str(object_id), direction, side, frame_count)
-                #callibr.append([object_id, direction, frame_count])
-                dictionary = {
-                                'car_id': object_id,
-                                'direction_indicator': direction_indicator,
-                                'frame_count': frame_count
-                            }
-                print(frame_count)
-                logging.info(json.dumps(dictionary))
-
                 total_movement = math.sqrt(math.pow(x_movement, 2) + math.pow(y_movement, 2))
 
                 if custom_object_detection:
@@ -290,14 +284,20 @@ def run(data_dir, max_depth=None, fps=None, max_frames=None, custom_object_detec
             # every minute
             total_speed = 0
             car_count = 0
+            total_speed_meta_appr = 0
+
         
             for car_id, car in cars.items():
 
                 if car.frame_end >= frame_count - 60 * fps and car.frames_seen > 5 and car.meters_moved > 0.05:
                     car_count += 1
                     total_speed += (car.meters_moved) / (car.frames_seen / fps)
+                    total_speed_meta_appr += (avg_frame_count/int(car.frames_seen)) * speed_limit
+
             if car_count > 0:
                 print(f"Average speed last minute: {(total_speed / car_count) * 3.6:.2f} km/h")
+                print(f"Average META speed last minute: {(total_speed_meta_appr / car_count)} km/h")
+
                 avg_speed = round((total_speed / car_count) * 3.6, 2)
                 logging.info(json.dumps(dict(frameId=frame_count, avgSpeedLastMinute=avg_speed)))
 
@@ -306,14 +306,19 @@ def run(data_dir, max_depth=None, fps=None, max_frames=None, custom_object_detec
             # every 5 seconds
             total_speed = 0
             car_count = 0
-        
+            total_speed_meta_appr = 0
+
             for car_id, car in cars.items():
 
                 if car.frame_end >= frame_count - sliding_window and car.frames_seen > 5 and car.meters_moved > 0.05:
                     car_count += 1
                     total_speed += (car.meters_moved) / (car.frames_seen / fps)
+                    total_speed_meta_appr += (avg_frame_count/int(car.frames_seen)) * speed_limit
+
             if car_count > 0:
                 print(f"Average speed: {(total_speed / car_count) * 3.6:.2f} km/h")
+                print(f"Average META speed: {(total_speed_meta_appr / car_count)} km/h")
+
                 avg_speed = round((total_speed / car_count) * 3.6, 2)
                 logging.info(json.dumps(dict(frameId=frame_count, avgSpeedLast15Seconds=avg_speed)))
 

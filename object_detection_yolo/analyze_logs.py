@@ -1,44 +1,61 @@
 import json
+import re
 import pandas as pd
-from paths import cars_path
 from sklearn.metrics import mean_squared_error, mean_absolute_error
+import numpy as np
+import math
+import configparser
+
+def analyzer(log_file):
+    config = configparser.ConfigParser()
+    config.read('object_detection_yolo/config.ini')
 
 
-# avg_speeds = []
-# with open("example.log", "r") as fp:
-#     for line in fp:
-#         line_dict = json.loads(line[10:])
-#         if "avgSpeed" in line_dict:
-#             avg_speeds.append(line_dict)
+    # add a new section and some values
+    try:
+        config.add_section('analyzer')
+    except:
+        print("")
 
-# df = pd.DataFrame(avg_speeds)
-# df.head()
-# df.to_csv("log_avg.csv", index=False)
+    log_path = log_file
+    log_dict = []
+    speed_limit = int(config.get('analyzer', 'speed_limit'))
+    #speed_limit = 80
 
-cars = pd.read_csv(cars_path + "cars.csv")
-estimation = pd.read_csv("log_avg.csv")
-estimation = estimation[estimation.frameId > 249]
-estimation['avgSpeed'] = pd.to_numeric(estimation['avgSpeed'], errors='coerce')
-
-def avg_speed_for_time_ground_truth(timeStart, timeEnd):
-    cars_to_avg = cars.loc[cars['start'].gt(timeStart) & cars['end'].le(timeEnd)]
-    return cars_to_avg['speed'].mean()
-
-def avg_speed_for_time_estimation(timeStart, timeEnd):
-    timeStart *= 50
-    timeEnd *= 50
-    estimation_avg = estimation.loc[estimation['frameId'].gt(timeStart) & estimation['frameId'].le(timeEnd)]
-    return estimation_avg['avgSpeed'].mean()
+    print(log_path)
 
 
-truth = []
-predicted = []
-# 54min * 60s = 3.240s
-for start in range(250, 3240, 60):
-    end = start + 60
-    truth.append(avg_speed_for_time_ground_truth(start, end))
-    predicted.append(avg_speed_for_time_estimation(start,end))
+    with open(log_path, "r") as fp:
+        for idx, line in enumerate(fp):
+            if not line.startswith('INFO:root:{'):
+                continue
+            line_dict = json.loads(line[10:])
+            if "car_id" in line_dict:
+                log_dict.append(line_dict)
+        
+        df = pd.DataFrame(log_dict)
 
-print("Truth vs. Predicted 50min divided in 1min slots: ")
-print(f"mean_squared_error: {mean_squared_error(truth, predicted)}")
-print(f"mean_absolute_error: {mean_absolute_error(truth, predicted)}")
+        df_grouped = df.groupby('car_id').agg(direction_indicator=('direction_indicator', 'sum'), frame_count=('frame_count', 'count'))
+        
+        #outlier filtering
+        df_grouped = df_grouped[df_grouped["frame_count"] > 20]
+        df_grouped = df_grouped[df_grouped["direction_indicator"] != 0] #both directions
+
+        avg_frame_count = df_grouped["frame_count"].mean()
+
+        config.set('analyzer', 'avg_frame_count', str(avg_frame_count))
+
+        speeds = []
+
+        for index, row in df_grouped.iterrows():
+            speed_for_car = (avg_frame_count/row["frame_count"]) * speed_limit
+            speeds.append(speed_for_car)
+            # print(str(index) + ": " + str(speed_for_car))
+        
+        df_grouped["speed"] = speeds
+        print(df_grouped)
+
+        with open('object_detection_yolo/config.ini', 'w') as configfile:
+            config.write(configfile)
+
+        return avg_frame_count, speed_limit
