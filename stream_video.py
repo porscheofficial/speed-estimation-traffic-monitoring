@@ -56,12 +56,29 @@ if __name__ == '__main__':
         help='Enter the link to an m3u8 stream over http',
     )
 
+    # constant for setting max fps for down-sampling
+    MAX_FPS = 30
+
     stream, width, height = get_video_stream_from_url(parser.parse_args().stream_link)
     fps = count_fps_from_stream(stream, width, height)
 
-    while True:
-        cv2.imshow("Stream", retrieve_next_frame_from_stream(stream, width, height))
-        if cv2.waitKey(int(1000 / fps)) == ord('q'):
-            break
+    if fps > MAX_FPS:
+        print("fps over ", MAX_FPS, ": ", fps)
+        i = 0
+        while True:
+            if MAX_FPS / (fps - MAX_FPS) <= i:
+                i = 0
+            else:
+                cv2.imshow("Stream", retrieve_next_frame_from_stream(stream, width, height))
+                i += 1
+            if cv2.waitKey(int(1000 / MAX_FPS)) == ord('q'):
+                break
+    else:
+
+        print("fps under ", MAX_FPS, ": ", fps)
+        while True:
+            cv2.imshow("Stream", retrieve_next_frame_from_stream(stream, width, height))
+            if cv2.waitKey(int(1000 / fps)) == ord('q'):
+                break
 
     cv2.destroyAllWindows()
