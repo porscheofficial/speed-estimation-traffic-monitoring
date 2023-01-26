@@ -3,6 +3,7 @@ import subprocess as sp
 import numpy
 import argparse
 import time
+import math
 
 
 def get_video_stream_from_url(url):
@@ -47,6 +48,11 @@ def count_fps_from_stream(pipe, w, h):
     return n_frames / delta_t
 
 
+def downsample_fps(max, fps):
+    threshold = max / (fps - max)
+    new_fps = fps - int(fps / math.floor(threshold+1))
+    return int(new_fps), threshold
+
 # main method is only for viewing and testing the stream
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Show an m3u8 stream over http')
@@ -64,14 +70,15 @@ if __name__ == '__main__':
 
     if fps > MAX_FPS:
         print("fps over ", MAX_FPS, ": ", fps)
+        real_fps, thresh = downsample_fps(MAX_FPS, fps)
         i = 0
         while True:
-            if MAX_FPS / (fps - MAX_FPS) <= i:
+            if thresh <= i:
                 i = 0
             else:
                 cv2.imshow("Stream", retrieve_next_frame_from_stream(stream, width, height))
                 i += 1
-            if cv2.waitKey(int(1000 / MAX_FPS)) == ord('q'):
+            if cv2.waitKey(int(1000 / real_fps)) == ord('q'):
                 break
     else:
 
