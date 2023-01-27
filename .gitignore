@@ -133,9 +133,7 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-object_detection_yolo/model_weights/*
 *.weights
 
-object_detection_yolo/frames_detected/*
 data/*
 !data/.gitkeep
