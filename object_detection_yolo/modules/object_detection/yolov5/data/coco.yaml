@@ -1,0 +1,12 @@
+names:
+- cars
+nc: 1
+roboflow:
+  license: CC BY 4.0
+  project: aip
+  url: https://universe.roboflow.com/hasso-plattner-institut/aip/dataset/3
+  version: 3
+  workspace: hasso-plattner-institut
+test: ../test/images
+train: AIP-3/train/images
+val: AIP-3/valid/images
