@@ -1,14 +1,22 @@
 # HPI for Porsche
 
-## Current Idea L&M:
-1) Use PreProcessing: Take AVERAGE Pixel Per Meters from the first 5 cars tracked
-2) Estimate FPS (still super buggy)
-3) Track Cars with Yolo Model and calculate how many pixels the moved on the segment
-4) Use Time + PPM + FPS + Moved_Pixels to caluclate Speed of Cars
-5) Take average and put this out over maybe a 30 second window
+## Structure
+The config file of the application is called *config.ini* and stored inside the *object_detection_yolo* folder. There you can enable the custom object detection (yolov5) model. The default is the yolov4 model.
+<br />
+<br />
+The different modules of this project can be found inside the folder *object_detection_yolo/modules*
+You will find there:
+- the object detection models
+- the depth_map module to estimate the depth in the particular video
+- the regression module, that is used to find the maximal depth of the video
+- the evaluation module which compares our estimates with the ground truth
 
 
+## Requirements
+Before you start the code, please install the requirements.txt. Therefore you can use this command:
+`conda create --name <env> --file requirements.txt`
 
-
-
-[Google Doc](https://docs.google.com/document/d/1Aflw2Ysx4cUf3YdxHo8Sdlf6sds1JJRBF54pdv3yV3s/edit)
+## How 2 Run
+The easiest way to run the code right now is to use the debugger of visual studio code (at least this does work all on all our machines).
+The main file to execute is `object_detection_yolo/object_tracing.py`
+<br />
