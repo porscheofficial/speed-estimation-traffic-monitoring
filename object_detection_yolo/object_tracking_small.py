@@ -17,6 +17,7 @@ from get_fps import give_me_fps
 import pandas as pd
 import logging
 import json
+from modules.shake_detection import ShakeDetection
 from paths import session_path
 import copy
 import imutils
@@ -47,10 +48,6 @@ def run(
     # Load Cars
     cars = pd.read_csv(data_dir + "cars.csv")
 
-    def avg_speed_for_time(timeStart, timeEnd):
-        cars_to_avg = cars.loc[cars["start"].gt(timeStart) & cars["end"].le(timeEnd)]
-        return cars_to_avg["speed"].mean()
-
     run_id = uuid.uuid4().hex[:10]
     print(f"Run No.: {run_id}")
 
@@ -68,8 +65,6 @@ def run(
     depth_map = load_depth_map(data_dir, max_depth=max_depth)
 
     # Initialize Object Detection
-    start = time.time()
-
     if custom_object_detection:
         source = "object_detection_yolo/frames_detected/frame.jpg"
         weights = "object_detection_yolo/model_weights/yolov5/best.pt"
@@ -81,27 +76,17 @@ def run(
 
     fps = give_me_fps(path_to_video) if fps is None else fps
 
-    sliding_window = 15 * fps
-    text_color = (255, 255, 255)
-    # text_color = (0,0,0)
-
     # Initialize count
     frame_count = 0
     tracking_objects = {}
 
-    # TODO: Remove if unused
-    tolerance_px = 3
     tracking_objects_diff_map = {}
 
     tracking_objects_prev = {}
-    cars = {}
     track_id = 0
-    avg_speed = "calculating"
 
     # for shake_detection
-    frames = []
-    full_changes = []
-    starter_threshold = 0.4
+    shake_detection = ShakeDetection()
     # for shake_detection
 
     if custom_object_detection:
@@ -132,44 +117,10 @@ def run(
         frame_count += 1
 
         # for shake_detection
-        frames.append(original_frame)
-        if len(frames) == 2 and frames[1] is not None:
-            out = frames[0] - frames[1]
-            # print(out)
-            out[-11:11] = 0  # remove some random noise
-            zeros = out.size - np.count_nonzero(out)
-            size = out.size
-            percentage_of_zeros = zeros / size
-            full_changes.append(percentage_of_zeros)
-            frames = []
-            q1 = np.percentile(full_changes, 25)
-            if len(full_changes) >= 100:
-                starter_threshold = q1
-            if (
-                percentage_of_zeros < starter_threshold / 4
-            ):  # divided by 4 for hard move
-                cont = "HARD MOVE HAPPENED"
-                cont_hard = cont + " at frame: " + str(frame_count)
-                full_changes = []
-                # print(cont_hard)
-                logging.info(
-                    f"Run No.: {run_id}, Video: {data_dir}, Hard Move Detected Frame: {frame_count}"
-                )
-            else:
-                # print("no hard move detected")
-                nothing = 42  # xd
-        # this part of shake_detection averages the pixel changes for comparison
-        if len(full_changes) == 400:
-            avg_changes = sum(full_changes) / len(full_changes)
-            q1 = np.percentile(full_changes, 25)
-            # print("1Q")
-            # print(q1)
-            # plt.hist(full_changes)
-            # plt.show()
-            length_f = len(full_changes)
-            last100 = length_f - 102
-            del full_changes[last100:]
-            # end shake_detection
+        if shake_detection.is_hard_move(frame):
+            logging.info(
+                f"Run No.: {run_id}, Video: {data_dir}, Hard Move Detected Frame: {frame_count}"
+            )
 
         # Point current frame
         center_points_cur_frame = []
