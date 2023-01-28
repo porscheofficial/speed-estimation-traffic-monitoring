@@ -38,6 +38,28 @@ config.read("object_detection_yolo/config.ini")
 max_cars = 40
 callibr = []
 
+# TODO: Put this in a module? Or make it nicer somehow...
+def map_box_to_our_point(frame, box, depth_map, custom_object_detection, frame_count):
+    (x, y, w, h) = box.astype(int)
+    cx = int((x + x + w) / 2)
+    cy = int((y + y + h) / 2)
+    if cy < depth_map.shape[0] and cx < depth_map.shape[1]:
+        meters = depth_map[cy][cx]
+    else:
+        meters = 0
+
+    if custom_object_detection:
+        cropped_frame = frame[y : y + h, x : x + w]
+        car_length_in_pixels = get_pixel_length_of_car(cropped_frame)
+        avg_car_in_meters = 5
+        if car_length_in_pixels is None:
+            ppm = None
+        else:
+            ppm = car_length_in_pixels / avg_car_in_meters
+    else:
+        ppm = None
+    return Point(cx, cy, meters, x, y, w, h, frame_count, ppm)
+
 
 def run(
     data_dir, max_depth=None, fps=None, max_frames=None, custom_object_detection=False
@@ -87,7 +109,6 @@ def run(
 
     # for shake_detection
     shake_detection = ShakeDetection()
-    # for shake_detection
 
     if custom_object_detection:
         fgbg = cv2.bgsegm.createBackgroundSubtractorMOG()
@@ -96,8 +117,6 @@ def run(
         ret, frame = input_video.read()
         if not ret:
             break
-
-        original_frame = frame
 
         if custom_object_detection:
             frame = fgbg.apply(frame)
@@ -134,29 +153,13 @@ def run(
         else:
             (class_ids, scores, boxes) = od.detect(frame)
 
+        # Estimate PPM / Meters and retrieve center points
         for box in boxes:
-            (x, y, w, h) = box.astype(int)
-            cx = int((x + x + w) / 2)
-            cy = int((y + y + h) / 2)
-            if cy < depth_map.shape[0] and cx < depth_map.shape[1]:
-                meters = depth_map[cy][cx]
-            else:
-                meters = 0
-
-            if custom_object_detection:
-                cropped_frame = frame[y : y + h, x : x + w]
-                car_length_in_pixels = get_pixel_length_of_car(cropped_frame)
-                avg_car_in_meters = 5
-                if car_length_in_pixels is None:
-                    ppm = None
-                else:
-                    ppm = car_length_in_pixels / avg_car_in_meters
-            else:
-                ppm = None
-            center_points_cur_frame.append(
-                Point(cx, cy, meters, x, y, w, h, frame_count, ppm)
+            p = map_box_to_our_point(
+                frame, box, depth_map, custom_object_detection, frame_count
             )
-            cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
+            center_points_cur_frame.append(p)
+            cv2.rectangle(frame, (p.x, p.y), (p.x + p.w, p.y + p.h), (255, 0, 0), 2)
 
         # Only at the beginning we compare previous and current frame
         if frame_count <= 2:
