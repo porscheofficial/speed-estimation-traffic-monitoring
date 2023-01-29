@@ -14,9 +14,11 @@ You will find there:
 
 ## Requirements
 Before you start the code, please install the requirements.txt. Therefore you can use this command:
-`conda create --name <env> --file requirements.txt`
+`pip install -r docker/requirements.txt`
+
+The path to the video that should be analysed can be set *object_detection_yolo/paths.py*
 
 ## How 2 Run
 The easiest way to run the code right now is to use the debugger of visual studio code (at least this does work all on all our machines).
-The main file to execute is `object_detection_yolo/object_tracing.py`
+The main file to execute is `object_detection_yolo/object_tracking.py`
 <br />
