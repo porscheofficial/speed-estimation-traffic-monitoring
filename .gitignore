@@ -138,3 +138,5 @@ dmypy.json
 data/*
 !data/.gitkeep
 logs/
+
+*.pth

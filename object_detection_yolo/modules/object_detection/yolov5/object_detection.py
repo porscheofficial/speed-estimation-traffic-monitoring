@@ -30,7 +30,7 @@ class ObjectDetection:
         conf_thres=0.25,  # confidence threshold
         iou_thres=0.45,  # NMS IOU threshold
         max_det=1000,  # maximum detections per image
-        device='cuda:1',  # cuda device, i.e. 0 or 0,1,2,3 or cpu
+        device='cuda:0',  # cuda device, i.e. 0 or 0,1,2,3 or cpu
         view_img=False,  # show results
         save_txt=False,  # save results to *.txt
         save_conf=False,  # save confidences in --save-txt labels
@@ -52,12 +52,6 @@ class ObjectDetection:
     ):
         print("Loading Object Detection")
         print("Running with custom trained YOLOv5")
-        source = str(source)
-        is_file = Path(source).suffix[1:] in (IMG_FORMATS + VID_FORMATS)
-        is_url = source.lower().startswith(('rtsp://', 'rtmp://', 'http://', 'https://'))
-        if is_url and is_file:
-            source = check_file(source)  # download
-
         # Load model
         self.device = select_device(device)
         self.model = DetectMultiBackend(weights, device=self.device, dnn=dnn, data=data, fp16=half)

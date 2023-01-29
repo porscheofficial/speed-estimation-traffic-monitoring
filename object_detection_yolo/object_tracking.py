@@ -24,11 +24,26 @@ from modules.evaluation.evaluate import plot_absolute_error
 from modules.depth_map.depth_map_utils import load_depth_map
 import numpy as np
 from modules.regression.regression_calc import get_pixel_length_of_car
-
+from collections import defaultdict
 
 config = configparser.ConfigParser()
 config.read("object_detection_yolo/config.ini")
 
+
+def calc_viewing_distance(car_lines):
+    car_lines.sort(key=lambda x: x[0])
+
+    box_count = 0
+    start = None
+    for box in car_lines:
+        if start is None:
+            start = box[0] + box[1]
+            box_count += 1
+            continue
+        if box[0] >= start:
+            start = box[0] + box[1]
+            box_count += 1
+    return box_count * 5
 
 def run(
     data_dir, max_depth=None, fps=None, max_frames=None, custom_object_detection=False
@@ -56,16 +71,12 @@ def run(
         f'Run No.: {run_id}, Video: {data_dir}, Max Depth: {"None" if max_depth is None else max_depth}'
     )
 
-    # Load depth map
-    depth_map = load_depth_map(data_dir, max_depth=max_depth)
-
     # Initialize Object Detection
     start = time.time()
 
     if custom_object_detection:
-        source = "object_detection_yolo/frames_detected/frame.jpg"
         weights = "object_detection_yolo/model_weights/yolov5/best.pt"
-        od = ObjectDetectionCustom(weights=weights, source=source)
+        od = ObjectDetectionCustom(weights=weights)
     else:
         od = ObjectDetection()
 
@@ -103,6 +114,10 @@ def run(
     if custom_object_detection:
         fgbg = cv2.bgsegm.createBackgroundSubtractorMOG()
 
+    car_lines = []
+
+    depth_map = None
+
     while True:
         ret, frame = input_video.read()
         if not ret:
@@ -112,7 +127,7 @@ def run(
 
         if custom_object_detection:
             frame = fgbg.apply(frame)
-            path_to_frame = "object_detection_yolo/frames_detected/frame.jpg"
+            path_to_frame = f"object_detection_yolo/frames_detected/frame_{run_id}.jpg"
             cv2.imwrite(path_to_frame, frame)
         else:
             frame = imutils.resize(frame, height=352)
@@ -183,19 +198,23 @@ def run(
             (x, y, w, h) = box.astype(int)
             cx = int((x + x + w) / 2)
             cy = int((y + y + h) / 2)
-            if cy < depth_map.shape[0] and cx < depth_map.shape[1]:
+
+            if depth_map is not None and (cy < depth_map.shape[0] and cx < depth_map.shape[1]):
                 meters = depth_map[cy][cx]
             else:
                 meters = 0
 
             if custom_object_detection:
-                cropped_frame = frame[y : y + h, x : x + w]
-                car_length_in_pixels = get_pixel_length_of_car(cropped_frame)
-                avg_car_in_meters = 5
-                if car_length_in_pixels is None:
+                try:
+                    cropped_frame = frame[y:y+h, x:x+w]
+                    car_length_in_pixels = get_pixel_length_of_car(cropped_frame)
+                    avg_car_in_meters = 5
+                    if car_length_in_pixels is None:
+                        ppm = None
+                    else:
+                        ppm = car_length_in_pixels/avg_car_in_meters
+                except:
                     ppm = None
-                else:
-                    ppm = car_length_in_pixels / avg_car_in_meters
             else:
                 ppm = None
             center_points_cur_frame.append(
@@ -211,6 +230,7 @@ def run(
                     distance = math.hypot(point2.x - point.x, point2.y - point.y)
 
                     if distance < 20:
+                        point.object_id = track_id
                         tracking_objects[track_id] = point
                         tracking_objects_diff_map[track_id] = (
                             point2.x - point.x,
@@ -238,16 +258,26 @@ def run(
                             # TODO: Only take closest!
                             center_points_cur_frame_copy.remove(point)
                         break
-                        continue
 
                 # Remove IDs lost
                 if not object_exists:
+                    
+                    # for idx in range(1, len(car_lines[object_id])):
+                    #     idx_prev = idx - 1
+                    #     frame = cv2.line(frame, car_lines[object_id][idx_prev], car_lines[object_id][idx], (255,255,255), 8)
+
                     tracking_objects.pop(object_id)
 
             # Add new IDs found
             for point in center_points_cur_frame:
                 tracking_objects[track_id] = point
                 track_id += 1
+
+        if depth_map is None and len(car_lines) >= 200:
+            # Load depth map
+            max_depth = calc_viewing_distance(car_lines)
+            depth_map = load_depth_map(data_dir, max_depth=max_depth)
+
 
         for object_id, point in tracking_objects.items():
             meters_moved = None
@@ -310,27 +340,15 @@ def run(
                 else:
                     cars[object_id] = Car(meters_moved, 1, frame_count, frame_count)
 
-            # cv2.circle(frame, (point.x, point.y), 5, (0, 0, 255), -1)
+            # if object_id in tracking_objects_prev and object_id in tracking_objects:
+            #     car_lines[object_id].append((tracking_objects[object_id].x, tracking_objects[object_id].w))
+            car_lines.append((tracking_objects[object_id].x, tracking_objects[object_id].w))
+
+            #cv2.circle(frame, (point.x, point.y), 5, (0, 0, 255), -1)
             if not meters_moved or meters_moved < 0.001:
-                cv2.putText(
-                    frame,
-                    f"ID:{object_id}",
-                    (point.x + point.w + 5, point.y + point.h),
-                    0,
-                    1,
-                    (0, 0, 255),
-                    2,
-                )
+                cv2.putText(frame, f"ID:{object_id}", (point.x + point.w + 5, point.y + point.h), 0, 1, (255,255,255), 2)
             else:
-                cv2.putText(
-                    frame,
-                    f"ID:{object_id}",
-                    (point.x + point.w + 5, point.y + point.h),
-                    0,
-                    1,
-                    (0, 255, 0),
-                    2,
-                )
+                cv2.putText(frame, f"ID:{object_id}", (point.x + point.w + 5, point.y + point.h), 0, 1, (255,255,255), 2)
 
         # Make a copy of the points
         center_points_prev_frame = copy.deepcopy(center_points_cur_frame)
@@ -415,51 +433,46 @@ def run(
             frame, f"FPS: {fps}", (7, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, text_color, 2
         )
 
-        try:
-            cv2.putText(
-                frame,
-                f"Ground truth: {avg_speed_for_time((frame_count/fps)-sliding_window,frame_count/fps):.2f} km/h",
-                (7, 130),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                1,
-                text_color,
-                2,
-            )
-        except:
-            cv2.putText(
-                frame,
-                f"Problems retrieving ground truth for frame: {frame_count}.",
-                (7, 130),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                1,
-                text_color,
-                2,
-            )
+        # try:
+        #     cv2.putText(
+        #         frame,
+        #         f"Ground truth: {avg_speed_for_time((frame_count/fps)-sliding_window,frame_count/fps):.2f} km/h",
+        #         (7, 130),
+        #         cv2.FONT_HERSHEY_SIMPLEX,
+        #         1,
+        #         text_color,
+        #         2
+        #     )
+        # except:
+        #     cv2.putText(
+        #         frame,
+        #         f"Problems retrieving ground truth for frame: {frame_count}.",
+        #         (7, 130),
+        #         cv2.FONT_HERSHEY_SIMPLEX,
+        #         1,
+        #         text_color,
+        #         2
+        #     )
 
-        cv2.putText(
-            frame,
-            f"Estimated speed: {avg_speed} km/h",
-            (7, 160),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            1,
-            text_color,
-            2,
-        )
+        # cv2.putText(
+        #     frame,
+        #     f"Estimated speed: {avg_speed} km/h",
+        #     (7, 160),    
+        #     cv2.FONT_HERSHEY_SIMPLEX,
+        #     1,
+        #     text_color,
+        #     2
+        # )
         if frame_count % 500 == 0:
             print(
                 f"Frame no. {frame_count} time since start: {(time.time()-start):.2f}s"
             )
 
-        cv2.imwrite(
-            f"object_detection_yolo/frames_detected/frame_after_detection.jpg", frame
-        )
+        #cv2.imwrite(f"object_detection_yolo/frames_detected/frame_after_detection.jpg", frame)
 
-        # cv2.imshow("Frame", frame)
-        if frame_count % 3000 == 0:
-            cv2.imwrite(
-                f"object_detection_yolo/frames_detected/{run_id}_frame_{frame_count}.jpg",
-                frame,
-            )
+        #cv2.imshow("Frame", frame)
+        # if frame_count % 3000 == 0:
+        #     cv2.imwrite(f"object_detection_yolo/frames_detected/{run_id}_frame_{frame_count}.jpg", frame)
 
         if max_frames is not None and frame_count >= max_frames:
             break

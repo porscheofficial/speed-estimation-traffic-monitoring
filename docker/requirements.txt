@@ -126,3 +126,4 @@ wrapt==1.14.1
 yapf==0.32.0
 yarl==1.8.1
 zipp==3.11.0
+seaborn
