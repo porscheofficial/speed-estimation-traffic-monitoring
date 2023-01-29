@@ -140,3 +140,5 @@ data/*
 logs/
 
 *.pth
+
+object_detection_yolo/frames_detected/*

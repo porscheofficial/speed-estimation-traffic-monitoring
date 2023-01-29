@@ -14,7 +14,7 @@ from get_fps import give_me_fps
 import pandas as pd
 import logging
 import json
-from modules.shake_detection import ShakeDetection
+from modules.shake_detection.shake_detection import ShakeDetection
 from paths import session_path
 import copy
 import imutils
@@ -26,17 +26,31 @@ from modules.depth_map.depth_map_utils import load_depth_map
 import numpy as np
 from modules.regression.regression_calc import get_pixel_length_of_car
 from collections import defaultdict
+from sklearn import linear_model
+from scipy.spatial.distance import euclidean
 
 config = configparser.ConfigParser()
 config.read("object_detection_yolo/config.ini")
 
 
-def calc_viewing_distance(car_lines):
-    car_lines.sort(key=lambda x: x[0])
+def calc_regression_lines(car_boxes):
+    lines = []
+    for object_id, boxes in car_boxes.items():
+        center_points = np.array([(box.center_x, box.center_y) for box in boxes])
+        regr = linear_model.LinearRegression()
+        regr.fit(center_points[:,0].reshape(-1,1), center_points[:,1])
+        # y = ax + b
+        a = regr.coef_[0]
+        b = regr.intercept_
+        lines.append((a,b))
+        # predictions = regr.predict(x)
+    return lines
+
+    car_boxes.sort(key=lambda x: x[0])
 
     box_count = 0
     start = None
-    for box in car_lines:
+    for box in car_boxes:
         if start is None:
             start = box[0] + box[1]
             box_count += 1
@@ -47,7 +61,7 @@ def calc_viewing_distance(car_lines):
     return box_count * 5
 
 def run(
-    data_dir, max_depth=None, fps=None, max_frames=None, custom_object_detection=False
+    data_dir, regression_lines=None, fps=None, max_frames=None, custom_object_detection=False
 ):
     reload(logging)
     path_to_video = os.path.join(data_dir, "video.mp4")
@@ -69,7 +83,7 @@ def run(
         filename=f"logs/{now_str}_run_{run_id}.log", level=logging.DEBUG
     )
     logging.info(
-        f'Run No.: {run_id}, Video: {data_dir}, Max Depth: {"None" if max_depth is None else max_depth}'
+        f'Run No.: {run_id}, Video: {data_dir}, Max Depth: {"None" if regression_lines is None else regression_lines}'
     )
 
     # Initialize Object Detection
@@ -110,7 +124,7 @@ def run(
     if custom_object_detection:
         fgbg = cv2.bgsegm.createBackgroundSubtractorMOG()
 
-    car_lines = []
+    car_boxes = defaultdict(list)
 
     depth_map = None
 
@@ -233,13 +247,81 @@ def run(
                 tracking_objects[track_id] = point
                 track_id += 1
 
-        if depth_map is None and len(car_lines) >= 200:
+        if depth_map is None and len(car_boxes) >= 300:
             # Load depth map
-            max_depth = calc_viewing_distance(car_lines)
+            regression_lines = calc_regression_lines(car_boxes)
+            for line in regression_lines:
+                m = line[0]
+                b = line[1]
+                if m != 0 and b != 0:
+
+                    frame = cv2.line(frame, (int(b/m), 0), (frame.shape[0], int(m * frame.shape[0] + b)), (255,255,255), 8)
+                    break
+            
+            aggr_meters = []
+            for object_id in car_boxes:
+                distances_in_px = []
+                center_points = [(box.center_x, box.center_y) for box in car_boxes[object_id]]
+
+                for box in car_boxes[object_id]:
+                    center_points_idx = 0
+                    if center_points[center_points_idx][0] > box.x:
+                        continue
+                    
+                    for i in range(len(center_points)):
+                        if center_points[i][0] > box.x:
+                            center_points_idx = max(0, i-1)
+                            break
+
+                    start_point = center_points[center_points_idx]
+                    while box.x + box.w > center_points[center_points_idx][0] and box.y + box.h > center_points[center_points_idx][1]:
+                        center_points_idx += 1
+
+                        if center_points_idx >= len(center_points)-1:
+                            break
+                    end_point = center_points[center_points_idx]
+
+                    distances_in_px.append((start_point, end_point, euclidean(start_point, end_point)))
+
+                    frame = cv2.line(frame, start_point, end_point, (255,255,255), 8)
+
+                    cv2.rectangle(frame, (box.x, box.y), (box.x + box.w, box.y + box.h), (255, 0, 0), 2)
+
+                meters_traveled = 0
+                for idx in range(1, len(distances_in_px)):
+                    idx_prev = idx - 1
+                    start_point_a = distances_in_px[idx][0]
+                    start_point_b = distances_in_px[idx_prev][0]
+
+                    end_point_a = distances_in_px[idx][1]
+                    end_point_b = distances_in_px[idx_prev][1]
+
+                    distance_a = distances_in_px[idx][2]
+                    distance_b = distances_in_px[idx_prev][2]
+
+                    pixel_dist = euclidean(start_point_a, start_point_b) + euclidean(end_point_a, end_point_b)
+                    pixel_dist /= 2
+
+                    distances = (distance_a/5 + distance_b/5) / 2
+
+                    meters_traveled += pixel_dist/distances
+                
+                if meters_traveled > 0:
+                    aggr_meters.append(meters_traveled)
+                
+                for idx in range(1, len(center_points)):
+                    idx_prev = idx - 1
+                    frame = cv2.line(frame, center_points[idx_prev], center_points[idx], (255,255,255), 8)
+
+            max_depth = sum(aggr_meters)/len(aggr_meters)
+            print("Viewing distance: ", max_depth)
+            cv2.imwrite(f"object_detection_yolo/frames_detected/line_approach.jpg", frame)
+
             depth_map = load_depth_map(data_dir, max_depth=max_depth)
 
 
         for object_id, point in tracking_objects.items():
+            car_boxes[object_id].append(point)
             meters_moved = None
             if object_id in tracking_objects_prev:
                 x_movement = (
@@ -299,10 +381,6 @@ def run(
                     cars[object_id].frame_end += 1
                 else:
                     cars[object_id] = Car(meters_moved, 1, frame_count, frame_count)
-
-            # if object_id in tracking_objects_prev and object_id in tracking_objects:
-            #     car_lines[object_id].append((tracking_objects[object_id].x, tracking_objects[object_id].w))
-            car_lines.append((tracking_objects[object_id].x, tracking_objects[object_id].w))
 
             #cv2.circle(frame, (point.x, point.y), 5, (0, 0, 255), -1)
             if not meters_moved or meters_moved < 0.001:
@@ -428,7 +506,7 @@ def run(
                 f"Frame no. {frame_count} time since start: {(time.time()-start):.2f}s"
             )
 
-        #cv2.imwrite(f"object_detection_yolo/frames_detected/frame_after_detection.jpg", frame)
+        cv2.imwrite(f"object_detection_yolo/frames_detected/frame_after_detection.jpg", frame)
 
         #cv2.imshow("Frame", frame)
         # if frame_count % 3000 == 0:
