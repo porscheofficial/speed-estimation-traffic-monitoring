@@ -13,8 +13,9 @@ You will find there:
 
 
 ## Requirements
-Before you start the code, please install the requirements.txt. Therefore you can use this command:
+Before you start the code, please install the requirements.txt. Therefore, you can use this command:
 `pip install -r docker/requirements.txt`
+For being able to stream video data from the internet you need to install ffmpeg on your machine.
 
 The path to the video that should be analysed can be set *object_detection_yolo/paths.py*
 
