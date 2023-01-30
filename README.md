@@ -13,10 +13,13 @@ You will find there:
 
 
 ## Requirements
-Before you start the code, please install the requirements.txt. Therefore, you can use this command:
-`pip install -r docker/requirements.txt`
-For being able to stream video data from the internet you need to install ffmpeg on your machine.
+To run the code directly on your machine you will need to create a conda environment with the following command: 
+``` conda env create -f environment.yml ```
+For being able to stream video data from the internet you also need to install ffmpeg.
 
+However, we strongly recommend to build the docker container using the included Dockerfile.
+
+Only for object_tracking_small.py:
 The path to the video that should be analysed can be set *object_detection_yolo/paths.py*
 
 ## How 2 Run
