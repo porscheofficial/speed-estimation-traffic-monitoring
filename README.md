@@ -1,25 +1,69 @@
-# HPI for Porsche
+# Traffic speed estimation for uncalibrated camera footage
+
+Goal of this repository is to provide an easy way of estimating the speed of traffic from uncalibrated video footage.
 
 ## Structure
-The config file of the application is called *config.ini* and stored inside the *object_detection_yolo* folder. There you can enable the custom object detection (yolov5) model. The default is the yolov4 model.
-<br />
-<br />
+
+Our current approach is stored in the `object_detection_yolo` folder. It contains a `config.ini`, where some configuration can be changed.
+
+|Name|Description|Values|
+|-|-|-|
+| fps | Default FPS to use, if they can't be detected from the provided video | integer |
+| custom_object_detection | Wether to use the custom trained yolov5 model or pretrained yolov4 (default) | boolean |
+| avg_frame_count | | float |
+| speed_limit | Speed limit on the road segment shown in the video (in km/h) | integer |
+
+The project is split into multiple modules, each handling a part of the total pipeline.
+![](.github/modules.png)
+
 The different modules of this project can be found inside the folder *object_detection_yolo/modules*
-You will find there:
-- the object detection models
-- the depth_map module to estimate the depth in the particular video
-- the regression module, that is used to find the maximal depth of the video
-- the evaluation module which compares our estimates with the ground truth
+Currently, there are:
+| Module Name | Folder | Description |
+|-|-|-|
+| Car Tracking | modules/object_detection | Contains yolov4 and v5 for detecting cars in a video frame |
+| Depth map | modules/depth_map | Generates a depth map for a provided frame, using Pixelformer or Midas model |
+| Hard Move Detection | modules/shake_detection | Detects if the frame moved |
+| Stream-Conversion & Downsampler | modules/streaming | Reads a stream, caps it to 30FPS and provides the frames |
+| Evaluation | modules/evaluation | Compares videos with the provided ground truth |
 
 
-## Requirements
-Before you start the code, please install the requirements.txt. Therefore, you can use this command:
-`pip install -r docker/requirements.txt`
-For being able to stream video data from the internet you need to install ffmpeg on your machine.
+## Setup
 
-The path to the video that should be analysed can be set *object_detection_yolo/paths.py*
+Running the code can be done in two ways:
 
-## How 2 Run
-The easiest way to run the code right now is to use the debugger of visual studio code (at least this does work all on all our machines).
-The main file to execute is `object_detection_yolo/object_tracking.py`
-<br />
+1. Locally
+2. Docker (with CUDA support)
+
+The advantage of the Docker container is that it supports CUDA acceleration out of the box. Locally, you'll have to set it up yourself ;)
+
+### Local Setup
+
+0. (Have python virtual environments set up, e.g. through `conda`)
+1. Install requirements from `environment.yml`
+2. Install [ffmpeg](https://ffmpeg.org/) for your machine.
+```sh
+# Mac
+> brew install ffmpeg
+# Ubuntu / Debian
+> sudo apt install ffmpeg
+```
+3. Go to `object_detection_yolo/object_tracking.py` and run it
+
+### Docker Setup
+0. (Have `docker` installed)
+1. Go to `docker` directory in a terminal
+2. Run `docker build .` Assign a tag, if you like.
+3. Run the docker container with the following command:
+```
+docker run --rm \
+        --gpus '"device=0"' -v $PATH_TO_REPO:/storage -v $PATH_TO_VIDEO_ROOT_FOLDER:/scratch2 \
+        -t cv-cuda python3 /storage/object_detection_yolo/object_tracking.py \
+        "$PATH_TO_VIDEO_FILE_IN_DOCKER"
+```
+Replace `$PATH_TO_REPO`, `$PATH_TO_VIDEO_ROOT_FOLDER` and `$PATH_TO_VIDEO_FILE_IN_DOCKER` with the paths on your machine.
+
+## Run
+
+The path to the video that should be analysed can be set in *object_detection_yolo/paths.py* or provided to `object_detection_yolo/object_tracking.py` as argument `--path`
+
+An example run command could be `python object_detection_yolo/object_tracking.py '/data/my_video.mp4'`
