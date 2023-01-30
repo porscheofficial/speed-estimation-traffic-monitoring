@@ -1,24 +1,24 @@
-name: porsche
+name: cctv_speed_estimation
 channels:
   - defaults
   - conda-forge
 dependencies:
-  - bzip2=1.0.8=h620ffc9_4
-  - ca-certificates=2022.10.11=hca03da5_0
-  - certifi=2022.12.7=py310hca03da5_0
-  - libffi=3.4.2=hca03da5_6
-  - ncurses=6.3=h1a28f6b_3
-  - openssl=1.1.1s=h1a28f6b_0
-  - pip=22.3.1=py310hca03da5_0
-  - python=3.10.8=hc0d8a6c_1
-  - readline=8.2=h1a28f6b_0
-  - setuptools=65.5.0=py310hca03da5_0
-  - sqlite=3.40.0=h7a7dc30_0
-  - tk=8.6.12=hb8d0fd4_0
-  - tzdata=2022g=h04d1e81_0
-  - wheel=0.37.1=pyhd3eb1b0_0
-  - xz=5.2.8=h80987f9_0
-  - zlib=1.2.13=h5a0b063_0
+  - bzip2=1.0.8
+  - ca-certificates=2022.10.11
+  - certifi=2022.12.7
+  - libffi=3.4.2
+  - ncurses=6.3
+  - openssl=1.1.1s
+  - pip=22.3.1
+  - python=3.10.8
+  - readline=8.2
+  - setuptools=65.5.0
+  - sqlite=3.40.0
+  - tk=8.6.12
+  - tzdata=2022g
+  - wheel=0.37.1
+  - xz=5.2.8
+  - zlib=1.2.13
   - pip:
     - absl-py==1.3.0
     - astunparse==1.6.3
