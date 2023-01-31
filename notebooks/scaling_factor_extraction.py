@@ -1,12 +1,30 @@
+from typing import NamedTuple
+
 import numpy as np
 from numpy.typing import NDArray
-from collections import namedtuple
-from typing import NamedTuple
 from scipy.stats import norm
+from dataclasses import dataclass
 
 
-CameraPoint = namedtuple("CameraPoint", "frame u v")
-WorldPoint = namedtuple("WorldPoint", "frame x y z")
+@dataclass
+class CameraPoint:
+    frame: NDArray
+    u: int
+    v: int
+
+    def coords(self):
+        return self.u, self.v
+
+
+@dataclass
+class WorldPoint:
+    frame: NDArray
+    x: float
+    y: float
+    z: float
+
+    def coords(self):
+        return self.x, self.y, self.z
 
 
 class GroundTruthEvent(NamedTuple):
@@ -24,35 +42,22 @@ class DepthModel:
         return depth_map
 
 
+@dataclass
 class GeometricModel:
-    f: float  # focal length
-    s_u: int  # translating pixels into m in u direction
-    s_v: int  # translating pixels into m in v direction
-    c_u: int  # this would usually be chosen at half the frame resolution width
-    c_v: int  # this would usually be chosen at half the frame resolution height
-    scale_factor: float
     depth_model: DepthModel
-
-    def __init__(self, depth_model, f=1, s_u=1, s_v=1, c_u=0, c_v=0, scale_factor=1):
-        self.depth_model = depth_model
-        self.f = f
-        self.s_u = s_u
-        self.s_v = s_v
-        self.c_u = c_u
-        self.c_v = c_v
-        self.scale_factor = scale_factor
+    f: float = 1  # focal length
+    s_u: int = 1  # translating pixels into m in u direction
+    s_v: int = 1  # translating pixels into m in v direction
+    c_u: int = 0  # this would usually be chosen at half the frame resolution width
+    c_v: int = 0  # this would usually be chosen at half the frame resolution height
+    scale_factor: float = 1
 
     def get_unscaled_world_point(self, cp: CameraPoint) -> WorldPoint:
         normalised_u = self.s_u * (cp.u - self.c_u)
         normalised_v = self.s_v * (cp.v - self.c_v)
-        distance_from_screen_center = norm(normalised_v, normalised_u)
-        distance_from_pinhole = norm(distance_from_screen_center, self.f)
 
-        theta = np.arccos(self.f / distance_from_pinhole)
-        phi = (
-            np.sign(normalised_v)
-            * np.arccos
-            * (normalised_u / distance_from_screen_center)
+        _, theta, phi = self._cartesian_to_sperhical(
+            x=normalised_u, y=normalised_v, z=self.f
         )
 
         depth_map = self.depth_model.predict_depth(cp.frame)
@@ -60,9 +65,7 @@ class GeometricModel:
 
         return WorldPoint(
             frame=cp.frame,
-            x=unscaled_depth * np.sin(theta) * np.cos(phi),
-            y=unscaled_depth * np.sin(theta) * np.sin(phi),
-            z=unscaled_depth * np.cos(theta),
+            *self._spherical_to_cartesian(r=unscaled_depth, theta=theta, phi=phi)
         )
 
     def get_world_point(self, cp: CameraPoint) -> WorldPoint:
@@ -73,12 +76,35 @@ class GeometricModel:
 
         return unscaled_world_point
 
+    def get_camera_point(self, wp: WorldPoint) -> CameraPoint:
+        r, theta, phi = self._cartesian_to_sperhical(*wp.coords())
+        u, v, z_hat = self._spherical_to_cartesian(
+            r=self.f / (np.sin(theta) * np.cos(phi)), theta=theta, phi=phi
+        )
+
+        assert z_hat == self.f
+
+        return CameraPoint(frame=wp.frame, u=u, v=v)
+
+    @staticmethod
+    def _spherical_to_cartesian(r, theta, phi):
+        x = r * np.sin(theta) * np.cos(phi)
+        y = r * np.sin(theta) * np.sin(phi)
+        z = r * np.cos(theta)
+        return x, y, z
+
+    @staticmethod
+    def _cartesian_to_sperhical(x, y, z):
+        r = norm(x, y, z)
+        theta = np.arccos(z / r)
+        phi = np.sign(y) * np.arccos(x / norm(x, y))
+        return r, theta, phi
+
     @staticmethod
     def calculate_distance_between_world_points(
         wp1: WorldPoint, wp2: WorldPoint
     ) -> float:
-        to_coords = lambda wp: np.array([wp.x, wp.y, wp.z])
-        return norm(to_coords(wp1), to_coords(wp2))
+        return norm(wp1.coords() - wp2.coords())
 
     def get_unscaled_distance_from_camera_points(
         self, cp1: CameraPoint, cp2: CameraPoint
@@ -118,7 +144,6 @@ def offline_scaling_factor_estimation_from_least_squares(
 
 
 def online_scaling_factor_estimation_from_least_squares(stream_of_events):
-
     counter = 0
 
     depth_model = DepthModel()
@@ -128,7 +153,6 @@ def online_scaling_factor_estimation_from_least_squares(stream_of_events):
     mean_prediction_dot_distance = 0
 
     while stream_of_events.has_next():
-
         counter += 1
 
         # calibration phase uses a stream of ground truth events
