@@ -13,7 +13,7 @@ class CameraPoint:
     v: int
 
     def coords(self):
-        return self.u, self.v
+        return np.array([self.u, self.v])
 
 
 @dataclass
@@ -24,7 +24,7 @@ class WorldPoint:
     z: float
 
     def coords(self):
-        return self.x, self.y, self.z
+        return np.array([self.x, self.y, self.z])
 
 
 class GroundTruthEvent(NamedTuple):
@@ -95,9 +95,9 @@ class GeometricModel:
 
     @staticmethod
     def _cartesian_to_sperhical(x, y, z):
-        r = norm(x, y, z)
+        r = norm([x, y, z])
         theta = np.arccos(z / r)
-        phi = np.sign(y) * np.arccos(x / norm(x, y))
+        phi = np.sign(y) * np.arccos(x / norm([x, y]))
         return r, theta, phi
 
     @staticmethod
