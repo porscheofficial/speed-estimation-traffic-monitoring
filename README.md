@@ -10,7 +10,7 @@ Our current approach is stored in the `object_detection_yolo` folder. It contain
 |-|-|-|
 | fps | Default FPS to use, if they can't be detected from the provided video | integer |
 | custom_object_detection | Wether to use the custom trained yolov5 model or pretrained yolov4 (default) | boolean |
-| avg_frame_count | | float |
+| avg_frame_count | Output of meta statistics approach gets written here. Average frames a standard car was taking to drive through the CCTV segment (average tracked over a longer time frame | float |
 | speed_limit | Speed limit on the road segment shown in the video (in km/h) | integer |
 
 The project is split into multiple modules, each handling a part of the total pipeline.
