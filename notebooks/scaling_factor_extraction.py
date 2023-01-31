@@ -2,7 +2,7 @@ from typing import NamedTuple
 
 import numpy as np
 from numpy.typing import NDArray
-from scipy.stats import norm
+from scipy.linalg import norm
 from dataclasses import dataclass
 
 
@@ -28,8 +28,8 @@ class WorldPoint:
 
 
 class GroundTruthEvent(NamedTuple):
-    coords1: (int, int, int)
-    coords2: (int, int, int)
+    coords1: tuple[int, int, int]
+    coords2: tuple[int, int, int]
     distance: float
 
 
