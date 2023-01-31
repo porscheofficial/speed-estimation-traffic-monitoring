@@ -59,6 +59,38 @@ class GeometricModelTests(unittest.TestCase):
             # we expect that due to point always appears in the diagonally opposite quadrant of the camera ref system
             self.assertTrue(np.allclose(wp.coords(), [-(u - 1), -(v - 1), 1]))
 
+    def test_distance_between_world_points(self):
+        frame = np.empty((100, 100))
+        wp1 = WorldPoint(frame, 0, 0, 1)
+        wp2 = WorldPoint(frame, 0, 0, 0)
+        self.assertEqual(
+            1, self.geometric_model.calculate_distance_between_world_points(wp1, wp2)
+        )
+
+        wp1 = WorldPoint(frame, 1, 1, 1)
+        self.assertTrue(
+            np.isclose(
+                np.sqrt(3),
+                self.geometric_model.calculate_distance_between_world_points(wp1, wp2),
+            )
+        )
+
+    def test_distance_from_camera_points(self):
+        # the depth model will predict a depth of sqrt(3) for all points.
+        frame = np.full((3, 3), np.sqrt(3))
+        self.geometric_model.c_u = 1
+        self.geometric_model.c_v = 1
+
+        # points should be projected onto different corners of the cube of side length 2 cenetered at origin
+        cp1 = CameraPoint(frame, 2, 2)
+        cp2 = CameraPoint(frame, 0, 0)
+        distance = self.geometric_model.get_distance_from_camera_points(cp1, cp2)
+        self.assertTrue(np.isclose(distance, 2 * np.sqrt(2)))
+
+        cp2 = CameraPoint(frame, 2, 0)
+        distance = self.geometric_model.get_distance_from_camera_points(cp1, cp2)
+        self.assertTrue(np.isclose(distance, 2))
+
 
 if __name__ == "__main__":
     unittest.main()
