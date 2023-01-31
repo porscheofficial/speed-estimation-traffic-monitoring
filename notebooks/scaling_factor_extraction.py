@@ -34,11 +34,9 @@ class GroundTruthEvent(NamedTuple):
 
 
 class DepthModel:
-    predict_function = lambda x: x
-
     def predict_depth(self, frame: NDArray) -> NDArray:
         # predict depth here
-        depth_map = self.predict_function(frame)
+        depth_map = frame
         return depth_map
 
 
@@ -56,17 +54,22 @@ class GeometricModel:
         normalised_u = self.s_u * (cp.u - self.c_u)
         normalised_v = self.s_v * (cp.v - self.c_v)
 
-        _, theta, phi = self._cartesian_to_sperhical(
-            x=normalised_u, y=normalised_v, z=self.f
+        # we relabel the axis here to deal with different reference conventions
+        _, theta, phi = self._cartesian_to_spherical(
+            x=self.f, y=normalised_u, z=normalised_v
         )
 
         depth_map = self.depth_model.predict_depth(cp.frame)
         unscaled_depth = depth_map[cp.u, cp.v]
 
-        return WorldPoint(
-            frame=cp.frame,
-            *self._spherical_to_cartesian(r=unscaled_depth, theta=theta, phi=phi)
-        )
+        # we also mirror theta around pi and phi around 0
+        theta = np.pi - theta
+        phi = -phi
+
+        x, y, z = self._spherical_to_cartesian(r=unscaled_depth, theta=theta, phi=phi)
+
+        # relabeling again for the world reference system
+        return WorldPoint(frame=cp.frame, x=y, y=z, z=x)
 
     def get_world_point(self, cp: CameraPoint) -> WorldPoint:
         unscaled_world_point = self.get_unscaled_world_point(cp)
@@ -77,14 +80,20 @@ class GeometricModel:
         return unscaled_world_point
 
     def get_camera_point(self, wp: WorldPoint) -> CameraPoint:
-        r, theta, phi = self._cartesian_to_sperhical(*wp.coords())
-        u, v, z_hat = self._spherical_to_cartesian(
-            r=self.f / (np.sin(theta) * np.cos(phi)), theta=theta, phi=phi
+
+        x, y, z = wp.coords()
+        # Note that we here relabel the coordinates to keep the two coordinate systems aligned!
+        r, theta, phi = self._cartesian_to_spherical(x=z, y=x, z=y)
+        # we also mirror theta around pi and phi around 0
+        theta = np.pi - theta
+        phi = -phi
+        z_inner, x_inner, y_inner = self._spherical_to_cartesian(
+            r=np.abs(self.f / (np.sin(theta) * np.cos(phi))), theta=theta, phi=phi
         )
 
-        assert z_hat == self.f
+        assert np.isclose(z_inner, self.f)
 
-        return CameraPoint(frame=wp.frame, u=u, v=v)
+        return CameraPoint(frame=wp.frame, u=x_inner, v=y_inner)
 
     @staticmethod
     def _spherical_to_cartesian(r, theta, phi):
@@ -94,9 +103,13 @@ class GeometricModel:
         return x, y, z
 
     @staticmethod
-    def _cartesian_to_sperhical(x, y, z):
+    def _cartesian_to_spherical(x, y, z):
         r = norm([x, y, z])
+        if r == 0:
+            return 0, 0, 0
         theta = np.arccos(z / r)
+        if norm([x, y]) == 0:
+            return z, 0, 0
         phi = np.sign(y) * np.arccos(x / norm([x, y]))
         return r, theta, phi
 
