@@ -154,5 +154,5 @@ def online_scaling_factor_estimation_from_least_squares(stream_of_events):
             mean_prediction_dot_distance / mean_predictions_two_norm
         )
 
-        # once calibration is finished, we can start using the geometric_model to perform actual predictions for velocities
-        # however, even then we can still continue updating the scale factor
+        # once calibration is finished, we can start using the geometric_model to perform actual predictions for
+        # velocities, however, even then we can still continue updating the scale factor
