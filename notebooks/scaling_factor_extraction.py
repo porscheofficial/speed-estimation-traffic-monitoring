@@ -93,7 +93,7 @@ class GeometricModel:
         )
 
 
-def derive_scaling_factor_from_least_squares(
+def offline_scaling_factor_estimation_from_least_squares(
     frames: list[NDArray],
     geometric_model: GeometricModel,
     ground_truths: list[GroundTruthEvent],
@@ -112,4 +112,47 @@ def derive_scaling_factor_from_least_squares(
         labels.append(distance)
 
     # return optimal scaling factor under least sum of squares estimator
-    return np.dot(unscaled_predictions, labels) / np.dot(labels, labels)
+    return np.dot(unscaled_predictions, labels) / np.dot(
+        unscaled_predictions, unscaled_predictions
+    )
+
+
+def online_scaling_factor_estimation_from_least_squares(stream_of_events):
+
+    counter = 0
+
+    depth_model = DepthModel()
+    geometric_model = GeometricModel(depth_model=depth_model)
+
+    mean_predictions_two_norm = 0
+    mean_prediction_dot_distance = 0
+
+    while stream_of_events.has_next():
+
+        counter += 1
+
+        # calibration phase uses a stream of ground truth events
+        frame, coords1, coords2, true_distance = stream_of_events.next()
+
+        # this would e.g. be the pixel coordinates for the corners of a bounding box
+        _, u1, v1 = coords1
+        _, u2, v2 = coords2
+
+        # calculate the unscaled predicted distance
+        cp1 = CameraPoint(frame=frame, u=u1, v=v1)
+        cp2 = CameraPoint(frame=frame, u=u2, v=v2)
+        prediction = geometric_model.get_unscaled_distance_from_camera_points(cp1, cp2)
+
+        mean_predictions_two_norm = (1 - 1 / counter) * mean_predictions_two_norm + (
+            prediction**2
+        ) / counter
+        mean_prediction_dot_distance = (
+            1 - 1 / counter
+        ) * mean_prediction_dot_distance + (prediction * true_distance) / counter
+
+        geometric_model.scale_factor = (
+            mean_prediction_dot_distance / mean_predictions_two_norm
+        )
+
+        # once calibration is finished, we can start using the geometric_model to perform actual predictions for velocities
+        # however, even then we can still continue updating the scale factor
