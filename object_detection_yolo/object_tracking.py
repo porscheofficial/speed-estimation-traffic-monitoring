@@ -22,15 +22,30 @@ import time
 import uuid
 from utils.object_tracking import Point, Car, clamp
 from modules.evaluation.evaluate import plot_absolute_error
-from modules.depth_map.depth_map_utils import load_depth_map
+from modules.depth_map.depth_map_utils import load_depth_map, load_depth_map_from_file
 import numpy as np
 from modules.regression.regression_calc import get_pixel_length_of_car
 from collections import defaultdict
 from sklearn import linear_model
 from scipy.spatial.distance import euclidean
+from modules.scaling_factor.scaling_factor_extraction import GroundTruthEvent, offline_scaling_factor_estimation_from_least_squares, GeometricModel, CameraPoint
 
 config = configparser.ConfigParser()
 config.read("object_detection_yolo/config.ini")
+
+
+class DepthModel:
+
+    def __init__(self, data_dir) -> None:
+        self.data_dir = data_dir
+        self.memo = {}
+
+    def predict_depth(self, frame_id):
+        if frame_id in self.memo: return self.memo[frame_id]
+
+        self.memo[frame_id] = load_depth_map_from_file(self.data_dir, max_depth=1, frame=frame_id)
+        # predict depth here
+        return self.memo[frame_id]
 
 
 def calc_regression_lines(car_boxes):
@@ -106,6 +121,7 @@ def run(
     # Initialize count
     frame_count = 0
     tracking_objects = {}
+    frames = []
 
     tracking_objects_diff_map = {}
 
@@ -135,6 +151,7 @@ def run(
 
         if custom_object_detection:
             frame = fgbg.apply(frame)
+            frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2RGB)
             path_to_frame = f"object_detection_yolo/frames_detected/frame_{run_id}.jpg"
             cv2.imwrite(path_to_frame, frame)
         
@@ -169,16 +186,17 @@ def run(
                 meters = 0
 
             if custom_object_detection:
-                try:
-                    cropped_frame = frame[y:y+h, x:x+w]
-                    car_length_in_pixels = get_pixel_length_of_car(cropped_frame)
-                    avg_car_in_meters = 5
-                    if car_length_in_pixels is None:
-                        ppm = None
-                    else:
-                        ppm = car_length_in_pixels/avg_car_in_meters
-                except:
-                    ppm = None
+                ppm = None
+                # try:
+                #     cropped_frame = frame[y:y+h, x:x+w]
+                #     car_length_in_pixels = get_pixel_length_of_car(cropped_frame)
+                #     avg_car_in_meters = 5
+                #     if car_length_in_pixels is None:
+                #         ppm = None
+                #     else:
+                #         ppm = car_length_in_pixels/avg_car_in_meters
+                # except:
+                #     ppm = None
             else:
                 ppm = None
             center_points_cur_frame.append(
@@ -236,80 +254,40 @@ def run(
             for point in center_points_cur_frame:
                 tracking_objects[track_id] = point
                 track_id += 1
+        
+        geo_model = None
 
-        if depth_map is None and len(car_boxes) >= 300:
-            # Load depth map
-            regression_lines = calc_regression_lines(car_boxes)
-            for line in regression_lines:
-                m = line[0]
-                b = line[1]
-                if m != 0 and b != 0:
-
-                    frame = cv2.line(frame, (int(b/m), 0), (frame.shape[0], int(m * frame.shape[0] + b)), (255,255,255), 8)
-                    break
-            
-            aggr_meters = []
+        if len(car_boxes) >= 50: 
+            ground_truth_events = []
             for object_id in car_boxes:
-                distances_in_px = []
-                center_points = [(box.center_x, box.center_y) for box in car_boxes[object_id]]
+                center_points = np.array([(box.center_x, box.center_y) for box in car_boxes[object_id]])                
+                if len(center_points) < 10: 
+                    continue
 
+                # extract ground truth value for each tracking box
                 for box in car_boxes[object_id]:
-                    center_points_idx = 0
-                    if center_points[center_points_idx][0] > box.x:
-                        continue
-                    
-                    for i in range(len(center_points)):
-                        if center_points[i][0] > box.x:
-                            center_points_idx = max(0, i-1)
-                            break
-
-                    start_point = center_points[center_points_idx]
-                    while box.x + box.w > center_points[center_points_idx][0] and box.y + box.h > center_points[center_points_idx][1]:
-                        center_points_idx += 1
-
-                        if center_points_idx >= len(center_points)-1:
-                            break
-                    end_point = center_points[center_points_idx]
-
-                    distances_in_px.append((start_point, end_point, euclidean(start_point, end_point)))
-
-                    frame = cv2.line(frame, start_point, end_point, (255,255,255), 8)
-
                     cv2.rectangle(frame, (box.x, box.y), (box.x + box.w, box.y + box.h), (255, 0, 0), 2)
+                    if center_points[0][0] > box.x or center_points[-1][0] > box.x + box.w:
+                        continue
 
-                meters_traveled = 0
-                for idx in range(1, len(distances_in_px)):
-                    idx_prev = idx - 1
-                    start_point_a = distances_in_px[idx][0]
-                    start_point_b = distances_in_px[idx_prev][0]
+                    start_point = int(np.interp(box.x, center_points[:,0], center_points[:,1]))
+                    end_point = int(np.interp(box.x + box.w, center_points[:,0], center_points[:,1]))
+                    ground_truth_events.append(GroundTruthEvent((frame_count, box.x, start_point), (frame_count, box.x + box.w, end_point), 5.))
+                    frame = cv2.line(frame, (box.x, start_point), (box.x + box.w, end_point), (0,255,0), 8)
 
-                    end_point_a = distances_in_px[idx][1]
-                    end_point_b = distances_in_px[idx_prev][1]
-
-                    distance_a = distances_in_px[idx][2]
-                    distance_b = distances_in_px[idx_prev][2]
-
-                    pixel_dist = euclidean(start_point_a, start_point_b) + euclidean(end_point_a, end_point_b)
-                    pixel_dist /= 2
-
-                    distances = (distance_a/5 + distance_b/5) / 2
-
-                    meters_traveled += pixel_dist/distances
-                
-                if meters_traveled > 0:
-                    aggr_meters.append(meters_traveled)
-                
-                for idx in range(1, len(center_points)):
-                    idx_prev = idx - 1
-                    frame = cv2.line(frame, center_points[idx_prev], center_points[idx], (255,255,255), 8)
-
-            max_depth = sum(aggr_meters)/len(aggr_meters)
-            print("Viewing distance: ", max_depth)
-            cv2.imwrite(f"object_detection_yolo/frames_detected/line_approach.jpg", frame)
-
-            depth_map = load_depth_map(data_dir, max_depth=max_depth)
+                    cv2.imwrite(f"object_detection_yolo/frames_detected/line_approach.jpg", frame)
+        
+            depth_model = DepthModel(data_dir)
+            c_u = int(frame.shape[1] / 2)
+            c_v = int(frame.shape[0] / 2)
+            geo_model = GeometricModel(depth_model, c_u=c_u, c_v=c_v)
+            geo_model.scale_factor = offline_scaling_factor_estimation_from_least_squares(frames, geo_model, ground_truth_events)
 
 
+        # Strassenpfosten 50m # geo_model.get_distance_from_camera_points(CameraPoint(frame_count, 750, 213), CameraPoint(frame_count, 511, 132))
+        # Auto 5m # geo_model.get_distance_from_camera_points(CameraPoint(frame_count, 761, 321), CameraPoint(frame_count, 688, 279))
+        if geo_model is not None:
+            geo_model.get_distance_from_camera_points(CameraPoint(frame_count, 750, 213), CameraPoint(frame_count, 511, 132))
         for object_id, point in tracking_objects.items():
             car_boxes[object_id].append(point)
             meters_moved = None
@@ -504,6 +482,8 @@ def run(
 
         if max_frames is not None and frame_count >= max_frames:
             break
+
+        frame_count += 1
 
     input_video.release()
     cv2.destroyAllWindows()

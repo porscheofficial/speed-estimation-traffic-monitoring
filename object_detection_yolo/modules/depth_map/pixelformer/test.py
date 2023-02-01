@@ -100,7 +100,7 @@ def generate_depth_map(data_folder: str, file_name: str, *, max_depth_o: int):
                 pred_depth = pred_depth_uncropped
 
             # max_depth = 100
-            our_meters = normalize_between_zero_one(pred_depth) * max_depth
+            depth_map = normalize_between_zero_one(pred_depth) * max_depth
             # x: 1040 y: 370
             # x: 740 y:0
             # our_meters[214][375] - our_meters[20][528] session1_center
@@ -113,9 +113,7 @@ def generate_depth_map(data_folder: str, file_name: str, *, max_depth_o: int):
             # 494, 70
             # 494, 16
 
-            with open(output_path, 'wb') as f:
-                np.save(f, our_meters)
-            pred_depths.append(pred_depth)
+            return depth_map
 
     elapsed_time = time.time() - start_time
     print('Elapsed time: %s' % str(elapsed_time))

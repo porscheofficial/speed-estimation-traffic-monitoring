@@ -2,6 +2,8 @@ import cv2
 import os
 import numpy as np
 import imutils
+from modules.depth_map.pixelformer.test import generate_depth_map
+
 
 def get_padding_right(shape, height = 352):
     h,w = shape[:2]
@@ -48,25 +50,24 @@ def extract_frame(video_path: str, output_folder: str, output_file: str, frame_i
             return output_file % frame_idx, original_shape
         frame_count += 1
 
-def load_depth_map(current_folder: str, max_depth: int = None):
+def load_depth_map_from_file(current_folder: str, max_depth: int = None, frame: int = 0):
     input_video = os.path.join(current_folder, 'video.mp4')
-    depth_map_path = current_folder + (f'depth_map_{max_depth}.npy' if max_depth is not None else 'depth_map.npy')
+    depth_map_path = current_folder + (f'depth_map_{max_depth}_{frame}.npy' if max_depth is not None else 'depth_map.npy')
     original_shape = (1080, 1920)
     
     if not os.path.exists(depth_map_path):
         print('Depth map generation.')
         scaled_image_name, original_shape = extract_frame(input_video, current_folder, 'frame_%d_scaled.jpg')
         print(f'Extracted scaled frame to {scaled_image_name}')
-        from modules.depth_map.pixelformer.test import generate_depth_map
-        generate_depth_map(current_folder, scaled_image_name, max_depth_o=max_depth)
+        return generate_depth_map(current_folder, scaled_image_name, max_depth_o=max_depth)
     else:
         print('Depth map found.')
         
     if not os.path.exists(depth_map_path):
         raise Exception('Depth Map could not be generated.')
 
-    with open(depth_map_path, 'rb') as f:
-        our_meters = np.load(f)
-
-    our_meters = resize_output(our_meters, original_shape)
-    return our_meters
+def load_depth_map(current_folder: str, frame, max_depth=1):
+    path = os.path.join(current_folder, 'frame_scaled.jpg')
+    cv2.imwrite(path, frame)
+    depth_map = generate_depth_map(current_folder, 'frame_scaled.jpg', max_depth_o=max_depth)
+    return resize_output(depth_map, frame.shape)
