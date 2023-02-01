@@ -137,17 +137,7 @@ def run(
             frame = fgbg.apply(frame)
             path_to_frame = f"object_detection_yolo/frames_detected/frame_{run_id}.jpg"
             cv2.imwrite(path_to_frame, frame)
-        else:
-            frame = imutils.resize(frame, height=352)
-            frame = cv2.copyMakeBorder(
-                frame,
-                left=295,
-                right=296,
-                top=0,
-                bottom=0,
-                borderType=cv2.BORDER_CONSTANT,
-            )
-        # cv2.imwrite("object_detection_yolo/frames_detected/frame%d_new_scaled.jpg" % frame_count, frame)
+        
         frame_count += 1
 
         # for shake_detection
