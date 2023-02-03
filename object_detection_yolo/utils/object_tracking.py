@@ -1,27 +1,31 @@
 import cv2
-
+from enum import Enum
 
 def clamp(n, smallest, largest): return max(smallest, min(n, largest)) 
 
-class Car:
-    def __init__(self, meters_moved, frames_seen, frame_start, frame_end) -> None:
-        self.meters_moved = meters_moved
-        self.frames_seen = frames_seen
-        self.frame_start = frame_start
-        self.frame_end = frame_end
+class Direction(Enum):
+    towards = 0
+    away = 1
 
-class Point:
-    def __init__(self, center_x, center_y, meters_moved, x, y, w, h, frame, ppm, object_id=None) -> None:
+class TrackingBox:
+    def __init__(self, center_x, center_y, x, y, w, h, frame, object_id=None) -> None:
         self.center_x = center_x
         self.center_y = center_y
-        self.meters_moved = meters_moved
         self.x = x
         self.y = y
         self.w = w
         self.h = h
         self.frame = frame
-        self.ppm = ppm
         self.object_id = object_id
+
+class Car:
+    def __init__(self, tracked_boxes: list, frames_seen, frame_start, frame_end, direction:Direction = None) -> None:
+        self.tracked_boxes = tracked_boxes
+        self.frames_seen = frames_seen
+        self.frame_start = frame_start
+        self.frame_end = frame_end
+        self.direction = direction
+
 
 def render_detected_frames_to_video(count, fps, out_video_name, path_to_frames):
     img_array = []

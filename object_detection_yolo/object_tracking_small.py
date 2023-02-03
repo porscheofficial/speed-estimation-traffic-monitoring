@@ -23,7 +23,7 @@ import copy
 import imutils
 import time
 import uuid
-from utils.object_tracking import Point, Car, clamp
+from utils.object_tracking import TrackingBox, Car, clamp
 from modules.evaluation.evaluate import plot_absolute_error
 from modules.depth_map.depth_map_utils import load_depth_map
 import numpy as np
@@ -58,7 +58,7 @@ def map_box_to_our_point(frame, box, depth_map, custom_object_detection, frame_c
             ppm = car_length_in_pixels / avg_car_in_meters
     else:
         ppm = None
-    return Point(cx, cy, meters, x, y, w, h, frame_count, ppm)
+    return TrackingBox(cx, cy, meters, x, y, w, h, frame_count, ppm)
 
 
 def run(

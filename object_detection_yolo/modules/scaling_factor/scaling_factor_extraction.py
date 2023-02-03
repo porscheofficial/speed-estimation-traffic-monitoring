@@ -28,23 +28,27 @@ class WorldPoint:
 
 
 class GroundTruthEvent(NamedTuple):
-    coords1: tuple[int, int, int]
-    coords2: tuple[int, int, int]
+    coords1: tuple
+    coords2: tuple
     distance: float
 
 
 @dataclass
 class GeometricModel:
 
-    def __init__(self, depth_model, c_u, c_v) -> None:
+    def __init__(self, depth_model) -> None:
         
         self.depth_model = depth_model
-        self.f: float = 1  # focal length
+        self.f: float = 105.  # focal length
         self.s_u: int = 1  # translating pixels into m in u direction
         self.s_v: int = 1  # translating pixels into m in v direction
-        self.c_u: int = c_u  # this would usually be chosen at half the frame resolution width
-        self.c_v: int = c_v  # this would usually be chosen at half the frame resolution height
+        self.c_u: int = 1  # this would usually be chosen at half the frame resolution width
+        self.c_v: int = 1  # this would usually be chosen at half the frame resolution height
         self.sale_factor: float = 1
+
+    def set_normalization_axes(self, c_u, c_v):
+        self.c_u = c_u
+        self.c_v = c_v
 
     def get_unscaled_world_point(self, cp: CameraPoint) -> WorldPoint:
         normalised_u = self.s_u * (cp.u - self.c_u)
@@ -129,9 +133,8 @@ class GeometricModel:
 
 
 def offline_scaling_factor_estimation_from_least_squares(
-    frames: list[NDArray],
     geometric_model: GeometricModel,
-    ground_truths: list[GroundTruthEvent],
+    ground_truths: list,
 ) -> float:
     unscaled_predictions = []
     labels = []
