@@ -44,6 +44,8 @@ class DepthModel:
         if frame_id in self.memo: return self.memo[frame_id]
 
         self.memo[frame_id] = load_depth_map_from_file(self.data_dir, max_depth=1, frame=frame_id)
+        with open("object_detection_yolo/frames_detected/depth_map.npy", "wb") as fp:
+            np.save(fp, self.memo[frame_id])
         # predict depth here
         return self.memo[frame_id]
 
@@ -150,7 +152,7 @@ def run(
             break
 
         if custom_object_detection:
-            # cv2.imwrite(f"object_detection_yolo/frames_detected/frame_rgb.jpg", frame)
+            cv2.imwrite(f"object_detection_yolo/frames_detected/frame_rgb.jpg", frame)
             frame = fgbg.apply(frame)
             frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2RGB)
             path_to_frame = f"object_detection_yolo/frames_detected/frame_{run_id}.jpg"
@@ -259,7 +261,7 @@ def run(
         
         geo_model = None
 
-        if len(car_boxes) >= 50: 
+        if len(car_boxes) >= 24: 
             ground_truth_events = []
             for object_id in car_boxes:
                 center_points = np.array([(box.center_x, box.center_y) for box in car_boxes[object_id]])                
@@ -268,27 +270,44 @@ def run(
 
                 # extract ground truth value for each tracking box
                 for box in car_boxes[object_id]:
-                    cv2.rectangle(frame, (box.x, box.y), (box.x + box.w, box.y + box.h), (255, 0, 0), 2)
                     if center_points[0][0] > box.x or center_points[-1][0] > box.x + box.w:
                         continue
 
                     start_point = int(np.interp(box.x, center_points[:,0], center_points[:,1]))
                     end_point = int(np.interp(box.x + box.w, center_points[:,0], center_points[:,1]))
-                    ground_truth_events.append(GroundTruthEvent((frame_count, box.x, start_point), (frame_count, box.x + box.w -1, end_point), 5.))
+                    ground_truth_events.append(GroundTruthEvent((box.frame, box.x, start_point), (box.frame, box.x + box.w -1, end_point), 5.))
                     frame = cv2.line(frame, (box.x, start_point), (box.x + box.w, end_point), (0,255,0), 8)
-
+                    
+                    cv2.rectangle(frame, (box.x, box.y), (box.x + box.w, box.y + box.h), (255, 0, 0), 2)
                     cv2.imwrite(f"object_detection_yolo/frames_detected/line_approach.jpg", frame)
-        
+
+            # ground_truth_events = [
+            #     GroundTruthEvent((frame_count, 296, 167), (frame_count, 1142, 967), 28.),
+            #     GroundTruthEvent((frame_count, 114, 190), (frame_count, 575, 828), 25.),
+            #     GroundTruthEvent((frame_count, 1141, 712), (frame_count, 1446, 973), 4.),
+            # ]
             depth_model = DepthModel(data_dir)
             c_u = int(frame.shape[1] / 2)
             c_v = int(frame.shape[0] / 2)
             geo_model = GeometricModel(depth_model, c_u=c_u, c_v=c_v)
             geo_model.scale_factor = offline_scaling_factor_estimation_from_least_squares(frames, geo_model, ground_truth_events)
 
-
-        # Strassenpfosten 50m # geo_model.get_distance_from_camera_points(CameraPoint(frame_count, 1397, 650), CameraPoint(frame_count, 665, 407))
-        # Auto 5m # geo_model.get_distance_from_camera_points(CameraPoint(frame_count, 660, 540), CameraPoint(frame_count, 623, 515))
         if geo_model is not None:
+            # Ihre Markierung 28m 
+            # Strassenpfosen 25m 
+            # Auto 4m 
+            # geo_model.scale_factor = 84
+            ground_truth_sanity_check = dict(
+                marked_points=geo_model.get_distance_from_camera_points(CameraPoint(frame_count, 296, 167), CameraPoint(frame_count, 1142, 967)),
+                delineator=geo_model.get_distance_from_camera_points(CameraPoint(frame_count, 114, 190), CameraPoint(frame_count, 575, 828)),
+                car=geo_model.get_distance_from_camera_points(CameraPoint(frame_count, 1141, 712), CameraPoint(frame_count, 1446, 973))
+            )
+            depth_map_sanity_check = dict(
+                marked_points=depth_model.memo[frame_count][167, 296] - depth_model.memo[frame_count][967, 1142],
+                delineator=depth_model.memo[frame_count][190, 114] - depth_model.memo[frame_count][828, 575],
+                car=depth_model.memo[frame_count][712, 1141] - depth_model.memo[frame_count][973, 1446]
+            )
+
             geo_model.get_distance_from_camera_points(CameraPoint(frame_count, 750, 213), CameraPoint(frame_count, 511, 132))
         for object_id, point in tracking_objects.items():
             car_boxes[object_id].append(point)
