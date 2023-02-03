@@ -150,12 +150,14 @@ def run(
             break
 
         if custom_object_detection:
+            # cv2.imwrite(f"object_detection_yolo/frames_detected/frame_rgb.jpg", frame)
             frame = fgbg.apply(frame)
             frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2RGB)
             path_to_frame = f"object_detection_yolo/frames_detected/frame_{run_id}.jpg"
             cv2.imwrite(path_to_frame, frame)
+
         
-        frame_count += 1
+        frames.append(frame)
 
         # for shake_detection
         if shake_detection.is_hard_move(frame):
@@ -272,7 +274,7 @@ def run(
 
                     start_point = int(np.interp(box.x, center_points[:,0], center_points[:,1]))
                     end_point = int(np.interp(box.x + box.w, center_points[:,0], center_points[:,1]))
-                    ground_truth_events.append(GroundTruthEvent((frame_count, box.x, start_point), (frame_count, box.x + box.w, end_point), 5.))
+                    ground_truth_events.append(GroundTruthEvent((frame_count, box.x, start_point), (frame_count, box.x + box.w -1, end_point), 5.))
                     frame = cv2.line(frame, (box.x, start_point), (box.x + box.w, end_point), (0,255,0), 8)
 
                     cv2.imwrite(f"object_detection_yolo/frames_detected/line_approach.jpg", frame)
@@ -284,8 +286,8 @@ def run(
             geo_model.scale_factor = offline_scaling_factor_estimation_from_least_squares(frames, geo_model, ground_truth_events)
 
 
-        # Strassenpfosten 50m # geo_model.get_distance_from_camera_points(CameraPoint(frame_count, 750, 213), CameraPoint(frame_count, 511, 132))
-        # Auto 5m # geo_model.get_distance_from_camera_points(CameraPoint(frame_count, 761, 321), CameraPoint(frame_count, 688, 279))
+        # Strassenpfosten 50m # geo_model.get_distance_from_camera_points(CameraPoint(frame_count, 1397, 650), CameraPoint(frame_count, 665, 407))
+        # Auto 5m # geo_model.get_distance_from_camera_points(CameraPoint(frame_count, 660, 540), CameraPoint(frame_count, 623, 515))
         if geo_model is not None:
             geo_model.get_distance_from_camera_points(CameraPoint(frame_count, 750, 213), CameraPoint(frame_count, 511, 132))
         for object_id, point in tracking_objects.items():

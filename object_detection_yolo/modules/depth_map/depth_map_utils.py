@@ -59,7 +59,7 @@ def load_depth_map_from_file(current_folder: str, max_depth: int = None, frame: 
         print('Depth map generation.')
         scaled_image_name, original_shape = extract_frame(input_video, current_folder, 'frame_%d_scaled.jpg')
         print(f'Extracted scaled frame to {scaled_image_name}')
-        return generate_depth_map(current_folder, scaled_image_name, max_depth_o=max_depth)
+        return resize_output(generate_depth_map(current_folder, scaled_image_name, max_depth_o=max_depth), original_shape)
     else:
         print('Depth map found.')
         
