@@ -20,7 +20,7 @@ import copy
 import imutils
 import time
 import uuid
-from utils.object_tracking import Direction, TrackingBox, Car, clamp
+from utils.object_tracking import Direction, Line, Point, TrackingBox, Car, clamp
 from modules.evaluation.evaluate import plot_absolute_error
 from modules.depth_map.depth_map_utils import load_depth_map, load_depth_map_from_file
 import numpy as np
@@ -63,8 +63,8 @@ class DepthModel:
 
         if len(self.memo) > 10:
             depth_maps = [self.memo[frame] for frame in self.memo]
-            with open("object_detection_yolo/frames_detected/depth_map.npy", "wb") as fp:
-                np.save(fp, sum(depth_maps)/len(depth_maps))
+            # with open("object_detection_yolo/frames_detected/depth_map.npy", "wb") as fp:
+            #     np.save(fp, sum(depth_maps)/len(depth_maps))
             return sum(depth_maps)/len(depth_maps)
 
         self.memo[frame_id] = load_depth_map_from_file(self.data_dir, max_depth=1, frame=frame_id)
@@ -72,26 +72,65 @@ class DepthModel:
         return self.memo[frame_id]
 
 
-def get_ground_truth_events(tracking_boxes):
+def get_intersection(line_a: Line, line_b: Line) -> Point:
+    b = Point(*line_a.end.coords() - line_a.start.coords())
+    d = Point(*line_b.end.coords() - line_b.start.coords())
+    b_dot_d = b.x * d.y - b.y * d.x
+
+    if b_dot_d == 0:
+        # lines are parallel, no intersection
+        return False
+    
+    c = Point(*line_b.start.coords() - line_a.start.coords())
+    t = (c.x * d.y - c.y * d.x) / b_dot_d
+    if t < 0 or t > 1:
+        return False
+    
+    u = (c.x * b.y - c.y * b.x) / b_dot_d
+    if u < 0 or u > 1:
+        return False
+    
+    return Point(*line_a.start.coords() + t * b.coords())
+
+
+def get_ground_truth_events(tracking_boxes, frame=None):
     # extract ground truth value for each tracking box
     ground_truth_events = []
     for object_id in tracking_boxes:
         center_points = np.array([(box.center_x, box.center_y) for box in tracking_boxes[object_id]])                
-        if len(center_points) < 10: 
+        if len(center_points) < 10 or len(center_points) > 750: 
             continue
+        center_points_line = Line(Point(*center_points[0]), Point(*center_points[-1]))
 
         # extract ground truth value for each tracking box
         for box in tracking_boxes[object_id]:
-            if center_points[0][0] > box.x or center_points[-1][0] > box.x + box.w:
-                continue
 
-            start_point = int(np.interp(box.x, center_points[:,0], center_points[:,1]))
-            end_point = int(np.interp(box.x + box.w, center_points[:,0], center_points[:,1]))
-            ground_truth_events.append(GroundTruthEvent((box.frame, box.x, start_point), (box.frame, box.x + box.w -1, end_point), 6))
+            # check each of the for lines, spanned by the bounding box rectangle
+            upper_line = Line(Point(box.x, box.y), Point(box.x+box.w, box.y))
+            right_line = Line(Point(box.x+box.w, box.y), Point(box.x+box.w, box.y+box.h))
+            lower_line = Line(Point(box.x, box.y+box.h), Point(box.x+box.w, box.y+box.h))
+            left_line = Line(Point(box.x, box.y), Point(box.x, box.y+box.h))
+
+            intersections = []
+            for bounding_box_line in [upper_line, right_line, lower_line, left_line]:
+                intersection = get_intersection(center_points_line, bounding_box_line)
+                if intersection:
+                    intersections.append(intersection)
             
-            # frame = cv2.line(frame, (box.x, start_point), (box.x + box.w, end_point), (0,255,0), 8)
-        #     cv2.rectangle(frame, (box.x, box.y), (box.x + box.w, box.y + box.h), (255, 0, 0), 2)
-        # cv2.imwrite(f"object_detection_yolo/frames_detected/line_approach.jpg", frame)
+            if len(intersections) == 2:
+                # append ground truth only if line fully cuts bounding box
+                intersect1, intersect2 = intersections
+                ground_truth_events.append(
+                    GroundTruthEvent(
+                        (box.frame, int(intersect1.x), int(intersect1.y)), 
+                        (box.frame, int(intersect2.x), int(intersect2.y)), 
+                        6
+                        )
+                    )
+
+                # cv2.rectangle(frame, (box.x, box.y), (box.x + box.w, box.y + box.h), (255, 0, 0), 2)
+                # cv2.line(frame, (int(intersect1.x), int(intersect1.y)), (int(intersect2.x), int(intersect2.y)), (0,255,0), 8)
+                # cv2.imwrite(f"object_detection_yolo/frames_detected/line_approach.jpg", frame)
 
     return ground_truth_events
 
@@ -142,7 +181,7 @@ def run(
     input_video = cv2.VideoCapture(path_to_video)
 
     fps = give_me_fps(path_to_video) if fps is None else fps
-    sliding_window = 15 * fps
+    sliding_window = 60 * fps
     text_color = (255, 255, 255)
     # text_color = (0,0,0)
 
@@ -275,18 +314,19 @@ def run(
         # scaling factor estimation
         ############################
         if not is_calibrated:
-            if len(tracked_boxes) > 100:
+            if len(tracked_boxes) > 150:
                 # more than 10 cars were tracked
-                ground_truth_events = get_ground_truth_events(tracked_boxes)
-                geo_model.scale_factor = offline_scaling_factor_estimation_from_least_squares(geo_model, ground_truth_events)
-                print("Is calibrated: scale_factor: ", geo_model.scale_factor)
-                is_calibrated = True
-            else:
-                if frame_count % fps == 0:
-                    print(len(tracked_boxes))
-                    print("Have to calibrate")
-                for object_id, point in tracking_objects.items():
-                    tracked_boxes[object_id].append(point)
+                ground_truth_events = get_ground_truth_events(tracked_boxes, frame)
+                if len(ground_truth_events) > 50:
+                    geo_model.scale_factor = offline_scaling_factor_estimation_from_least_squares(geo_model, ground_truth_events)
+                    logging.info(f"Is calibrated: scale_factor: {geo_model.scale_factor}")
+                    print(f"Is calibrated: scale_factor: {geo_model.scale_factor}", flush=True)
+                    is_calibrated = True
+
+            if frame_count % fps == 0:
+                print(f"Have to calibrate: {len(tracked_boxes)}", flush=True)
+            for object_id, point in tracking_objects.items():
+                tracked_boxes[object_id].append(point)
         else:
             ############################
             # track cars
@@ -306,7 +346,7 @@ def run(
             ############################
             # speed estimation
             ############################
-            if frame_count >= fps and frame_count % (10 * fps) == 0:
+            if frame_count >= fps and frame_count % (60 * fps) == 0:
                 # every 10 seconds
                 car_count_towards = 0
                 car_count_away = 0
@@ -343,7 +383,7 @@ def run(
 
                 for car_id in ids_to_drop:
                     del tracked_cars[car_id]
-
+                
                 if car_count_towards > 0:
                     avg_speed = round((total_speed_towards / car_count_towards) * 3.6, 2)
                     print(f"Average speed towards: {avg_speed} km/h")

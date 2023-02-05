@@ -1,11 +1,26 @@
 import cv2
 from enum import Enum
+from typing import NamedTuple
+import numpy as np
+from dataclasses import dataclass
 
 def clamp(n, smallest, largest): return max(smallest, min(n, largest)) 
 
 class Direction(Enum):
     towards = 0
     away = 1
+
+@dataclass
+class Point:
+    x: int
+    y: int
+
+    def coords(self):
+        return np.array([self.x, self.y])
+
+class Line(NamedTuple):
+        start: Point
+        end: Point
 
 class TrackingBox:
     def __init__(self, center_x, center_y, x, y, w, h, frame, object_id=None) -> None:
