@@ -9,6 +9,7 @@ import platform
 import subprocess
 import time
 import warnings
+import configparser
 from contextlib import contextmanager
 from copy import deepcopy
 from pathlib import Path
@@ -20,6 +21,9 @@ import torch.nn.functional as F
 from torch.nn.parallel import DistributedDataParallel as DDP
 
 from modules.object_detection.yolov5.utils.general import LOGGER, check_version, colorstr, file_date, git_describe
+
+config = configparser.ConfigParser()
+config.read("object_detection_yolo/config.ini")
 
 LOCAL_RANK = int(os.getenv('LOCAL_RANK', -1))  # https://pytorch.org/docs/stable/elastic/run.html
 RANK = int(os.getenv('RANK', -1))
@@ -69,7 +73,7 @@ def select_device(device='', batch_size=0, newline=True):
     # device = None or 'cpu' or 0 or '0' or '0,1,2,3'
     s = f'YOLOv5 🚀 {git_describe() or file_date()} Python-{platform.python_version()} torch-{torch.__version__} '
     device = str(device).strip().lower().replace('cuda:', '').replace('none', '')  # to string, 'cuda:0' to '0'
-    cpu = device == 'cpu'
+    cpu = config.getboolean("device", "use_cpu")
     mps = device == 'mps'  # Apple Metal Performance Shaders (MPS)
     if cpu or mps:
         os.environ['CUDA_VISIBLE_DEVICES'] = '-1'  # force torch.cuda.is_available() = False
