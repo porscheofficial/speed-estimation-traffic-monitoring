@@ -64,6 +64,12 @@ docker run --rm \
 ```
 Replace `$PATH_TO_REPO`, `$PATH_TO_VIDEO_ROOT_FOLDER` and `$PATH_TO_VIDEO_FILE_IN_DOCKER` with the paths on your machine.
 
+## Dataset
+As a test dataset to run the estimation on, we provide you with a excerpt of the BrnoCompSpeed Dataset
+1. Download the whole folder from here: https://1drv.ms/u/s!AmCOHF26iIAQgf1ladUQOKtY0an0dg?e=wa1iZX
+2. Go to `object_detection_yolo/paths.py` and adjust the `session_path` accordingly
+
+
 ## Run
 Only for object_tracking_small.py:
 The path to the video that should be analysed can be set in *object_detection_yolo/paths.py*
