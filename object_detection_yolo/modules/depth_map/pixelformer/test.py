@@ -1,6 +1,7 @@
 from __future__ import absolute_import, division, print_function
 
 import torch
+import configparser
 from torch.autograd import Variable
 
 import os, sys, errno
@@ -12,6 +13,10 @@ from .dataloaders.dataloader import NewDataLoader
 
 from .utils import post_process_depth, flip_lr
 
+config = configparser.ConfigParser()
+config.read("object_detection_yolo/config.ini")
+
+use_cpu = config.getboolean("device", "use_cpu")
 
 def convert_arg_line_to_args(arg_line):
     for arg in arg_line.split():
@@ -69,10 +74,17 @@ def generate_depth_map(data_folder: str, file_name: str, *, max_depth_o: int):
     model = PixelFormer(version='large07', inv_depth=False, max_depth=max_depth)
     model = torch.nn.DataParallel(model, device_ids=[0])
     
-    checkpoint = torch.load(checkpoint_path, map_location=device)
+    if use_cpu:
+        checkpoint = torch.load(checkpoint_path, map_location=torch.device('cpu'))
+    else:
+        checkpoint = torch.load(checkpoint_path)
+
     model.load_state_dict(checkpoint['model'])
     model.eval()
-    model.cuda(device)
+
+    if not use_cpu:
+        model.cuda()
+    
 
     num_params = sum([np.prod(p.size()) for p in model.parameters()])
     print("Total number of parameters: {}".format(num_params))
@@ -85,7 +97,11 @@ def generate_depth_map(data_folder: str, file_name: str, *, max_depth_o: int):
     start_time = time.time()
     with torch.no_grad():
         for idx, sample in enumerate(tqdm(dataloader.data)):
-            image = Variable(sample['image'].cuda(device))
+            if use_cpu:
+                image = Variable(sample['image'])
+            else:
+                image = Variable(sample['image'])
+
             # Predict
             depth_est = model(image)
             image_flipped = flip_lr(image)

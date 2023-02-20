@@ -47,7 +47,9 @@ The advantage of the Docker container is that it supports CUDA acceleration out 
 # Ubuntu / Debian
 > sudo apt install ffmpeg
 ```
-3. Go to `object_detection_yolo/object_tracking.py` and run it
+3. Download the weights for the depth map from here: https://drive.google.com/file/d/1s7AdfwrV_6-svzfntBJih011u2IGkjf4/view?usp=share_link 
+4. Place the weights in that folder: `object_detection_yolo/modules/depth_map/pixelformer/pretrained`
+5. Go to `object_detection_yolo/object_tracking.py` and run it
 
 ### Docker Setup
 0. (Have `docker` installed)
@@ -61,6 +63,12 @@ docker run --rm \
         "$PATH_TO_VIDEO_FILE_IN_DOCKER"
 ```
 Replace `$PATH_TO_REPO`, `$PATH_TO_VIDEO_ROOT_FOLDER` and `$PATH_TO_VIDEO_FILE_IN_DOCKER` with the paths on your machine.
+
+## Dataset
+As a test dataset to run the estimation on, we provide you with a excerpt of the BrnoCompSpeed Dataset
+1. Download the whole folder from here: https://1drv.ms/u/s!AmCOHF26iIAQgf1ladUQOKtY0an0dg?e=wa1iZX
+2. Go to `object_detection_yolo/paths.py` and adjust the `session_path` accordingly
+
 
 ## Run
 Only for object_tracking_small.py:
