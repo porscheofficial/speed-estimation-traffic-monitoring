@@ -59,17 +59,20 @@ def get_num_lines(file_path):
 def generate_depth_map(data_folder: str, file_name: str, *, max_depth_o: int):
     """Test function."""
 
+    device = "cuda:0"
+
+    torch.cuda.set_device(device)
     max_depth = args.max_depth if max_depth_o is None else max_depth_o
     output_path = os.path.join(data_folder, f'depth_map_{max_depth}.npy')
     dataloader = NewDataLoader(args, 'test', file_list=[file_name], data_path=data_folder, do_kb_crop=do_kb_crop)
     
     model = PixelFormer(version='large07', inv_depth=False, max_depth=max_depth)
-    model = torch.nn.DataParallel(model)
+    model = torch.nn.DataParallel(model, device_ids=[0])
     
-    checkpoint = torch.load(checkpoint_path)
+    checkpoint = torch.load(checkpoint_path, map_location=device)
     model.load_state_dict(checkpoint['model'])
     model.eval()
-    model.cuda()
+    model.cuda(device)
 
     num_params = sum([np.prod(p.size()) for p in model.parameters()])
     print("Total number of parameters: {}".format(num_params))
@@ -82,7 +85,7 @@ def generate_depth_map(data_folder: str, file_name: str, *, max_depth_o: int):
     start_time = time.time()
     with torch.no_grad():
         for idx, sample in enumerate(tqdm(dataloader.data)):
-            image = Variable(sample['image'].cuda())
+            image = Variable(sample['image'].cuda(device))
             # Predict
             depth_est = model(image)
             image_flipped = flip_lr(image)

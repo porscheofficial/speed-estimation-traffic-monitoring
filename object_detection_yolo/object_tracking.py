@@ -189,7 +189,6 @@ def run(
     frame_count = 0
     tracking_objects = {}
     frames = {}
-    tracking_objects_diff_map = {}
     tracked_cars = {}
     track_id = 0
     avg_speed = "calculating"
@@ -249,6 +248,9 @@ def run(
         else:
             (class_ids, scores, boxes) = od.detect(frame)
 
+        # Point current frame
+        center_points_cur_frame = []
+
         for box in boxes:
             (x, y, w, h) = box.astype(int)
             cx = int((x + x + w) / 2)
@@ -263,51 +265,30 @@ def run(
         ############################
         # assign tracking box IDs
         ############################
-        # Only at the beginning we compare previous and current frame
-        if frame_count <= 2:
-            center_points_prev_frame_copy = center_points_prev_frame.copy()
-            for point in center_points_cur_frame:
-                for point2 in center_points_prev_frame_copy:
-                    distance = math.hypot(point2.x - point.x, point2.y - point.y)
+        for object_id, point_prev in tracking_objects.copy().items():
+            object_exists = False
+            for point_cur in center_points_cur_frame:
+                distance = math.hypot(point_prev.x - point_cur.x, point_prev.y - point_cur.y)
 
-                    if distance < 20:
-                        point.object_id = track_id
-                        tracking_objects[track_id] = point
-                        tracking_objects_diff_map[track_id] = (
-                            point2.x - point.x,
-                            point2.y - point.y,
-                        )
-                        track_id += 1
-                        center_points_prev_frame_copy.remove(point2)
-                        break
-        else:
-            tracking_objects_copy = tracking_objects.copy()
-            center_points_cur_frame_copy = center_points_cur_frame.copy()
+                # Update IDs position
+                if distance < 50:
 
-            for object_id, point2 in tracking_objects_copy.items():
-                object_exists = False
-                for point in center_points_cur_frame_copy:
-                    distance = math.hypot(point2.x - point.x, point2.y - point.y)
+                    tracking_objects[object_id] = point_cur
+                    object_exists = True
+                    if point_cur in center_points_cur_frame:
+                        # Point should not match to multiple boxes
+                        # TODO: Only take closest!
+                        center_points_cur_frame.remove(point_cur)
+                    break
 
-                    # Update IDs position
-                    if distance < 50:
-                        tracking_objects[object_id] = point
-                        object_exists = True
-                        if point in center_points_cur_frame:
-                            center_points_cur_frame.remove(point)
-                            # Point should not match to multiple boxes
-                            # TODO: Only take closest!
-                            center_points_cur_frame_copy.remove(point)
-                        break
+            # Remove IDs lost
+            if not object_exists:
+                tracking_objects.pop(object_id)
 
-                # Remove IDs lost
-                if not object_exists:
-                    tracking_objects.pop(object_id)
-
-            # Add new IDs found
-            for point in center_points_cur_frame:
-                tracking_objects[track_id] = point
-                track_id += 1
+        # Add new IDs found
+        for point_cur in center_points_cur_frame:
+            tracking_objects[track_id] = point_cur
+            track_id += 1
 
 
         ############################
@@ -338,10 +319,7 @@ def run(
                     tracked_cars[object_id].frames_seen += 1
                     tracked_cars[object_id].frame_end += 1
                 else:
-                    tracked_cars[object_id] = Car([point], 1, frame_count, frame_count)
-
-            # Make a copy of the points
-            center_points_prev_frame = copy.deepcopy(center_points_cur_frame)
+                    
 
             ############################
             # speed estimation

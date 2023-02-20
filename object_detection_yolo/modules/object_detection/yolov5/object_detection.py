@@ -53,7 +53,7 @@ class ObjectDetection:
         print("Loading Object Detection")
         print("Running with custom trained YOLOv5")
         # Load model
-        self.device = select_device(device)
+        self.device = torch.device(device)
         self.model = DetectMultiBackend(weights, device=self.device, dnn=dnn, data=data, fp16=half)
         self.stride, self.names, self.pt = self.model.stride, self.model.names, self.model.pt
         imgsz = check_img_size(imgsz, s=self.stride)  # check image size
@@ -75,18 +75,18 @@ class ObjectDetection:
         img = np.ascontiguousarray(img)
 
         #for path, im, im0s, vid_cap, s in dataset:
-        t1 = time_sync()
+        t1 = time_sync(self.device)
         img = torch.from_numpy(img).to(self.device)
         img = img.half() if self.model.fp16 else img.float()  # uint8 to fp16/32
         img /= 255  # 0 - 255 to 0.0 - 1.0
         if len(img.shape) == 3:
             img = img[None]  # expand for batch dim
-        t2 = time_sync()
+        t2 = time_sync(self.device)
         self.dt[0] += t2 - t1
 
         # Inference
         pred = self.model(img, augment=False, visualize=False)
-        t3 = time_sync()
+        t3 = time_sync(self.device)
         self.dt[1] += t3 - t2
 
         conf_thres=0.25  # confidence threshold

@@ -101,10 +101,10 @@ def select_device(device='', batch_size=0, newline=True):
     return torch.device(arg)
 
 
-def time_sync():
+def time_sync(device="cuda:0"):
     # PyTorch-accurate time
     if torch.cuda.is_available():
-        torch.cuda.synchronize()
+        torch.cuda.synchronize(device)
     return time.time()
 
 

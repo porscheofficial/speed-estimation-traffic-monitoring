@@ -23,7 +23,7 @@ class Line(NamedTuple):
         end: Point
 
 class TrackingBox:
-    def __init__(self, center_x, center_y, x, y, w, h, frame, object_id=None) -> None:
+    def __init__(self, center_x, center_y, x, y, w, h, frame) -> None:
         self.center_x = center_x
         self.center_y = center_y
         self.x = x
@@ -31,7 +31,6 @@ class TrackingBox:
         self.w = w
         self.h = h
         self.frame = frame
-        self.object_id = object_id
 
 class Car:
     def __init__(self, tracked_boxes: list, frames_seen, frame_start, frame_end, direction:Direction = None) -> None:

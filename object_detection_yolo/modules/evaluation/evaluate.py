@@ -15,15 +15,13 @@ def load_log(log_path: str):
     with open(log_path, "r") as fp:
         for idx, line in enumerate(fp):
             if idx == 0:
-                result = re.search('Video: (.*), Max', line)
+                result = re.search('Video: (.*)', line)
                 cars_path = result.group(1)
-                result = re.search('Max Depth: (.*)', line)
-                max_depth = result.group(1)
                 print(f"Found cars path from log: {cars_path}")
             if not  line.startswith('INFO:root:{'):
                 continue
             line_dict = json.loads(line[10:])
-            if "avgSpeedLastMinute" in line_dict:
+            if "avgSpeedTowards" in line_dict:
                 avg_speeds.append(line_dict)
 
     video_id = cars_path.strip('/').split('/')[-1]
@@ -40,14 +38,14 @@ def avg_speed_for_time_estimation(estimation, timeStart, timeEnd):
     timeStart *= 50
     timeEnd *= 50
     estimation_avg = estimation.loc[estimation['frameId'].gt(timeStart) & estimation['frameId'].le(timeEnd)]
-    return estimation_avg['avgSpeedLastMinute'].mean()
+    return estimation_avg['avgSpeedTowards'].mean()
 
 def generate_aligned_estimations(run_ids, loaded_avg_speeds, ground_truth):
     truth = []
     estimations = {k: [] for k in run_ids}
     timestamps = []
 
-    for start in range(90, 3240, 60):
+    for start in range(90, 15 * 60, 60):
         end = start + 60
         truth.append(avg_speed_for_time_ground_truth(ground_truth, start, end))
         for idx, id in enumerate(run_ids):
@@ -92,15 +90,8 @@ def plot_absolute_error(logs: 'list[str]', save_file_path=None):
         df[run_id_list].mean(axis=0).to_csv(csv_path)
 
 def main():
-    arr = ["logs/20230108-225957_run_e2c12c871e.log",
-        "logs/20230109-010057_run_3370f63e98.log",
-        "logs/20230109-030202_run_2a8936574f.log"]
+    arr = ["/home/ssawicki/porsche_digital_hpi/logs/20230204-090410_run_371dbc8dd5.log"]
 
-    arr = [
-        "logs/20230109-155900_run_01e2343a18.log",
-        "logs/20230109-160150_run_7935551b66.log",
-        "logs/20230109-160446_run_e3584a64df.log",
-    ]
     plot_absolute_error(arr, 'logs/')
 
 if __name__ == '__main__':
