@@ -12,5 +12,5 @@ for filename in /scratch2/2016-ITS-BrnoCompSpeed/dataset/*/; do
     echo "Run $filename"
     max5; docker run --rm \
         --gpus '"device=1"' -v /home/fsauerwald/p2:/storage -v /scratch2:/scratch2 \
-        -t cv-cuda python3 /storage/object_detection_yolo/object_tracking.py "$filename" &
+        -t cv-cuda python3 /storage/speed_estimation/speed_estimation.py "$filename" &
 done

@@ -14,7 +14,7 @@ from .dataloaders.dataloader import NewDataLoader
 from .utils import post_process_depth, flip_lr
 
 config = configparser.ConfigParser()
-config.read("object_detection_yolo/config.ini")
+config.read("speed_estimation/config.ini")
 
 use_cpu = config.getboolean("device", "use_cpu")
 
@@ -33,7 +33,7 @@ max_depth=80
 do_kb_crop=True
 min_depth_eval=1e-3
 max_depth_eval=80
-checkpoint_path='object_detection_yolo/modules/depth_map/pixelformer/pretrained/kitti.pth'
+checkpoint_path='speed_estimation/modules/depth_map/pixelformer/pretrained/kitti.pth'
 # checkpoint_path='modules/depth_map/pixelformer/pretrained/kitti.pth'
 
 args = {

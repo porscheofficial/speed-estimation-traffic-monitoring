@@ -17,7 +17,7 @@ from modules.shake_detection.shake_detection import ShakeDetection
 from paths import session_path
 import time
 import uuid
-from utils.object_tracking import (
+from utils.speed_estimation import (
     Direction,
     TrackingBox,
     Car,
@@ -37,7 +37,7 @@ import torch
 from typing import Dict, List
 
 config = configparser.ConfigParser()
-config.read("object_detection_yolo/config.ini")
+config.read("speed_estimation/config.ini")
 
 
 def run(
@@ -64,7 +64,7 @@ def run(
 
     # Initialize Object Detection
     if custom_object_detection:
-        weights = "object_detection_yolo/model_weights/yolov5/best.pt"
+        weights = "speed_estimation/model_weights/yolov5/best.pt"
         od = ObjectDetectionCustom(weights=weights)
     else:
         od = ObjectDetection()
@@ -113,7 +113,7 @@ def run(
         if custom_object_detection:
             frame = fgbg.apply(frame)
             frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2RGB)
-            path_to_frame = f"object_detection_yolo/frames_detected/frame_{run_id}.jpg"
+            path_to_frame = f"speed_estimation/frames_detected/frame_{run_id}.jpg"
             cv2.imwrite(path_to_frame, frame)
 
         # for shake_detection
@@ -324,7 +324,7 @@ def run(
             frame, f"FPS: {fps}", (7, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, text_color, 2
         )
         cv2.imwrite(
-            f"object_detection_yolo/frames_detected/frame_after_detection.jpg", frame
+            f"speed_estimation/frames_detected/frame_after_detection.jpg", frame
         )
 
         if frame_count % 500 == 0:

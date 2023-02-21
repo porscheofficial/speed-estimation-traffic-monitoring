@@ -23,7 +23,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from modules.object_detection.yolov5.utils.general import LOGGER, check_version, colorstr, file_date, git_describe
 
 config = configparser.ConfigParser()
-config.read("object_detection_yolo/config.ini")
+config.read("speed_estimation/config.ini")
 
 LOCAL_RANK = int(os.getenv('LOCAL_RANK', -1))  # https://pytorch.org/docs/stable/elastic/run.html
 RANK = int(os.getenv('RANK', -1))

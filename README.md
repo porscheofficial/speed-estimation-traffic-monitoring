@@ -4,7 +4,7 @@ Goal of this repository is to provide an easy way of estimating the speed of tra
 
 ## Structure
 
-Our current approach is stored in the `object_detection_yolo` folder. It contains a `config.ini`, where some configuration can be changed.
+Our current approach is stored in the `speed_estimation` folder. It contains a `config.ini`, where some configuration can be changed.
 
 |Name|Description|Values|
 |-|-|-|
@@ -16,7 +16,7 @@ Our current approach is stored in the `object_detection_yolo` folder. It contain
 The project is split into multiple modules, each handling a part of the total pipeline.
 ![](.github/modules.png)
 
-The different modules of this project can be found inside the folder *object_detection_yolo/modules*
+The different modules of this project can be found inside the folder *speed_estimation/modules*
 Currently, there are:
 | Module Name | Folder | Description |
 |-|-|-|
@@ -48,8 +48,8 @@ The advantage of the Docker container is that it supports CUDA acceleration out 
 > sudo apt install ffmpeg
 ```
 3. Download the weights for the depth map from here: https://drive.google.com/file/d/1s7AdfwrV_6-svzfntBJih011u2IGkjf4/view?usp=share_link 
-4. Place the weights in that folder: `object_detection_yolo/modules/depth_map/pixelformer/pretrained`
-5. Go to `object_detection_yolo/object_tracking.py` and run it
+4. Place the weights in that folder: `speed_estimation/modules/depth_map/pixelformer/pretrained`
+5. Go to `speed_estimation/speed_estimation.py` and run it
 
 ### Docker Setup
 0. (Have `docker` installed)
@@ -59,7 +59,7 @@ The advantage of the Docker container is that it supports CUDA acceleration out 
 ```
 docker run --rm \
         --gpus '"device=0"' -v $PATH_TO_REPO:/storage -v $PATH_TO_VIDEO_ROOT_FOLDER:/scratch2 \
-        -t cv-cuda python3 /storage/object_detection_yolo/object_tracking.py \
+        -t cv-cuda python3 /storage/speed_estimation/speed_estimation.py \
         "$PATH_TO_VIDEO_FILE_IN_DOCKER"
 ```
 Replace `$PATH_TO_REPO`, `$PATH_TO_VIDEO_ROOT_FOLDER` and `$PATH_TO_VIDEO_FILE_IN_DOCKER` with the paths on your machine.
@@ -67,13 +67,13 @@ Replace `$PATH_TO_REPO`, `$PATH_TO_VIDEO_ROOT_FOLDER` and `$PATH_TO_VIDEO_FILE_I
 ## Dataset
 As a test dataset to run the estimation on, we provide you with a excerpt of the BrnoCompSpeed Dataset
 1. Download the whole folder from here: https://1drv.ms/u/s!AmCOHF26iIAQgf1ladUQOKtY0an0dg?e=wa1iZX
-2. Go to `object_detection_yolo/paths.py` and adjust the `session_path` accordingly
+2. Go to `speed_estimation/paths.py` and adjust the `session_path` accordingly
 
 
 ## Run
 Only for object_tracking_small.py:
-The path to the video that should be analysed can be set in *object_detection_yolo/paths.py*
-Only for object_tracking.py
-The path to the video should be given to `object_detection_yolo/object_tracking.py` as argument
+The path to the video that should be analysed can be set in *speed_estimation/paths.py*
+Only for speed_estimation.py
+The path to the video should be given to `speed_estimation/speed_estimation.py` as argument
 
-An example run command could be `python object_detection_yolo/object_tracking.py '/data/my_video.mp4'`
+An example run command could be `python speed_estimation/speed_estimation.py '/data/my_video.mp4'`

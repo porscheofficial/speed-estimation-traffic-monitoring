@@ -8,7 +8,7 @@ import configparser
 
 def analyzer(log_file):
     config = configparser.ConfigParser()
-    config.read('object_detection_yolo/config.ini')
+    config.read('speed_estimation/config.ini')
 
 
     # add a new section and some values
@@ -55,7 +55,7 @@ def analyzer(log_file):
         df_grouped["speed"] = speeds
         print(df_grouped)
 
-        with open('object_detection_yolo/config.ini', 'w') as configfile:
+        with open('speed_estimation/config.ini', 'w') as configfile:
             config.write(configfile)
 
         return avg_frame_count, speed_limit

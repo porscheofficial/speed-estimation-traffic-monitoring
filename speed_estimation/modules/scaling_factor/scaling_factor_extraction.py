@@ -5,7 +5,7 @@ from numpy.typing import NDArray
 from scipy.linalg import norm
 from dataclasses import dataclass
 from typing import Dict, List
-from utils.object_tracking import Line, Point, TrackingBox, get_intersection
+from utils.speed_estimation import Line, Point, TrackingBox, get_intersection
 from modules.depth_map.depth_map_utils import DepthModel
 
 

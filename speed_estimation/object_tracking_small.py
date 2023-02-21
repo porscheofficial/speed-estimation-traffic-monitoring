@@ -23,7 +23,7 @@ import copy
 import imutils
 import time
 import uuid
-from utils.object_tracking import TrackingBox, Car, clamp
+from utils.speed_estimation import TrackingBox, Car, clamp
 from modules.evaluation.evaluate import plot_absolute_error
 from modules.depth_map.depth_map_utils import load_depth_map
 import numpy as np
@@ -32,7 +32,7 @@ from analyze_logs import analyzer
 
 
 config = configparser.ConfigParser()
-config.read("object_detection_yolo/config.ini")
+config.read("speed_estimation/config.ini")
 
 # set for callibr:
 max_cars = 40
@@ -88,8 +88,8 @@ def run(
 
     # Initialize Object Detection
     if custom_object_detection:
-        source = "object_detection_yolo/frames_detected/frame.jpg"
-        weights = "object_detection_yolo/model_weights/yolov5/best.pt"
+        source = "speed_estimation/frames_detected/frame.jpg"
+        weights = "speed_estimation/model_weights/yolov5/best.pt"
         od = ObjectDetectionCustom(weights=weights, source=source)
     else:
         od = ObjectDetection()
@@ -120,7 +120,7 @@ def run(
 
         if custom_object_detection:
             frame = fgbg.apply(frame)
-            path_to_frame = "object_detection_yolo/frames_detected/frame.jpg"
+            path_to_frame = "speed_estimation/frames_detected/frame.jpg"
             cv2.imwrite(path_to_frame, frame)
         else:
             frame = imutils.resize(frame, height=352)
@@ -132,7 +132,7 @@ def run(
                 bottom=0,
                 borderType=cv2.BORDER_CONSTANT,
             )
-        # cv2.imwrite("object_detection_yolo/frames_detected/frame%d_new_scaled.jpg" % frame_count, frame)
+        # cv2.imwrite("speed_estimation/frames_detected/frame%d_new_scaled.jpg" % frame_count, frame)
         frame_count += 1
 
         # for shake_detection

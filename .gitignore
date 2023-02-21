@@ -141,4 +141,4 @@ tmp
 
 *.pth
 
-object_detection_yolo/frames_detected/*
+speed_estimation/frames_detected/*
