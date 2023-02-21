@@ -4,7 +4,7 @@ import numpy as np
 from numpy.typing import NDArray
 from scipy.linalg import norm
 from dataclasses import dataclass
-from typing import Dict
+from typing import Dict, List
 from utils.object_tracking import Line, Point, TrackingBox, get_intersection
 from modules.depth_map.depth_map_utils import DepthModel
 
@@ -197,7 +197,7 @@ def online_scaling_factor_estimation_from_least_squares(stream_of_events):
         # velocities, however, even then we can still continue updating the scale factor
 
 
-def get_ground_truth_events(tracking_boxes: Dict[int, list[TrackingBox]]):
+def get_ground_truth_events(tracking_boxes: Dict[int, List[TrackingBox]]):
     # extract ground truth value for each tracking box
     ground_truth_events = []
     for object_id in tracking_boxes:

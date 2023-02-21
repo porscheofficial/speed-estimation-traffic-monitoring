@@ -19,8 +19,6 @@ import time
 import uuid
 from utils.object_tracking import (
     Direction,
-    Line,
-    Point,
     TrackingBox,
     Car,
     calculate_car_direction,
@@ -36,7 +34,7 @@ from modules.scaling_factor.scaling_factor_extraction import (
     offline_scaling_factor_estimation_from_least_squares,
 )
 import torch
-from typing import Dict
+from typing import Dict, List
 
 config = configparser.ConfigParser()
 config.read("object_detection_yolo/config.ini")
@@ -82,7 +80,7 @@ def run(
     track_id = 0
     tracking_objects: Dict[int, TrackingBox] = {}
     tracked_cars: Dict[int, Car] = {}
-    tracked_boxes: Dict[int, list[TrackingBox]] = defaultdict(list)
+    tracked_boxes: Dict[int, List[TrackingBox]] = defaultdict(list)
     depth_model = DepthModel(data_dir)
     geo_model = GeometricModel(depth_model)
     is_calibrated = False
@@ -136,7 +134,7 @@ def run(
             (class_ids, scores, boxes) = od.detect(frame)
 
         # collect tracking boxes
-        tracking_boxes_cur_frame: list[TrackingBox] = []
+        tracking_boxes_cur_frame: List[TrackingBox] = []
         for box in boxes:
             (x, y, w, h) = box.astype(int)
             cx = int((x + x + w) / 2)
@@ -351,8 +349,8 @@ def main():
 
     session_path_local = sys.argv[1] if len(sys.argv) > 1 else session_path
     log_name = run(
-        session_path_local,
         os.path.join(session_path_local, "video.mp4"),
+        session_path_local,
         fps,
         max_frames=max_frames,
         custom_object_detection=custom_object_detection,

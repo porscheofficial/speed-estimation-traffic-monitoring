@@ -3,6 +3,7 @@ from enum import Enum
 from typing import NamedTuple
 import numpy as np
 from dataclasses import dataclass
+from typing import List
 
 def clamp(n, smallest, largest): return max(smallest, min(n, largest)) 
 
@@ -33,7 +34,7 @@ class TrackingBox:
         self.frame_count = frame_count
 
 class Car:
-    def __init__(self, tracked_boxes: list[TrackingBox], frames_seen: int, frame_start: int, frame_end: int, direction: Direction = None) -> None:
+    def __init__(self, tracked_boxes: List[TrackingBox], frames_seen: int, frame_start: int, frame_end: int, direction: Direction = None) -> None:
         self.tracked_boxes = tracked_boxes
         self.frames_seen = frames_seen
         self.frame_start = frame_start
