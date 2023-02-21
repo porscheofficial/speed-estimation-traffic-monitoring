@@ -11,22 +11,22 @@ from modules.depth_map.depth_map_utils import DepthModel
 
 @dataclass
 class CameraPoint:
-    frame: NDArray
+    frame: int
     u: int
     v: int
 
-    def coords(self):
+    def coords(self) -> NDArray:
         return np.array([self.u, self.v])
 
 
 @dataclass
 class WorldPoint:
-    frame: NDArray
+    frame: int
     x: float
     y: float
     z: float
 
-    def coords(self):
+    def coords(self) -> NDArray:
         return np.array([self.x, self.y, self.z])
 
 
@@ -47,7 +47,7 @@ class GeometricModel:
         self.s_v: int = 1  # translating pixels into m in v direction
         self.c_u: int = 1  # this would usually be chosen at half the frame resolution width
         self.c_v: int = 1  # this would usually be chosen at half the frame resolution height
-        self.sale_factor: float = 1
+        self.scale_factor: float = 1
 
     def set_normalization_axes(self, c_u, c_v):
         self.c_u = c_u
@@ -159,9 +159,12 @@ def offline_scaling_factor_estimation_from_least_squares(
 
 
 def online_scaling_factor_estimation_from_least_squares(stream_of_events):
+    ###################
+    # TODO: integrate
+    ###################
     counter = 0
 
-    depth_model = DepthModel()
+    depth_model = DepthModel(data_dir="")
     geometric_model = GeometricModel(depth_model=depth_model)
 
     mean_predictions_two_norm = 0

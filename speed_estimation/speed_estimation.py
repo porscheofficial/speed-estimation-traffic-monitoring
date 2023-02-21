@@ -25,7 +25,6 @@ from utils.speed_estimation import (
 )
 from modules.evaluation.evaluate import plot_absolute_error
 from modules.depth_map.depth_map_utils import DepthModel
-import numpy as np
 from collections import defaultdict
 from modules.scaling_factor.scaling_factor_extraction import (
     GeometricModel,
@@ -43,8 +42,8 @@ config.read("speed_estimation/config.ini")
 def run(
     path_to_video: str,
     data_dir: str,
-    fps: int = None,
-    max_frames: int = None,
+    fps: int = 0,
+    max_frames: int = 0,
     custom_object_detection: bool = False,
 ):
     reload(logging)
@@ -71,7 +70,7 @@ def run(
 
     input_video = cv2.VideoCapture(path_to_video)
 
-    fps = give_me_fps(path_to_video) if fps is None else fps
+    fps = give_me_fps(path_to_video) if fps == 0 else fps
     sliding_window = 60 * fps
     text_color = (255, 255, 255)
 
@@ -332,7 +331,7 @@ def run(
                 f"Frame no. {frame_count} time since start: {(time.time()-start):.2f}s"
             )
         frame_count += 1
-        if max_frames is not None and frame_count >= max_frames:
+        if max_frames != 0 and frame_count >= max_frames:
             break
 
     input_video.release()

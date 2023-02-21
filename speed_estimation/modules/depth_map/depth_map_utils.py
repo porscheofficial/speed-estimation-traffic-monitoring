@@ -14,7 +14,7 @@ class DepthModel:
     def predict_depth(self, frame_id: int) -> NDArray:
         if frame_id in self.memo: return self.memo[frame_id]
 
-        if len(self.memo) > 0:
+        if len(self.memo) > 10:
             depth_maps = [self.memo[frame] for frame in self.memo]
             return sum(depth_maps)/len(depth_maps)
 

@@ -142,3 +142,5 @@ tmp
 *.pth
 
 speed_estimation/frames_detected/*
+
+.vscode/*
