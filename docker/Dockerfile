@@ -1,25 +1,12 @@
-FROM nvidia/cuda:11.7.1-devel-ubuntu22.04
+FROM nvidia/cuda:11.4.1-devel-ubuntu20.04
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG OPENCV_VERSION=4.5.3
 
-# Install python 3.9
-RUN apt-get update && apt-get upgrade -y && \
-    apt-get install -y --no-install-recommends \
-        gnupg2 \
-        python3-pip \
-        software-properties-common && \
-    add-apt-repository ppa:deadsnakes && \
-    apt-get install -y --no-install-recommends \
-        python3.9-dev \
-        python3.9-distutils \
-        python3-numpy && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-# Install build tools, build dependencies
 RUN apt-get update && apt-get upgrade -y &&\
+    # Install build tools, build dependencies and python
     apt-get install -y \
+	python3-pip \
         build-essential \
         cmake \
         git \
@@ -30,6 +17,7 @@ RUN apt-get update && apt-get upgrade -y &&\
         libswscale-dev \
         libtbb2 \
         libtbb-dev \
+        libjpeg-dev \
         libpng-dev \
         libtiff-dev \
         libavformat-dev \
@@ -40,12 +28,19 @@ RUN apt-get update && apt-get upgrade -y &&\
         zlib1g-dev \
         libjpeg-dev \
         libavcodec-dev \
+        libavformat-dev \
         libavutil-dev \
         libpostproc-dev \
+        libswscale-dev \
         libeigen3-dev \
+        libtbb-dev \
         libgtk2.0-dev \
         libcudnn8 \
         libcudnn8-dev \
+        pkg-config \
+        ## Python
+        python3-dev \
+        python3-numpy \
     && rm -rf /var/lib/apt/lists/*
 
 RUN cd /opt/ &&\
@@ -76,6 +71,7 @@ RUN cd /opt/ &&\
     ldconfig &&\
     # Remove OpenCV sources and build folder
     rm -rf /opt/opencv-${OPENCV_VERSION} && rm -rf /opt/opencv_contrib-${OPENCV_VERSION}
+
 
 WORKDIR /storage
 COPY requirements.txt /storage/requirements.txt
