@@ -1,4 +1,4 @@
-from object_detection_yolo.modules.evaluation.evaluate import load_log
+from speed_estimation.modules.evaluation.evaluate import load_log
 import json
 import os
 import re
