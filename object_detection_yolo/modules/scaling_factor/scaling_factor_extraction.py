@@ -4,6 +4,9 @@ import numpy as np
 from numpy.typing import NDArray
 from scipy.linalg import norm
 from dataclasses import dataclass
+from typing import Dict
+from utils.object_tracking import Line, Point, TrackingBox, get_intersection
+from modules.depth_map.depth_map_utils import DepthModel
 
 
 @dataclass
@@ -126,7 +129,7 @@ class GeometricModel:
         unscaled_wp2 = self.get_unscaled_world_point(cp2)
         return self.calculate_distance_between_world_points(unscaled_wp1, unscaled_wp2)
 
-    def get_distance_from_camera_points(self, cp1: CameraPoint, cp2: CameraPoint):
+    def get_distance_from_camera_points(self, cp1: CameraPoint, cp2: CameraPoint) -> float:
         return self.scale_factor * self.get_unscaled_distance_from_camera_points(
             cp1, cp2
         )
@@ -192,3 +195,41 @@ def online_scaling_factor_estimation_from_least_squares(stream_of_events):
 
         # once calibration is finished, we can start using the geometric_model to perform actual predictions for
         # velocities, however, even then we can still continue updating the scale factor
+
+
+def get_ground_truth_events(tracking_boxes: Dict[int, list[TrackingBox]]):
+    # extract ground truth value for each tracking box
+    ground_truth_events = []
+    for object_id in tracking_boxes:
+        center_points = np.array([(box.center_x, box.center_y) for box in tracking_boxes[object_id]])                
+        if len(center_points) < 2 or len(center_points) > 750: 
+            continue
+        center_points_line = Line(Point(*center_points[0]), Point(*center_points[-1]))
+
+        # extract ground truth value for each tracking box
+        for box in tracking_boxes[object_id]:
+
+            # check each of the for lines, spanned by the bounding box rectangle
+            upper_line = Line(Point(box.x, box.y), Point(box.x+box.w, box.y))
+            right_line = Line(Point(box.x+box.w, box.y), Point(box.x+box.w, box.y+box.h))
+            lower_line = Line(Point(box.x, box.y+box.h), Point(box.x+box.w, box.y+box.h))
+            left_line = Line(Point(box.x, box.y), Point(box.x, box.y+box.h))
+
+            intersections = []
+            for bounding_box_line in [upper_line, right_line, lower_line, left_line]:
+                intersection = get_intersection(center_points_line, bounding_box_line)
+                if intersection:
+                    intersections.append(intersection)
+            
+            if len(intersections) == 2:
+                # append ground truth only if line fully cuts bounding box
+                intersect1, intersect2 = intersections
+                ground_truth_events.append(
+                    GroundTruthEvent(
+                        (box.frame_count, int(intersect1.x), int(intersect1.y)), 
+                        (box.frame_count, int(intersect2.x), int(intersect2.y)), 
+                        6
+                        )
+                    )
+                    
+    return ground_truth_events

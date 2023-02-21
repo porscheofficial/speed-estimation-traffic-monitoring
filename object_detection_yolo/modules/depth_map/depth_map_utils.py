@@ -3,6 +3,25 @@ import os
 import numpy as np
 import imutils
 from modules.depth_map.pixelformer.test import generate_depth_map
+from numpy.typing import NDArray
+
+class DepthModel:
+
+    def __init__(self, data_dir: str) -> None:
+        self.data_dir = data_dir
+        self.memo = {}
+
+    def predict_depth(self, frame_id: int) -> NDArray:
+        if frame_id in self.memo: return self.memo[frame_id]
+
+        if len(self.memo) > 0:
+            depth_maps = [self.memo[frame] for frame in self.memo]
+            return sum(depth_maps)/len(depth_maps)
+
+        self.memo[frame_id] = load_depth_map_from_file(self.data_dir, max_depth=1, frame=frame_id)
+        
+        # predict depth here
+        return self.memo[frame_id]
 
 
 def get_padding_right(shape, height = 352):

@@ -100,7 +100,7 @@ def generate_depth_map(data_folder: str, file_name: str, *, max_depth_o: int):
             if use_cpu:
                 image = Variable(sample['image'])
             else:
-                image = Variable(sample['image'])
+                image = Variable(sample['image'].cuda(device))
 
             # Predict
             depth_est = model(image)

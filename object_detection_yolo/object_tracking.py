@@ -11,150 +11,27 @@ from modules.object_detection.yolov5.object_detection import (
 from modules.object_detection.yolov4.object_detection import ObjectDetection
 import math
 from get_fps import give_me_fps
-import pandas as pd
 import logging
 import json
 from modules.shake_detection.shake_detection import ShakeDetection
 from paths import session_path
-import copy
-import imutils
 import time
 import uuid
-from utils.object_tracking import Direction, Line, Point, TrackingBox, Car, clamp
+from utils.object_tracking import Direction, Line, Point, TrackingBox, Car, calculate_car_direction
 from modules.evaluation.evaluate import plot_absolute_error
-from modules.depth_map.depth_map_utils import load_depth_map, load_depth_map_from_file
+from modules.depth_map.depth_map_utils import DepthModel
 import numpy as np
 from collections import defaultdict
-from scipy.spatial.distance import euclidean
-from modules.scaling_factor.scaling_factor_extraction import GroundTruthEvent, offline_scaling_factor_estimation_from_least_squares, GeometricModel, CameraPoint
+from modules.scaling_factor.scaling_factor_extraction import GeometricModel, CameraPoint, get_ground_truth_events, offline_scaling_factor_estimation_from_least_squares
+import torch
+from typing import Dict
 
 config = configparser.ConfigParser()
 config.read("object_detection_yolo/config.ini")
 
-# ground_truth_events = [
-#     GroundTruthEvent((frame_count, 296, 167), (frame_count, 1142, 967), 28.),
-#     GroundTruthEvent((frame_count, 114, 190), (frame_count, 575, 828), 25.),
-#     GroundTruthEvent((frame_count, 1141, 712), (frame_count, 1446, 973), 4.),
-# ]
 
-# Ihre Markierung 28m 
-# Strassenpfosen 25m 
-# Auto 4m 
-# geo_model.scale_factor = 84
-# ground_truth_sanity_check = dict(
-#     marked_points=geo_model.get_distance_from_camera_points(CameraPoint(frame_count, 296, 167), CameraPoint(frame_count, 1142, 967)),
-#     delineator=geo_model.get_distance_from_camera_points(CameraPoint(frame_count, 114, 190), CameraPoint(frame_count, 575, 828)),
-#     car=geo_model.get_distance_from_camera_points(CameraPoint(frame_count, 1141, 712), CameraPoint(frame_count, 1446, 973))
-# )
-# depth_map_sanity_check = dict(
-#     marked_points=depth_model.memo[frame_count][167, 296] - depth_model.memo[frame_count][967, 1142],
-#     delineator=depth_model.memo[frame_count][190, 114] - depth_model.memo[frame_count][828, 575],
-#     car=depth_model.memo[frame_count][712, 1141] - depth_model.memo[frame_count][973, 1446]
-# )
-
-class DepthModel:
-
-    def __init__(self, data_dir) -> None:
-        self.data_dir = data_dir
-        self.memo = {}
-
-    def predict_depth(self, frame_id):
-        if frame_id in self.memo: return self.memo[frame_id]
-
-        if len(self.memo) > 10:
-            depth_maps = [self.memo[frame] for frame in self.memo]
-            # with open("object_detection_yolo/frames_detected/depth_map.npy", "wb") as fp:
-            #     np.save(fp, sum(depth_maps)/len(depth_maps))
-            return sum(depth_maps)/len(depth_maps)
-
-        self.memo[frame_id] = load_depth_map_from_file(self.data_dir, max_depth=1, frame=frame_id)
-        # predict depth here
-        return self.memo[frame_id]
-
-
-def get_intersection(line_a: Line, line_b: Line) -> Point:
-    b = Point(*line_a.end.coords() - line_a.start.coords())
-    d = Point(*line_b.end.coords() - line_b.start.coords())
-    b_dot_d = b.x * d.y - b.y * d.x
-
-    if b_dot_d == 0:
-        # lines are parallel, no intersection
-        return False
-    
-    c = Point(*line_b.start.coords() - line_a.start.coords())
-    t = (c.x * d.y - c.y * d.x) / b_dot_d
-    if t < 0 or t > 1:
-        return False
-    
-    u = (c.x * b.y - c.y * b.x) / b_dot_d
-    if u < 0 or u > 1:
-        return False
-    
-    return Point(*line_a.start.coords() + t * b.coords())
-
-
-def get_ground_truth_events(tracking_boxes, frame=None):
-    # extract ground truth value for each tracking box
-    ground_truth_events = []
-    for object_id in tracking_boxes:
-        center_points = np.array([(box.center_x, box.center_y) for box in tracking_boxes[object_id]])                
-        if len(center_points) < 10 or len(center_points) > 750: 
-            continue
-        center_points_line = Line(Point(*center_points[0]), Point(*center_points[-1]))
-
-        # extract ground truth value for each tracking box
-        for box in tracking_boxes[object_id]:
-
-            # check each of the for lines, spanned by the bounding box rectangle
-            upper_line = Line(Point(box.x, box.y), Point(box.x+box.w, box.y))
-            right_line = Line(Point(box.x+box.w, box.y), Point(box.x+box.w, box.y+box.h))
-            lower_line = Line(Point(box.x, box.y+box.h), Point(box.x+box.w, box.y+box.h))
-            left_line = Line(Point(box.x, box.y), Point(box.x, box.y+box.h))
-
-            intersections = []
-            for bounding_box_line in [upper_line, right_line, lower_line, left_line]:
-                intersection = get_intersection(center_points_line, bounding_box_line)
-                if intersection:
-                    intersections.append(intersection)
-            
-            if len(intersections) == 2:
-                # append ground truth only if line fully cuts bounding box
-                intersect1, intersect2 = intersections
-                ground_truth_events.append(
-                    GroundTruthEvent(
-                        (box.frame, int(intersect1.x), int(intersect1.y)), 
-                        (box.frame, int(intersect2.x), int(intersect2.y)), 
-                        6
-                        )
-                    )
-
-                # cv2.rectangle(frame, (box.x, box.y), (box.x + box.w, box.y + box.h), (255, 0, 0), 2)
-                # cv2.line(frame, (int(intersect1.x), int(intersect1.y)), (int(intersect2.x), int(intersect2.y)), (0,255,0), 8)
-                # cv2.imwrite(f"object_detection_yolo/frames_detected/line_approach.jpg", frame)
-
-    return ground_truth_events
-
-def calculate_car_direction(car: Car) -> Direction:
-    first_box = car.tracked_boxes[0]
-    last_box = car.tracked_boxes[-1]
-
-    if (first_box.y - last_box.y) < 0:
-        return Direction.towards
-    else:
-        return Direction.away
-
-def run(
-    data_dir, fps=None, max_frames=None, custom_object_detection=False
-):
+def run(path_to_video: str, data_dir: str, fps: int = None, max_frames: int = None, custom_object_detection: bool = False):
     reload(logging)
-    path_to_video = os.path.join(data_dir, "video.mp4")
-
-    # Load Cars
-    #cars = pd.read_csv(data_dir + "cars.csv")
-
-    def avg_speed_for_time(timeStart, timeEnd):
-        cars_to_avg = tracked_cars.loc[tracked_cars["start"].gt(timeStart) & tracked_cars["end"].le(timeEnd)]
-        return cars_to_avg["speed"].mean()
 
     run_id = uuid.uuid4().hex[:10]
     print(f"Run No.: {run_id}")
@@ -183,16 +60,13 @@ def run(
     fps = give_me_fps(path_to_video) if fps is None else fps
     sliding_window = 60 * fps
     text_color = (255, 255, 255)
-    # text_color = (0,0,0)
 
-    # Initialize count
+    # Initialize running variables
     frame_count = 0
-    tracking_objects = {}
-    frames = {}
-    tracked_cars = {}
     track_id = 0
-    avg_speed = "calculating"
-    tracked_boxes = defaultdict(list)
+    tracking_objects: Dict[int, TrackingBox] = {}
+    tracked_cars: Dict[int, Car] = {}
+    tracked_boxes: Dict[int, list[TrackingBox]] = defaultdict(list)
     depth_model = DepthModel(data_dir)
     geo_model = GeometricModel(depth_model)
     is_calibrated = False
@@ -213,7 +87,7 @@ def run(
         # load frame, shake detection and object detection
         ############################
         ret, frame = input_video.read()
-        frames[frame_count] = frame
+
         if frame_count == 0:
             # set normalization axes once at beginning
             c_u = int(frame.shape[1] / 2)
@@ -224,7 +98,6 @@ def run(
             break
 
         if custom_object_detection:
-            #cv2.imwrite(f"object_detection_yolo/frames_detected/frame_rgb.jpg", frame)
             frame = fgbg.apply(frame)
             frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2RGB)
             path_to_frame = f"object_detection_yolo/frames_detected/frame_{run_id}.jpg"
@@ -236,49 +109,45 @@ def run(
                 f"Run No.: {run_id}, Video: {data_dir}, Hard Move Detected Frame: {frame_count}"
             )
 
-        # Point current frame
-        center_points_cur_frame = []
-        center_points_prev_frame = []
-
-        # Detect objects on frame
+        ############################
+        # Detect cars on frame
+        ############################
         if custom_object_detection:
             boxes = od.detect(path_to_frame)
             if len(boxes) == 0:
                 continue
         else:
+            # TODO: look into scores
             (class_ids, scores, boxes) = od.detect(frame)
 
-        # Point current frame
-        center_points_cur_frame = []
-
+        # collect tracking boxes
+        tracking_boxes_cur_frame: list[TrackingBox] = []
         for box in boxes:
             (x, y, w, h) = box.astype(int)
             cx = int((x + x + w) / 2)
             cy = int((y + y + h) / 2)
 
-            center_points_cur_frame.append(
+            tracking_boxes_cur_frame.append(
                 TrackingBox(cx, cy, x, y, w, h, frame_count)
             )
             cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
 
-
         ############################
         # assign tracking box IDs
         ############################
-        for object_id, point_prev in tracking_objects.copy().items():
+        for object_id, tracking_box_prev in tracking_objects.copy().items():
             object_exists = False
-            for point_cur in center_points_cur_frame:
-                distance = math.hypot(point_prev.x - point_cur.x, point_prev.y - point_cur.y)
+            for tracking_box_cur in tracking_boxes_cur_frame:
+                distance = math.hypot(tracking_box_prev.x - tracking_box_cur.x, tracking_box_prev.y - tracking_box_cur.y)
 
                 # Update IDs position
                 if distance < 50:
-
-                    tracking_objects[object_id] = point_cur
+                    tracking_objects[object_id] = tracking_box_cur
                     object_exists = True
-                    if point_cur in center_points_cur_frame:
+                    if tracking_box_cur in tracking_boxes_cur_frame:
                         # Point should not match to multiple boxes
                         # TODO: Only take closest!
-                        center_points_cur_frame.remove(point_cur)
+                        tracking_boxes_cur_frame.remove(tracking_box_cur)
                     break
 
             # Remove IDs lost
@@ -286,39 +155,42 @@ def run(
                 tracking_objects.pop(object_id)
 
         # Add new IDs found
-        for point_cur in center_points_cur_frame:
-            tracking_objects[track_id] = point_cur
+        for tracking_box_cur in tracking_boxes_cur_frame:
+            tracking_objects[track_id] = tracking_box_cur
             track_id += 1
-
 
         ############################
         # scaling factor estimation
         ############################
         if not is_calibrated:
             if len(tracked_boxes) > 150:
-                # more than 10 cars were tracked
-                ground_truth_events = get_ground_truth_events(tracked_boxes, frame)
+                # more than x cars were tracked
+                ground_truth_events = get_ground_truth_events(tracked_boxes)
                 if len(ground_truth_events) > 50:
+                    # could extract more than x ground truth events
                     geo_model.scale_factor = offline_scaling_factor_estimation_from_least_squares(geo_model, ground_truth_events)
                     logging.info(f"Is calibrated: scale_factor: {geo_model.scale_factor}")
                     print(f"Is calibrated: scale_factor: {geo_model.scale_factor}", flush=True)
                     is_calibrated = True
+                    torch.cuda.empty_cache()
+                    od = ObjectDetection()
 
             if frame_count % fps == 0:
                 print(f"Have to calibrate: {len(tracked_boxes)}", flush=True)
-            for object_id, point in tracking_objects.items():
-                tracked_boxes[object_id].append(point)
+            for object_id, tracking_box in tracking_objects.items():
+                tracked_boxes[object_id].append(tracking_box)
         else:
             ############################
             # track cars
             ############################
-            for object_id, point in tracking_objects.items():
-                cv2.putText(frame, f"ID:{object_id}", (point.x + point.w + 5, point.y + point.h), 0, 1, (255,255,255), 2)
+            for object_id, tracking_box in tracking_objects.items():
+                cv2.putText(frame, f"ID:{object_id}", (tracking_box.x + tracking_box.w + 5, tracking_box.y + tracking_box.h), 0, 1, (255,255,255), 2)
                 if object_id in tracked_cars:
-                    tracked_cars[object_id].tracked_boxes.append(point)
+                    tracked_cars[object_id].tracked_boxes.append(tracking_box)
                     tracked_cars[object_id].frames_seen += 1
                     tracked_cars[object_id].frame_end += 1
                 else:
+                    tracked_cars[object_id] = Car([tracking_box], 1, frame_count, frame_count)
                     
 
             ############################
@@ -342,8 +214,8 @@ def run(
                             car_first_box = car.tracked_boxes[0]
                             car_last_box = car.tracked_boxes[-1] 
                             meters_moved = geo_model.get_distance_from_camera_points(
-                                CameraPoint(car_first_box.frame, car_first_box.center_x, car_first_box.center_y), 
-                                CameraPoint(car_last_box.frame, car_last_box.center_x, car_last_box.center_y)
+                                CameraPoint(car_first_box.frame_count, car_first_box.center_x, car_first_box.center_y), 
+                                CameraPoint(car_last_box.frame_count, car_last_box.center_x, car_last_box.center_y)
                                 )
 
                             if car.direction == Direction.towards:
@@ -411,11 +283,11 @@ def main():
     session_path_local = sys.argv[1] if len(sys.argv) > 1 else session_path
     log_name = run(
         session_path_local,
+        os.path.join(session_path_local, "video.mp4"),
         fps,
         max_frames=max_frames,
         custom_object_detection=custom_object_detection,
     )
-
 
     ### Evaluation
     plot_absolute_error([log_name], "logs/")
