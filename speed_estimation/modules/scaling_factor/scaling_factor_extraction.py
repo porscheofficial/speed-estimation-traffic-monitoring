@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from typing import Dict, List
 from utils.speed_estimation import Line, Point, TrackingBox, get_intersection
 from modules.depth_map.depth_map_utils import DepthModel
-
+from scipy.spatial import distance
 
 @dataclass
 class CameraPoint:
@@ -201,11 +201,24 @@ def online_scaling_factor_estimation_from_least_squares(stream_of_events):
 
 
 def get_ground_truth_events(tracking_boxes: Dict[int, List[TrackingBox]]):
+    # extract medium pixel distance traveled by object
+    box_distances = []
+    for object_id in tracking_boxes:
+        start_box = tracking_boxes[object_id][0]
+        end_box = tracking_boxes[object_id][-1]
+        tracking_box_distance = distance.euclidean([start_box.center_x, start_box.center_y], [end_box.center_x, end_box.center_y])
+        box_distances.append(tracking_box_distance)        
+
+    median_distance = np.percentile(np.array(box_distances), 50)
+
     # extract ground truth value for each tracking box
     ground_truth_events = []
     for object_id in tracking_boxes:
-        center_points = np.array([(box.center_x, box.center_y) for box in tracking_boxes[object_id]])                
-        if len(center_points) < 2 or len(center_points) > 750: 
+        center_points = np.array([(box.center_x, box.center_y) for box in tracking_boxes[object_id]])
+        start_box = center_points[0]
+        end_box = center_points[-1]
+        tracking_box_distance = distance.euclidean(start_box, end_box)
+        if len(center_points) < 2 or len(center_points) > 750 or tracking_box_distance < median_distance: 
             continue
         center_points_line = Line(Point(*center_points[0]), Point(*center_points[-1]))
 

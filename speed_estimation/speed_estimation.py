@@ -156,6 +156,7 @@ def run(
                 )
 
                 # Update IDs position
+                # TODO: should choose more sophisticated approach here 
                 if distance < 50:
                     tracking_objects[object_id] = tracking_box_cur
                     object_exists = True
@@ -178,9 +179,10 @@ def run(
         # scaling factor estimation
         ############################
         if not is_calibrated:
-            if len(tracked_boxes) > 150:
+            if len(tracked_boxes) > 400:
                 # more than x cars were tracked
                 ground_truth_events = get_ground_truth_events(tracked_boxes)
+                print("Number of GT events: ", len(ground_truth_events))
                 if len(ground_truth_events) > 50:
                     # could extract more than x ground truth events
                     geo_model.scale_factor = (
@@ -232,8 +234,8 @@ def run(
             ############################
             # speed estimation
             ############################
-            if frame_count >= fps and frame_count % (60 * fps) == 0:
-                # every 10 seconds
+            if frame_count >= fps and frame_count % (15 * fps) == 0:
+                # every x seconds
                 car_count_towards = 0
                 car_count_away = 0
                 total_speed_towards = 0
@@ -244,7 +246,7 @@ def run(
 
                 for car_id, car in tracked_cars.items():
                     if car.frame_end >= frame_count - sliding_window:
-                        if car.frames_seen > 5:
+                        if 5 < car.frames_seen < 750:
                             car.direction = calculate_car_direction(car)
                             car_first_box = car.tracked_boxes[0]
                             car_last_box = car.tracked_boxes[-1]
@@ -260,6 +262,8 @@ def run(
                                     car_last_box.center_y,
                                 ),
                             )
+                            if meters_moved <= 6:
+                                continue
 
                             if car.direction == Direction.towards:
                                 car_count_towards += 1
@@ -344,7 +348,7 @@ def main():
     fps = config.getint("DEFAULT", "fps")
     custom_object_detection = config.getboolean("DEFAULT", "custom_object_detection")
 
-    max_frames = fps * 60 * 15  # fps * sec * min
+    max_frames = fps * 60 * 30  # fps * sec * min
 
     session_path_local = sys.argv[1] if len(sys.argv) > 1 else session_path
     log_name = run(

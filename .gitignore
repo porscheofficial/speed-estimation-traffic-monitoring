@@ -144,3 +144,6 @@ tmp
 speed_estimation/frames_detected/*
 
 .vscode/*
+
+output/*
+!output/.gitkeep

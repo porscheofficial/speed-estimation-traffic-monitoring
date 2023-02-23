@@ -45,7 +45,7 @@ def generate_aligned_estimations(run_ids, loaded_avg_speeds, ground_truth):
     estimations = {k: [] for k in run_ids}
     timestamps = []
 
-    for start in range(90, 15 * 60, 60):
+    for start in range(300, 30 * 60, 60):
         end = start + 60
         truth.append(avg_speed_for_time_ground_truth(ground_truth, start, end))
         for idx, id in enumerate(run_ids):
