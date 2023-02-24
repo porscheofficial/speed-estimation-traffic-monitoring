@@ -85,6 +85,7 @@ def run(
     is_calibrated = False
 
     MAX_TRACKING_MATCH_DISTANCE = int(config.get("tracker", "max_match_distance"))
+    CAR_CLASS_ID = int(config.get("tracker", "car_class_id"))
 
     # for shake_detection
     shake_detection = ShakeDetection()
@@ -133,6 +134,7 @@ def run(
         else:
             # TODO: look into scores
             (class_ids, scores, boxes) = od.detect(frame)
+            boxes = [boxes[i] for i, class_id in enumerate(class_ids) if class_id == CAR_CLASS_ID]
 
         # collect tracking boxes
         tracking_boxes_cur_frame: List[TrackingBox] = []
