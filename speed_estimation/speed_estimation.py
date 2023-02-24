@@ -185,7 +185,7 @@ def run(
                 print("Number of GT events: ", len(ground_truth_events))
                 if len(ground_truth_events) > 50:
                     # could extract more than x ground truth events
-                    geo_model.scale_factor = (
+                    geo_model.scale_factor = 2 * (
                         offline_scaling_factor_estimation_from_least_squares(
                             geo_model, ground_truth_events
                         )
@@ -348,7 +348,7 @@ def main():
     fps = config.getint("DEFAULT", "fps")
     custom_object_detection = config.getboolean("DEFAULT", "custom_object_detection")
 
-    max_frames = fps * 60 * 30  # fps * sec * min
+    max_frames = fps * 60 * 20  # fps * sec * min
 
     session_path_local = sys.argv[1] if len(sys.argv) > 1 else session_path
     log_name = run(
