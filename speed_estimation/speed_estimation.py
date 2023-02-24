@@ -84,6 +84,8 @@ def run(
     geo_model = GeometricModel(depth_model)
     is_calibrated = False
 
+    MAX_TRACKING_MATCH_DISTANCE = int(config.get("tracker", "max_match_distance"))
+
     # for shake_detection
     shake_detection = ShakeDetection()
 
@@ -148,26 +150,27 @@ def run(
         # assign tracking box IDs
         ############################
         for object_id, tracking_box_prev in tracking_objects.copy().items():
-            object_exists = False
+            min_distance = math.inf
+            min_track_box = None
+
+            # Find closest bounding box
             for tracking_box_cur in tracking_boxes_cur_frame:
                 distance = math.hypot(
                     tracking_box_prev.x - tracking_box_cur.x,
                     tracking_box_prev.y - tracking_box_cur.y,
                 )
 
-                # Update IDs position
-                # TODO: should choose more sophisticated approach here 
-                if distance < 50:
-                    tracking_objects[object_id] = tracking_box_cur
-                    object_exists = True
-                    if tracking_box_cur in tracking_boxes_cur_frame:
-                        # Point should not match to multiple boxes
-                        # TODO: Only take closest!
-                        tracking_boxes_cur_frame.remove(tracking_box_cur)
-                    break
+                # Only take bounding box if it is closest AND somewhat close to bounding box (closer than MAX_TRACKING_...)
+                if distance < min_distance and distance < MAX_TRACKING_MATCH_DISTANCE:
+                    min_distance = distance
+                    min_track_box = tracking_box_cur
 
-            # Remove IDs lost
-            if not object_exists:
+            if min_track_box is not None:
+                # Update tracking box for object if close box found
+                tracking_objects[object_id] = min_track_box
+                tracking_boxes_cur_frame.remove(min_track_box)
+            else:
+                # Remove IDs lost
                 tracking_objects.pop(object_id)
 
         # Add new IDs found
