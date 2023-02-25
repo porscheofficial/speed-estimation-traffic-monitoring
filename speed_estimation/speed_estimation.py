@@ -71,8 +71,9 @@ def run(
     input_video = cv2.VideoCapture(path_to_video)
 
     fps = give_me_fps(path_to_video) if fps == 0 else fps
-    sliding_window = 60 * fps
-    text_color = (255, 255, 255)
+
+    SLIDING_WINDOW_SEC = config.getint("main", "sliding_window_sec")
+    sliding_window = SLIDING_WINDOW_SEC * fps
 
     # Initialize running variables
     frame_count = 0
@@ -83,16 +84,20 @@ def run(
     depth_model = DepthModel(data_dir)
     geo_model = GeometricModel(depth_model)
     is_calibrated = False
+    text_color = (255, 255, 255)
 
-    MAX_TRACKING_MATCH_DISTANCE = int(config.get("tracker", "max_match_distance"))
-    CAR_CLASS_ID = int(config.get("tracker", "car_class_id"))
+    MAX_TRACKING_MATCH_DISTANCE = config.getint("tracker", "max_match_distance")
+    CAR_CLASS_ID = config.getint("tracker", "car_class_id")
+
+    NUM_TRACKED_CARS = config.getint("calibration", "num_tracked_cars")
+    NUM_GT_EVENTS = config.getint("calibration", "num_gt_events")
+
+    # meta_appr
+    AVG_FRAME_COUNT = config.getfloat("analyzer", "avg_frame_count")
+    SPEED_LIMIT = config.getint("analyzer", "speed_limit")
 
     # for shake_detection
     shake_detection = ShakeDetection()
-
-    # meta_appr
-    avg_frame_count = float(config.get("analyzer", "avg_frame_count"))
-    speed_limit = int(config.get("analyzer", "speed_limit"))
 
     if custom_object_detection:
         fgbg = cv2.bgsegm.createBackgroundSubtractorMOG()
@@ -184,11 +189,11 @@ def run(
         # scaling factor estimation
         ############################
         if not is_calibrated:
-            if len(tracked_boxes) > 400:
+            if len(tracked_boxes) >= NUM_TRACKED_CARS:
                 # more than x cars were tracked
                 ground_truth_events = get_ground_truth_events(tracked_boxes)
                 print("Number of GT events: ", len(ground_truth_events))
-                if len(ground_truth_events) > 50:
+                if len(ground_truth_events) >= NUM_GT_EVENTS:
                     # could extract more than x ground truth events
                     geo_model.scale_factor = 2 * (
                         offline_scaling_factor_estimation_from_least_squares(
@@ -276,16 +281,16 @@ def run(
                                     car.frames_seen / fps
                                 )
                                 total_speed_meta_appr_towards += (
-                                    avg_frame_count / int(car.frames_seen)
-                                ) * speed_limit
+                                    AVG_FRAME_COUNT / int(car.frames_seen)
+                                ) * SPEED_LIMIT
                             else:
                                 car_count_away += 1
                                 total_speed_away += (meters_moved) / (
                                     car.frames_seen / fps
                                 )
                                 total_speed_meta_appr_away += (
-                                    avg_frame_count / int(car.frames_seen)
-                                ) * speed_limit
+                                    AVG_FRAME_COUNT / int(car.frames_seen)
+                                ) * SPEED_LIMIT
 
                     else:
                         # car is too old, drop from tracked_cars
@@ -350,18 +355,18 @@ def run(
 
 
 def main():
-    fps = config.getint("DEFAULT", "fps")
-    custom_object_detection = config.getboolean("DEFAULT", "custom_object_detection")
+    FPS = config.getint("main", "fps")
+    CUSTOM_OBJECT_DETECTION = config.getboolean("main", "custom_object_detection")
 
-    max_frames = fps * 60 * 20  # fps * sec * min
+    max_frames = FPS * 60 * 20  # fps * sec * min
 
     session_path_local = sys.argv[1] if len(sys.argv) > 1 else session_path
     log_name = run(
         os.path.join(session_path_local, "video.mp4"),
         session_path_local,
-        fps,
+        FPS,
         max_frames=max_frames,
-        custom_object_detection=custom_object_detection,
+        custom_object_detection=CUSTOM_OBJECT_DETECTION,
     )
 
     ### Evaluation
