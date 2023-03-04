@@ -34,6 +34,7 @@ from modules.scaling_factor.scaling_factor_extraction import (
 )
 import torch
 from typing import Dict, List
+from tqdm import tqdm
 
 config = configparser.ConfigParser()
 config.read("speed_estimation/config.ini")
@@ -101,6 +102,9 @@ def run(
 
     if custom_object_detection:
         fgbg = cv2.bgsegm.createBackgroundSubtractorMOG()
+
+    progress_bar = tqdm(total=NUM_TRACKED_CARS)
+    progress_bar.set_description("Calibrating")
 
     while True:
         ############################
@@ -208,11 +212,11 @@ def run(
                         flush=True,
                     )
                     is_calibrated = True
+                    progress_bar.close()
                     torch.cuda.empty_cache()
                     od = ObjectDetection()
 
-            if frame_count % fps == 0:
-                print(f"Have to calibrate: {len(tracked_boxes)}", flush=True)
+            progress_bar.update(len(tracked_boxes) - progress_bar.n)
             for object_id, tracking_box in tracking_objects.items():
                 tracked_boxes[object_id].append(tracking_box)
         else:
@@ -346,6 +350,8 @@ def run(
             )
         frame_count += 1
         if max_frames != 0 and frame_count >= max_frames:
+            if not is_calibrated:
+                log_name = None
             break
 
     input_video.release()
@@ -369,8 +375,11 @@ def main():
         custom_object_detection=CUSTOM_OBJECT_DETECTION,
     )
 
-    ### Evaluation
-    plot_absolute_error([log_name], "logs/")
+    if log_name is None:
+        print("Calibration did not finish, skip evaluation.")
+    else:
+        ### Evaluation
+        plot_absolute_error([log_name], "logs/")
 
 
 if __name__ == "__main__":
