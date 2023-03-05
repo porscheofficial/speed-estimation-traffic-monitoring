@@ -89,10 +89,37 @@ def plot_absolute_error(logs: 'list[str]', save_file_path=None):
         csv_path = os.path.join(save_file_path, f"{video_id}_{id}_error.csv")
         df[run_id_list].mean(axis=0).to_csv(csv_path)
 
+
+def get_gt_for_cctv_dataset(path):
+    # 0: towards camera, 1: away from camera
+    lanes_to_use = [1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 1]
+    fps = 25
+
+    summary = []
+    count = 0
+
+    for file in sorted(os.listdir(path)):
+        filename = os.fsdecode(file)
+        file_number = filename.split('.')[0]
+        n = np.load(os.path.join(path, filename))
+
+        speed = round(np.mean(n['speeds']), 2)
+        frames_seen = n['timestamps'][len(n['timestamps'])-1] - n['timestamps'][0]
+
+        gt = {"filename": file_number, "speed_in_kmh": speed, "time_seen": frames_seen/fps, "lane_to_use": lanes_to_use[count]}
+
+        summary.append(gt)
+        count += 1
+    
+    return summary
+
+
 def main():
     arr = ["/home/ssawicki/porsche_digital_hpi/logs/20230204-090410_run_371dbc8dd5.log"]
 
     plot_absolute_error(arr, 'logs/')
+    
+    gf_cctv = get_gt_for_cctv_dataset("/Users/matthiasschneider/Downloads/cctv_dataset/data/cctv_videos/gt")
 
 if __name__ == '__main__':
     main()
