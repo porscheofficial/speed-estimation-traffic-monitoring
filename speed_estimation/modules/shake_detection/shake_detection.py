@@ -1,5 +1,6 @@
 import numpy as np
 
+
 class ShakeDetection:
     last_frame = None
     last_frames_zero_percentage = []
@@ -9,7 +10,7 @@ class ShakeDetection:
 
         if self.last_frame is None or new_frame is None:
             return False
-        
+
         out = self.last_frame - new_frame
         out[-11:11] = 0  # remove some random noise
         zeros = out.size - np.count_nonzero(out)
@@ -27,9 +28,8 @@ class ShakeDetection:
             self.updateChanges()
 
         return False
-    
+
     def updateChanges(self):
         length_f = len(self.last_frames_zero_percentage)
         last100 = length_f - 102
         del self.last_frames_zero_percentage[last100:]
-            

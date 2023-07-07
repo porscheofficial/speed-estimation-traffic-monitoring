@@ -2,10 +2,11 @@ import json
 import os
 import re
 import uuid
-import pandas as pd
-from sklearn.metrics import mean_squared_error, mean_absolute_error
-import plotly.express as px
+
 import numpy as np
+import pandas as pd
+import plotly.express as px
+
 
 def load_log(log_path: str):
     cars_path = None
@@ -18,7 +19,7 @@ def load_log(log_path: str):
                 result = re.search('Video: (.*)', line)
                 cars_path = result.group(1)
                 print(f"Found cars path from log: {cars_path}")
-            if not  line.startswith('INFO:root:{'):
+            if not line.startswith('INFO:root:{'):
                 continue
             line_dict = json.loads(line[10:])
             if "avgSpeedTowards" in line_dict:
@@ -34,11 +35,13 @@ def avg_speed_for_time_ground_truth(cars_truth, timeStart, timeEnd):
     cars_to_avg = cars_truth.loc[cars_truth['start'].gt(timeStart) & cars_truth['end'].le(timeEnd)]
     return cars_to_avg['speed'].mean()
 
+
 def avg_speed_for_time_estimation(estimation, timeStart, timeEnd):
     timeStart *= 50
     timeEnd *= 50
     estimation_avg = estimation.loc[estimation['frameId'].gt(timeStart) & estimation['frameId'].le(timeEnd)]
     return estimation_avg['avgSpeedTowards'].mean()
+
 
 def generate_aligned_estimations(run_ids, loaded_avg_speeds, ground_truth):
     truth = []
@@ -49,10 +52,11 @@ def generate_aligned_estimations(run_ids, loaded_avg_speeds, ground_truth):
         end = start + 60
         truth.append(avg_speed_for_time_ground_truth(ground_truth, start, end))
         for idx, id in enumerate(run_ids):
-            estimations[id].append(avg_speed_for_time_estimation(loaded_avg_speeds[idx], start,end))
+            estimations[id].append(avg_speed_for_time_estimation(loaded_avg_speeds[idx], start, end))
         timestamps.append(end)
 
     return truth, estimations, timestamps
+
 
 def plot_absolute_error(logs: 'list[str]', save_file_path=None):
     run_ids, loaded_avg_speeds, cars_paths = zip(*list(map(load_log, logs)))
@@ -84,7 +88,7 @@ def plot_absolute_error(logs: 'list[str]', save_file_path=None):
         fig.write_image(file=os.path.join(save_file_path, f"{video_id}_{id}_mae.pdf"))
     else:
         fig.show()
-    
+
     if save_file_path is not None:
         csv_path = os.path.join(save_file_path, f"{video_id}_{id}_error.csv")
         df[run_id_list].mean(axis=0).to_csv(csv_path)
@@ -92,7 +96,8 @@ def plot_absolute_error(logs: 'list[str]', save_file_path=None):
 
 def get_gt_for_cctv_dataset(path):
     # 0: towards camera, 1: away from camera
-    lanes_to_use = [1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 1]
+    lanes_to_use = [1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 1,
+                    0, 1, 1, 1, 0, 0, 1]
     fps = 25
 
     summary = []
@@ -104,13 +109,14 @@ def get_gt_for_cctv_dataset(path):
         n = np.load(os.path.join(path, filename))
 
         speed = round(np.mean(n['speeds']), 2)
-        frames_seen = n['timestamps'][len(n['timestamps'])-1] - n['timestamps'][0]
+        frames_seen = n['timestamps'][len(n['timestamps']) - 1] - n['timestamps'][0]
 
-        gt = {"filename": file_number, "speed_in_kmh": speed, "time_seen": frames_seen/fps, "lane_to_use": lanes_to_use[count]}
+        gt = {"filename": file_number, "speed_in_kmh": speed, "time_seen": frames_seen / fps,
+              "lane_to_use": lanes_to_use[count]}
 
         summary.append(gt)
         count += 1
-    
+
     return summary
 
 
@@ -118,8 +124,9 @@ def main():
     arr = ["/home/ssawicki/porsche_digital_hpi/logs/20230204-090410_run_371dbc8dd5.log"]
 
     plot_absolute_error(arr, 'logs/')
-    
+
     gf_cctv = get_gt_for_cctv_dataset("/Users/matthiasschneider/Downloads/cctv_dataset/data/cctv_videos/gt")
+
 
 if __name__ == '__main__':
     main()

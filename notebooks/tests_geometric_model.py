@@ -1,5 +1,6 @@
 import unittest
 from itertools import product
+
 import numpy as np
 
 from notebooks.scaling_factor_extraction import (

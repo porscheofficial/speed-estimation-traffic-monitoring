@@ -2,15 +2,18 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .swin_transformer import SwinTransformer
 from .PQI import PSP
 from .SAM import SAM
+from .swin_transformer import SwinTransformer
+
+
 ########################################################################################################################
 
 class BCP(nn.Module):
     """ Multilayer perceptron."""
 
-    def __init__(self, max_depth, min_depth, in_features=512, hidden_features=512*4, out_features=256, act_layer=nn.GELU, drop=0.):
+    def __init__(self, max_depth, min_depth, in_features=512, hidden_features=512 * 4, out_features=256,
+                 act_layer=nn.GELU, drop=0.):
         super().__init__()
         out_features = out_features or in_features
         hidden_features = hidden_features or in_features
@@ -22,7 +25,7 @@ class BCP(nn.Module):
         self.max_depth = max_depth
 
     def forward(self, x):
-        x = torch.mean(x.flatten(start_dim=2), dim = 2)
+        x = torch.mean(x.flatten(start_dim=2), dim=2)
         x = self.fc1(x)
         x = self.act(x)
         x = self.drop(x)
@@ -38,10 +41,11 @@ class BCP(nn.Module):
         centers = centers.contiguous().view(n, dout, 1, 1)
         return centers
 
+
 class PixelFormer(nn.Module):
 
-    def __init__(self, version=None, inv_depth=False, pretrained=None, 
-                    frozen_stages=-1, min_depth=0.1, max_depth=100.0, **kwargs):
+    def __init__(self, version=None, inv_depth=False, pretrained=None,
+                 frozen_stages=-1, min_depth=0.1, max_depth=100.0, **kwargs):
         super().__init__()
 
         self.inv_depth = inv_depth
@@ -94,7 +98,7 @@ class PixelFormer(nn.Module):
         )
 
         self.backbone = SwinTransformer(**backbone_cfg)
-        v_dim = decoder_cfg['num_classes']*4
+        v_dim = decoder_cfg['num_classes'] * 4
         win = 7
         sam_dims = [128, 256, 512, 1024]
         v_dims = [64, 128, 256, embed_dim]

@@ -1,13 +1,13 @@
+import math
+import os
+import sys
+
+import numpy as np
 import torch
-import torch.nn as nn
 import torch.distributed as dist
+import torch.nn as nn
 from torch.utils.data import Sampler
 from torchvision import transforms
-
-import os, sys
-import numpy as np
-import math
-import torch
 
 
 def convert_arg_line_to_args(arg_line):
@@ -42,7 +42,7 @@ def colorize(value, vmin=None, vmax=None, cmap='Greys'):
     if vmin != vmax:
         value = (value - vmin) / (vmax - vmin)
     else:
-        value = value*0.
+        value = value * 0.
 
     cmapper = matplotlib.cm.get_cmap(cmap)
     value = cmapper(value, bytes=True)
@@ -67,10 +67,9 @@ def normalize_result(value, vmin=None, vmax=None):
 
 
 inv_normalize = transforms.Normalize(
-    mean=[-0.485/0.229, -0.456/0.224, -0.406/0.225],
-    std=[1/0.229, 1/0.224, 1/0.225]
+    mean=[-0.485 / 0.229, -0.456 / 0.224, -0.406 / 0.225],
+    std=[1 / 0.229, 1 / 0.224, 1 / 0.225]
 )
-
 
 eval_metrics = ['silog', 'abs_rel', 'log10', 'rms', 'sq_rel', 'log_rms', 'd1', 'd2', 'd3']
 
@@ -181,7 +180,7 @@ def post_process_depth(depth, depth_flipped, method='mean'):
     mask = 1.0 - torch.clamp(20. * (xs - 0.05), 0., 1.)
     mask_hat = flip_lr(mask)
     return mask_hat * depth + mask * inv_depth_hat + \
-           (1.0 - mask - mask_hat) * inv_depth_fused
+        (1.0 - mask - mask_hat) * inv_depth_fused
 
 
 class DistributedSamplerNoEvenlyDivisible(Sampler):

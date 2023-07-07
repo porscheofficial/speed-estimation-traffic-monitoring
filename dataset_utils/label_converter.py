@@ -1,10 +1,13 @@
 import pickle
-import pickle_compat
-import pandas as pd
 from pathlib import Path
+
+import pandas as pd
+import pickle_compat
+
 pickle_compat.patch()
 
 brno_dataset_path = '/Volumes/X/datasets/2016-ITS-BrnoCompSpeed/dataset/'
+
 
 # How to use converted labels
 # -- Only pandas import necesary
@@ -27,6 +30,7 @@ def list_pkl_files_in_folder(target: Path):
             pkl_list.append(file)
     return pkl_list
 
+
 def map_car_to_entry(car):
     if car['valid'] is not True:
         return None
@@ -34,7 +38,8 @@ def map_car_to_entry(car):
     intersection_times = sorted(intersection_times)
     if len(intersection_times) < 2:
         print(car)
-    return (intersection_times[0], intersection_times[1], car['carId'], car['speed'])
+    return intersection_times[0], intersection_times[1], car['carId'], car['speed']
+
 
 def main():
     pkl_to_convert = list_pkl_files_in_folder(Path(brno_dataset_path))
@@ -50,6 +55,7 @@ def main():
         mapped_list = filter(None, mapped_list)
         df = pd.DataFrame.from_records(mapped_list, columns=['start', 'end', 'carId', 'speed'])
         df.to_csv(out_path, index=False)
-    
+
+
 if __name__ == '__main__':
     main()

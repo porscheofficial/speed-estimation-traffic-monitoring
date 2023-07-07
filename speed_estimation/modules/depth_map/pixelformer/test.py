@@ -1,22 +1,24 @@
 from __future__ import absolute_import, division, print_function
 
-import torch
 import configparser
-from torch.autograd import Variable
-
-import os, sys, errno
+import os
+import sys
 import time
-import numpy as np
-from tqdm import tqdm
-from .networks.PixelFormer import PixelFormer
-from .dataloaders.dataloader import NewDataLoader
 
+import numpy as np
+import torch
+from torch.autograd import Variable
+from tqdm import tqdm
+
+from .dataloaders.dataloader import NewDataLoader
+from .networks.PixelFormer import PixelFormer
 from .utils import post_process_depth, flip_lr
 
 config = configparser.ConfigParser()
-config.read("speed_estimation/config.ini")
+config.read("config.ini")
 
 use_cpu = config.getboolean("device", "use_cpu")
+
 
 def convert_arg_line_to_args(arg_line):
     for arg in arg_line.split():
@@ -24,16 +26,17 @@ def convert_arg_line_to_args(arg_line):
             continue
         yield arg
 
-model_name='pixelformer_kittieigen'
-encoder='large07'
-dataset='kitti'
-input_height=352
-input_width=1216
-max_depth=80
-do_kb_crop=True
-min_depth_eval=1e-3
-max_depth_eval=80
-checkpoint_path='speed_estimation/modules/depth_map/pixelformer/pretrained/kitti.pth'
+
+model_name = 'pixelformer_kittieigen'
+encoder = 'large07'
+dataset = 'kitti'
+input_height = 352
+input_width = 1216
+max_depth = 80
+do_kb_crop = True
+min_depth_eval = 1e-3
+max_depth_eval = 80
+checkpoint_path = 'modules/depth_map/pixelformer/pretrained/kitti.pth'
 # checkpoint_path='modules/depth_map/pixelformer/pretrained/kitti.pth'
 
 args = {
@@ -64,16 +67,20 @@ def get_num_lines(file_path):
 def generate_depth_map(data_folder: str, file_name: str, *, max_depth_o: int):
     """Test function."""
 
-    device = "cuda:0"
+    if use_cpu:
+        device = "cpu"
+        torch.device(device)
+    else:
+        device = "cuda:0"
+        torch.cuda.set_device(device)
 
-    torch.cuda.set_device(device)
     max_depth = args.max_depth if max_depth_o is None else max_depth_o
     output_path = os.path.join(data_folder, f'depth_map_{max_depth}.npy')
     dataloader = NewDataLoader(args, 'test', file_list=[file_name], data_path=data_folder, do_kb_crop=do_kb_crop)
-    
+
     model = PixelFormer(version='large07', inv_depth=False, max_depth=max_depth)
     model = torch.nn.DataParallel(model, device_ids=[0])
-    
+
     if use_cpu:
         checkpoint = torch.load(checkpoint_path, map_location=torch.device('cpu'))
     else:
@@ -84,14 +91,12 @@ def generate_depth_map(data_folder: str, file_name: str, *, max_depth_o: int):
 
     if not use_cpu:
         model.cuda()
-    
 
     num_params = sum([np.prod(p.size()) for p in model.parameters()])
     print("Total number of parameters: {}".format(num_params))
 
-
     def normalize_between_zero_one(data):
-        return (data-np.min(data))/(np.max(data)-np.min(data))
+        return (data - np.min(data)) / (np.max(data) - np.min(data))
 
     pred_depths = []
     start_time = time.time()
@@ -138,7 +143,6 @@ def generate_depth_map(data_folder: str, file_name: str, *, max_depth_o: int):
     print('Elapsed time: %s' % str(elapsed_time))
     print('Done.')
     return output_path
-    
 
 
 if __name__ == '__main__':

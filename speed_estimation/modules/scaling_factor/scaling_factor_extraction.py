@@ -1,13 +1,14 @@
+from dataclasses import dataclass
+from typing import Dict, List
 from typing import NamedTuple
 
 import numpy as np
+from modules.depth_map.depth_map_utils import DepthModel
 from numpy.typing import NDArray
 from scipy.linalg import norm
-from dataclasses import dataclass
-from typing import Dict, List
-from utils.speed_estimation import Line, Point, TrackingBox, get_intersection
-from modules.depth_map.depth_map_utils import DepthModel
 from scipy.spatial import distance
+from utils.speed_estimation import Line, Point, TrackingBox, get_intersection
+
 
 @dataclass
 class CameraPoint:
@@ -40,7 +41,7 @@ class GroundTruthEvent(NamedTuple):
 class GeometricModel:
 
     def __init__(self, depth_model) -> None:
-        
+
         self.depth_model = depth_model
         self.f: float = 105.  # focal length
         self.s_u: int = 1  # translating pixels into m in u direction
@@ -118,12 +119,12 @@ class GeometricModel:
 
     @staticmethod
     def calculate_distance_between_world_points(
-        wp1: WorldPoint, wp2: WorldPoint
+            wp1: WorldPoint, wp2: WorldPoint
     ) -> float:
         return norm(wp1.coords() - wp2.coords())
 
     def get_unscaled_distance_from_camera_points(
-        self, cp1: CameraPoint, cp2: CameraPoint
+            self, cp1: CameraPoint, cp2: CameraPoint
     ):
         unscaled_wp1 = self.get_unscaled_world_point(cp1)
         unscaled_wp2 = self.get_unscaled_world_point(cp2)
@@ -136,8 +137,8 @@ class GeometricModel:
 
 
 def offline_scaling_factor_estimation_from_least_squares(
-    geometric_model: GeometricModel,
-    ground_truths: list,
+        geometric_model: GeometricModel,
+        ground_truths: list,
 ) -> float:
     unscaled_predictions = []
     labels = []
@@ -186,14 +187,14 @@ def online_scaling_factor_estimation_from_least_squares(stream_of_events):
         prediction = geometric_model.get_unscaled_distance_from_camera_points(cp1, cp2)
 
         mean_predictions_two_norm = (1 - 1 / counter) * mean_predictions_two_norm + (
-            prediction**2
+                prediction ** 2
         ) / counter
         mean_prediction_dot_distance = (
-            1 - 1 / counter
-        ) * mean_prediction_dot_distance + (prediction * true_distance) / counter
+                                               1 - 1 / counter
+                                       ) * mean_prediction_dot_distance + (prediction * true_distance) / counter
 
         geometric_model.scale_factor = (
-            mean_prediction_dot_distance / mean_predictions_two_norm
+                mean_prediction_dot_distance / mean_predictions_two_norm
         )
 
         # once calibration is finished, we can start using the geometric_model to perform actual predictions for
@@ -206,8 +207,9 @@ def get_ground_truth_events(tracking_boxes: Dict[int, List[TrackingBox]]):
     for object_id in tracking_boxes:
         start_box = tracking_boxes[object_id][0]
         end_box = tracking_boxes[object_id][-1]
-        tracking_box_distance = distance.euclidean([start_box.center_x, start_box.center_y], [end_box.center_x, end_box.center_y])
-        box_distances.append(tracking_box_distance)        
+        tracking_box_distance = distance.euclidean([start_box.center_x, start_box.center_y],
+                                                   [end_box.center_x, end_box.center_y])
+        box_distances.append(tracking_box_distance)
 
     median_distance = np.percentile(np.array(box_distances), 50)
 
@@ -218,7 +220,7 @@ def get_ground_truth_events(tracking_boxes: Dict[int, List[TrackingBox]]):
         start_box = center_points[0]
         end_box = center_points[-1]
         tracking_box_distance = distance.euclidean(start_box, end_box)
-        if len(center_points) < 2 or len(center_points) > 750 or tracking_box_distance < median_distance: 
+        if len(center_points) < 2 or len(center_points) > 750 or tracking_box_distance < median_distance:
             continue
         center_points_line = Line(Point(*center_points[0]), Point(*center_points[-1]))
 
@@ -226,26 +228,26 @@ def get_ground_truth_events(tracking_boxes: Dict[int, List[TrackingBox]]):
         for box in tracking_boxes[object_id]:
 
             # check each of the for lines, spanned by the bounding box rectangle
-            upper_line = Line(Point(box.x, box.y), Point(box.x+box.w, box.y))
-            right_line = Line(Point(box.x+box.w, box.y), Point(box.x+box.w, box.y+box.h))
-            lower_line = Line(Point(box.x, box.y+box.h), Point(box.x+box.w, box.y+box.h))
-            left_line = Line(Point(box.x, box.y), Point(box.x, box.y+box.h))
+            upper_line = Line(Point(box.x, box.y), Point(box.x + box.w, box.y))
+            right_line = Line(Point(box.x + box.w, box.y), Point(box.x + box.w, box.y + box.h))
+            lower_line = Line(Point(box.x, box.y + box.h), Point(box.x + box.w, box.y + box.h))
+            left_line = Line(Point(box.x, box.y), Point(box.x, box.y + box.h))
 
             intersections = []
             for bounding_box_line in [upper_line, right_line, lower_line, left_line]:
                 intersection = get_intersection(center_points_line, bounding_box_line)
                 if intersection:
                     intersections.append(intersection)
-            
+
             if len(intersections) == 2:
                 # append ground truth only if line fully cuts bounding box
                 intersect1, intersect2 = intersections
                 ground_truth_events.append(
                     GroundTruthEvent(
-                        (box.frame_count, int(intersect1.x), int(intersect1.y)), 
-                        (box.frame_count, int(intersect2.x), int(intersect2.y)), 
+                        (box.frame_count, int(intersect1.x), int(intersect1.y)),
+                        (box.frame_count, int(intersect2.x), int(intersect2.y)),
                         6
-                        )
                     )
-                    
+                )
+
     return ground_truth_events

@@ -1,28 +1,30 @@
 import matplotlib.pyplot as plt
-
-from PIL import Image, ImageOps
-import pandas as pd
-from sklearn import linear_model
-from scipy.spatial import distance
-import math
-import cv2
 import numpy as np
+import pandas as pd
+from PIL import Image, ImageOps
 from scipy.optimize import curve_fit
+from scipy.spatial import distance
+from sklearn import linear_model
+
 
 def objective(x, a, b, c):
-    return a*x**2 + b*x + c
+    return a * x ** 2 + b * x + c
+
+
 # def objective(x, a, b):
 #     return a*x + b
- 
+
 def get_pixel_length_of_car(img_array):
     background_image = Image.fromarray(img_array)
-    interpolated_image = Image.blend(background_image, Image.new(background_image.mode, background_image.size, "black"), .92).convert(mode="1")
+    interpolated_image = Image.blend(background_image, Image.new(background_image.mode, background_image.size, "black"),
+                                     .92).convert(mode="1")
     foreground_image = ImageOps.invert(interpolated_image)
 
-    df = pd.DataFrame(((x,-y) for x in range(foreground_image.width) for y in range(foreground_image.height) if not foreground_image.getpixel((x,y))), columns=("x","y"))
+    df = pd.DataFrame(((x, -y) for x in range(foreground_image.width) for y in range(foreground_image.height) if
+                       not foreground_image.getpixel((x, y))), columns=("x", "y"))
     # Plot
     # df.plot.scatter(x=0, y=1, s=5, alpha=.5, c=["#111133"], figsize=(5,5)).set_aspect("equal")
-        
+
     x = df['x'].values
     y = df['y'].values
 
@@ -44,15 +46,15 @@ def get_pixel_length_of_car(img_array):
     test_y = keep_smallest_y['y'].values
     # test_x = df['x'].values
     # test_y = df['y'].values
-    popt, _ = curve_fit(objective, test_x, test_y) 
+    popt, _ = curve_fit(objective, test_x, test_y)
     a, b, c = popt
     # plt.scatter(test_x, test_y, label="raw data")
-    #b_values = y - a * x
-    c_values = y - a*x**2 + b*x
+    # b_values = y - a * x
+    c_values = y - a * x ** 2 + b * x
 
     # plt.plot(test_x, objective(test_x, a, b, c), '--', color='red', label="lower bound", linewidth=4)
-    #plt.plot(test_x, objective(test_x, a, np.max(b_values)), '--', color='orange', label="upper bound")
-    #plt.legend()
+    # plt.plot(test_x, objective(test_x, a, np.max(b_values)), '--', color='orange', label="upper bound")
+    # plt.legend()
     idx = np.argmin(objective(test_x, a, b, c))
 
     x_value_to_cut = df.iloc[df[['y']].idxmin()]['x'].values[0]
@@ -65,8 +67,8 @@ def get_pixel_length_of_car(img_array):
     if regr.coef_[0][0] > 0:
         df_cutted = df[df["x"] > x_value_to_cut]
 
-        idx += 50 
-        min_point = (test_x[min(idx, len(test_x)-1)],objective(test_x, a, b, c)[min(idx, len(test_x)-1)])
+        idx += 50
+        min_point = (test_x[min(idx, len(test_x) - 1)], objective(test_x, a, b, c)[min(idx, len(test_x) - 1)])
         max_point = (test_x[-1], objective(test_x, a, b, c)[-1])
         # plt.plot([test_x[idx],test_x[-1]], [objective(test_x, a, b, c)[idx],objective(test_x, a, b, c)[-1]], '--', color='yellow', label="lower bound", linewidth=4)
         # print("Estimated distance: ", distance.euclidean(min_point, max_point))
@@ -75,7 +77,7 @@ def get_pixel_length_of_car(img_array):
         df_cutted = df[df["x"] < x_value_to_cut]
         # empirical evidence has shown...
         idx -= 25
-        min_point = (test_x[min(idx, len(test_x)-1)],objective(test_x, a, b, c)[min(idx, len(test_x)-1)])
+        min_point = (test_x[min(idx, len(test_x) - 1)], objective(test_x, a, b, c)[min(idx, len(test_x) - 1)])
         max_point = (test_x[0], objective(test_x, a, b, c)[0])
         # plt.plot([test_x[idx],test_x[0]], [objective(test_x, a, b, c)[idx],objective(test_x, a, b, c)[0]], '--', color='yellow', label="lower bound", linewidth=4)
         # print("Estimated distance: ", distance.euclidean(min_point, max_point))
@@ -104,7 +106,7 @@ def get_pixel_length_of_car(img_array):
     # previously calculated manually: math.sqrt((abs(predictions[0]) - abs(predictions[-1]))**2 + (x[0][0] - x[-1][0])**2)
     car_length_in_pixels = distance.euclidean(regr_line_coordinates[0], regr_line_coordinates[-1])
 
-    plt.scatter(x, y,  color='black')
+    plt.scatter(x, y, color='black')
     plt.plot(x, predictions, color='blue', linewidth=3)
     plt.xticks(())
     plt.yticks(())

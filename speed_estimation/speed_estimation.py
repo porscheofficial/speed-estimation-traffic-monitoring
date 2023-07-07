@@ -1,51 +1,52 @@
+import configparser
+import json
+import logging
+import math
+import os
+import sys
+import time
+import uuid
+from collections import defaultdict
 from datetime import datetime
 from importlib import reload
-from multiprocessing import Pool
-import sys
+from typing import Dict, List
+
 import cv2
-import os
-import configparser
+import torch
+from tqdm import tqdm
+
+from get_fps import give_me_fps
+from modules.depth_map.depth_map_utils import DepthModel
+from modules.evaluation.evaluate import plot_absolute_error
+from modules.object_detection.yolov4.object_detection import ObjectDetection
 from modules.object_detection.yolov5.object_detection import (
     ObjectDetection as ObjectDetectionCustom,
 )
-from modules.object_detection.yolov4.object_detection import ObjectDetection
-import math
-from get_fps import give_me_fps
-import logging
-import json
-from modules.shake_detection.shake_detection import ShakeDetection
-from paths import session_path
-import time
-import uuid
-from utils.speed_estimation import (
-    Direction,
-    TrackingBox,
-    Car,
-    calculate_car_direction,
-)
-from modules.evaluation.evaluate import plot_absolute_error
-from modules.depth_map.depth_map_utils import DepthModel
-from collections import defaultdict
 from modules.scaling_factor.scaling_factor_extraction import (
     GeometricModel,
     CameraPoint,
     get_ground_truth_events,
     offline_scaling_factor_estimation_from_least_squares,
 )
-import torch
-from typing import Dict, List
-from tqdm import tqdm
+from modules.shake_detection.shake_detection import ShakeDetection
+from paths import session_path
+from utils.speed_estimation import (
+    Direction,
+    TrackingBox,
+    Car,
+    calculate_car_direction,
+)
 
 config = configparser.ConfigParser()
-config.read("speed_estimation/config.ini")
+config.read("config.ini")
 
 
 def run(
-    path_to_video: str,
-    data_dir: str,
-    fps: int = 0,
-    max_frames: int = 0,
-    custom_object_detection: bool = False,
+        path_to_video: str,
+        data_dir: str,
+        fps: int = 0,
+        max_frames: int = 0,
+        custom_object_detection: bool = False,
 ):
     reload(logging)
 
@@ -55,6 +56,8 @@ def run(
     # Initialize logging
     now_str = datetime.now().strftime("%Y%m%d-%H%M%S")
     log_name = f"logs/{now_str}_run_{run_id}.log"
+    os.makedirs(os.path.dirname(log_name), exist_ok=True)
+
     logging.basicConfig(
         filename=f"logs/{now_str}_run_{run_id}.log", level=logging.DEBUG
     )
@@ -64,7 +67,7 @@ def run(
 
     # Initialize Object Detection
     if custom_object_detection:
-        weights = "speed_estimation/model_weights/yolov5/best.pt"
+        weights = "speed_estimation/model_weights/custom_object_detection/best.pt"
         od = ObjectDetectionCustom(weights=weights)
     else:
         od = ObjectDetection()
@@ -143,7 +146,11 @@ def run(
         else:
             # TODO: look into scores
             (class_ids, scores, boxes) = od.detect(frame)
-            boxes = [boxes[i] for i, class_id in enumerate(class_ids) if class_id == CAR_CLASS_ID]
+            boxes = [
+                boxes[i]
+                for i, class_id in enumerate(class_ids)
+                if class_id == CAR_CLASS_ID
+            ]
 
         # collect tracking boxes
         tracking_boxes_cur_frame: List[TrackingBox] = []
@@ -282,19 +289,19 @@ def run(
                             if car.direction == Direction.towards:
                                 car_count_towards += 1
                                 total_speed_towards += (meters_moved) / (
-                                    car.frames_seen / fps
+                                        car.frames_seen / fps
                                 )
                                 total_speed_meta_appr_towards += (
-                                    AVG_FRAME_COUNT / int(car.frames_seen)
-                                ) * SPEED_LIMIT
+                                                                         AVG_FRAME_COUNT / int(car.frames_seen)
+                                                                 ) * SPEED_LIMIT
                             else:
                                 car_count_away += 1
                                 total_speed_away += (meters_moved) / (
-                                    car.frames_seen / fps
+                                        car.frames_seen / fps
                                 )
                                 total_speed_meta_appr_away += (
-                                    AVG_FRAME_COUNT / int(car.frames_seen)
-                                ) * SPEED_LIMIT
+                                                                      AVG_FRAME_COUNT / int(car.frames_seen)
+                                                              ) * SPEED_LIMIT
 
                     else:
                         # car is too old, drop from tracked_cars
@@ -341,12 +348,12 @@ def run(
             frame, f"FPS: {fps}", (7, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, text_color, 2
         )
         cv2.imwrite(
-            f"speed_estimation/frames_detected/frame_after_detection.jpg", frame
+            f"frames_detected/frame_after_detection.jpg", frame
         )
 
         if frame_count % 500 == 0:
             print(
-                f"Frame no. {frame_count} time since start: {(time.time()-start):.2f}s"
+                f"Frame no. {frame_count} time since start: {(time.time() - start):.2f}s"
             )
         frame_count += 1
         if max_frames != 0 and frame_count >= max_frames:

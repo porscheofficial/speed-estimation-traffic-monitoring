@@ -1,7 +1,8 @@
 import os
+
 import cv2
-import torch
 import numpy as np
+import torch
 
 
 def normalize_between_zero_one(data):

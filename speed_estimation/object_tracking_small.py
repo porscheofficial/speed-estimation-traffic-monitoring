@@ -1,35 +1,33 @@
 # can get shortened and more lightweight even more if we clean up more; atm like this with lot of unnece.
 #  stuff because of dependencies for beeing able to run it
 
+import configparser
+import copy
+import json
+import logging
+import math
+import os
+import sys
+import uuid
 from datetime import datetime
 from importlib import reload
-from multiprocessing import Pool
-import sys
+
 import cv2
-import os
-import configparser
+import imutils
+import pandas as pd
+
+from analyze_logs import analyzer
+from get_fps import give_me_fps
+from modules.depth_map.depth_map_utils import load_depth_map
+from modules.evaluation.evaluate import plot_absolute_error
+from modules.object_detection.yolov4.object_detection import ObjectDetection
 from modules.object_detection.yolov5.object_detection import (
     ObjectDetection as ObjectDetectionCustom,
 )
-from modules.object_detection.yolov4.object_detection import ObjectDetection
-import math
-from get_fps import give_me_fps
-import pandas as pd
-import logging
-import json
+from modules.regression.regression_calc import get_pixel_length_of_car
 from modules.shake_detection import ShakeDetection
 from paths import session_path
-import copy
-import imutils
-import time
-import uuid
-from utils.speed_estimation import TrackingBox, Car, clamp
-from modules.evaluation.evaluate import plot_absolute_error
-from modules.depth_map.depth_map_utils import load_depth_map
-import numpy as np
-from modules.regression.regression_calc import get_pixel_length_of_car
-from analyze_logs import analyzer
-
+from utils.speed_estimation import TrackingBox
 
 config = configparser.ConfigParser()
 config.read("speed_estimation/config.ini")
@@ -37,6 +35,7 @@ config.read("speed_estimation/config.ini")
 # set for callibr:
 max_cars = 40
 callibr = []
+
 
 # TODO: Put this in a module? Or make it nicer somehow...
 def map_box_to_our_point(frame, box, depth_map, custom_object_detection, frame_count):
@@ -49,7 +48,7 @@ def map_box_to_our_point(frame, box, depth_map, custom_object_detection, frame_c
         meters = 0
 
     if custom_object_detection:
-        cropped_frame = frame[y : y + h, x : x + w]
+        cropped_frame = frame[y: y + h, x: x + w]
         car_length_in_pixels = get_pixel_length_of_car(cropped_frame)
         avg_car_in_meters = 5
         if car_length_in_pixels is None:
@@ -62,7 +61,7 @@ def map_box_to_our_point(frame, box, depth_map, custom_object_detection, frame_c
 
 
 def run(
-    data_dir, max_depth=None, fps=None, max_frames=None, custom_object_detection=False
+        data_dir, max_depth=None, fps=None, max_frames=None, custom_object_detection=False
 ):
     reload(logging)
     path_to_video = os.path.join(data_dir, "video.mp4")
@@ -211,10 +210,10 @@ def run(
             meters_moved = None
             if object_id in tracking_objects_prev:
                 x_movement = (
-                    tracking_objects[object_id].x - tracking_objects_prev[object_id].x
+                        tracking_objects[object_id].x - tracking_objects_prev[object_id].x
                 )
                 y_movement = (
-                    tracking_objects[object_id].y - tracking_objects_prev[object_id].y
+                        tracking_objects[object_id].y - tracking_objects_prev[object_id].y
                 )
 
                 # car direction

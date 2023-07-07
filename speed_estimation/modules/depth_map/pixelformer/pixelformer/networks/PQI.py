@@ -1,9 +1,8 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-
 from mmcv.cnn import ConvModule
-from .utils import resize, normal_init
+
+from .utils import resize
 
 
 class PPM(nn.ModuleList):
@@ -314,7 +313,6 @@ class UPerHead(BaseDecodeHead):
         return fpn_outs[0]
 
 
-
 class PSP(BaseDecodeHead):
     """Unified Perceptual Parsing for Scene Understanding.
 
@@ -360,5 +358,5 @@ class PSP(BaseDecodeHead):
     def forward(self, inputs):
         """Forward function."""
         inputs = self._transform_inputs(inputs)
-        
+
         return self.psp_forward(inputs)

@@ -1,4 +1,3 @@
-import warnings
 import os
 import os.path as osp
 import pkgutil
@@ -7,12 +6,12 @@ from collections import OrderedDict
 from importlib import import_module
 
 import torch
-import torchvision
 import torch.nn as nn
-from torch.utils import model_zoo
+import torchvision
+from torch import distributed as dist
 from torch.nn import functional as F
 from torch.nn.parallel import DataParallel, DistributedDataParallel
-from torch import distributed as dist
+from torch.utils import model_zoo
 
 TORCH_VERSION = torch.__version__
 
@@ -236,7 +235,7 @@ def load_checkpoint(model,
         absolute_pos_embed = state_dict['absolute_pos_embed']
         N1, L, C1 = absolute_pos_embed.size()
         N2, C2, H, W = model.absolute_pos_embed.size()
-        if N1 != N2 or C1 != C2 or L != H*W:
+        if N1 != N2 or C1 != C2 or L != H * W:
             logger.warning("Error in loading absolute_pos_embed, pass")
         else:
             state_dict['absolute_pos_embed'] = absolute_pos_embed.view(N2, H, W, C2).permute(0, 3, 1, 2)
@@ -255,8 +254,8 @@ def load_checkpoint(model,
                 S1 = int(L1 ** 0.5)
                 S2 = int(L2 ** 0.5)
                 table_pretrained_resized = F.interpolate(
-                     table_pretrained.permute(1, 0).view(1, nH1, S1, S1),
-                     size=(S2, S2), mode='bicubic')
+                    table_pretrained.permute(1, 0).view(1, nH1, S1, S1),
+                    size=(S2, S2), mode='bicubic')
                 state_dict[table_key] = table_pretrained_resized.view(nH2, L2).permute(1, 0)
 
     # load state_dict

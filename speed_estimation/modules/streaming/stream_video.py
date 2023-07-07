@@ -1,9 +1,10 @@
-import cv2
-import subprocess as sp
-import numpy
 import argparse
-import time
 import math
+import subprocess as sp
+import time
+
+import cv2
+import numpy
 
 
 def get_video_stream_from_url(url):
@@ -50,8 +51,9 @@ def count_fps_from_stream(pipe, w, h):
 
 def downsample_fps(max, fps):
     threshold = max / (fps - max)
-    new_fps = fps - int(fps / math.floor(threshold+1))
+    new_fps = fps - int(fps / math.floor(threshold + 1))
     return int(new_fps), threshold
+
 
 # main method is only for viewing and testing the stream
 if __name__ == '__main__':

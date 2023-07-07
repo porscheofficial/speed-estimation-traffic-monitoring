@@ -1,8 +1,6 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.utils.checkpoint as checkpoint
-import numpy as np
 from timm.models.layers import DropPath, to_2tuple, trunc_normal_
 
 
@@ -100,7 +98,7 @@ class WindowAttention(nn.Module):
         self.register_buffer("relative_position_index", relative_position_index)
 
         self.kv = nn.Linear(dim, dim * 2, bias=qkv_bias)
-        self.q = nn.Linear(dim, dim , bias=qkv_bias)
+        self.q = nn.Linear(dim, dim, bias=qkv_bias)
         self.attn_drop = nn.Dropout(attn_drop)
         self.proj = nn.Linear(v_dim, v_dim)
         self.proj_drop = nn.Dropout(proj_drop)
@@ -143,6 +141,7 @@ class WindowAttention(nn.Module):
         x = self.proj_drop(x)
         return x
 
+
 class SAMBLOCK(nn.Module):
     """ 
     Args:
@@ -178,8 +177,8 @@ class SAMBLOCK(nn.Module):
         self.v_dim = v_dim
         self.window_size = window_size
         self.mlp_ratio = mlp_ratio
-        act_layer=nn.GELU
-        norm_layer=nn.LayerNorm
+        act_layer = nn.GELU
+        norm_layer = nn.LayerNorm
 
         self.norm1 = norm_layer(dim)
         self.normv = norm_layer(dim)
@@ -199,14 +198,14 @@ class SAMBLOCK(nn.Module):
             x: Input feature, tensor size (B, H*W, C).
             H, W: Spatial resolution of the input feature.
         """
-        
+
         B, L, C = x.shape
         assert L == H * W, "input feature has wrong size"
 
         shortcut = x
         x = self.norm1(x)
         x = x.view(B, H, W, C)
-        
+
         shortcut_v = v
         v = self.normv(v)
         v = v.view(B, H, W, C)
@@ -223,8 +222,9 @@ class SAMBLOCK(nn.Module):
         x_windows = window_partition(x, self.window_size)  # nW*B, window_size, window_size, C
         x_windows = x_windows.view(-1, self.window_size * self.window_size, C)  # nW*B, window_size*window_size, C
         v_windows = window_partition(v, self.window_size)  # nW*B, window_size, window_size, C
-        v_windows = v_windows.view(-1, self.window_size * self.window_size, v_windows.shape[-1])  # nW*B, window_size*window_size, C
-        
+        v_windows = v_windows.view(-1, self.window_size * self.window_size,
+                                   v_windows.shape[-1])  # nW*B, window_size*window_size, C
+
         # W-MSA/SW-MSA
         attn_windows = self.attn(x_windows, v_windows, mask=None)  # nW*B, window_size*window_size, C
 
@@ -258,7 +258,7 @@ class SAM(nn.Module):
         super().__init__()
 
         self.embed_dim = embed_dim
-        
+
         if input_dim != embed_dim:
             self.proj_e = nn.Conv2d(input_dim, embed_dim, 3, padding=1)
         else:
@@ -272,22 +272,21 @@ class SAM(nn.Module):
 
         v_dim = embed_dim
         self.sam_block = SAMBLOCK(
-                dim=embed_dim,
-                num_heads=num_heads,
-                v_dim=v_dim,
-                window_size=window_size,
-                mlp_ratio=4.,
-                qkv_bias=True,
-                qk_scale=None,
-                drop=0.,
-                attn_drop=0.,
-                drop_path=0.,
-                norm_layer=norm_layer)
+            dim=embed_dim,
+            num_heads=num_heads,
+            v_dim=v_dim,
+            window_size=window_size,
+            mlp_ratio=4.,
+            qkv_bias=True,
+            qk_scale=None,
+            drop=0.,
+            attn_drop=0.,
+            drop_path=0.,
+            norm_layer=norm_layer)
 
         layer = norm_layer(embed_dim)
         layer_name = 'norm_sam'
         self.add_module(layer_name, layer)
-
 
     def forward(self, e, q):
         if self.proj_q is not None:
@@ -306,4 +305,4 @@ class SAM(nn.Module):
         q_out = norm_layer(q_out)
         q_out = q_out.view(-1, H, W, self.embed_dim).permute(0, 3, 1, 2).contiguous()
 
-        return q_out+e_proj+q_proj
+        return q_out + e_proj + q_proj
