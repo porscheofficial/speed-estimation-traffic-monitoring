@@ -2,7 +2,7 @@ import os
 
 import cv2
 import imutils
-from modules.depth_map.pixelformer.test import generate_depth_map
+from .pixelformer import generate_depth_map
 from numpy.typing import NDArray
 
 
@@ -19,9 +19,7 @@ class DepthModel:
             depth_maps = [self.memo[frame] for frame in self.memo]
             return sum(depth_maps) / len(depth_maps)
 
-        self.memo[frame_id] = load_depth_map_from_file(
-            self.data_dir, max_depth=1, frame=frame_id
-        )
+        self.memo[frame_id] = load_depth_map_from_file(self.data_dir, max_depth=1, frame=frame_id)
 
         # predict depth here
         return self.memo[frame_id]
@@ -63,14 +61,10 @@ def resize_output(prediction, shape):
 
     prediction = prediction[:, 0:-padding_right]
 
-    return cv2.resize(
-        prediction, dsize=(shape[1], shape[0]), interpolation=cv2.INTER_CUBIC
-    )
+    return cv2.resize(prediction, dsize=(shape[1], shape[0]), interpolation=cv2.INTER_CUBIC)
 
 
-def extract_frame(
-    video_path: str, output_folder: str, output_file: str, frame_idx: int = 0
-) -> str:
+def extract_frame(video_path: str, output_folder: str, output_file: str, frame_idx: int = 0) -> str:
     input_video = cv2.VideoCapture(video_path)
     frame_count = 0
     while True:
@@ -86,14 +80,10 @@ def extract_frame(
         frame_count += 1
 
 
-def load_depth_map_from_file(
-    current_folder: str, max_depth: int = None, frame: int = 0
-):
+def load_depth_map_from_file(current_folder: str, max_depth: int = None, frame: int = 0):
     input_video = os.path.join(current_folder, "video.mp4")
     depth_map_path = current_folder + (
-        f"depth_map_{max_depth}_{frame}.npy"
-        if max_depth is not None
-        else "depth_map.npy"
+        f"depth_map_{max_depth}_{frame}.npy" if max_depth is not None else "depth_map.npy"
     )
     print("Depth map generation.")
     scaled_image_name, original_shape = extract_frame(
@@ -116,7 +106,5 @@ def load_depth_map_from_file(
 def load_depth_map(current_folder: str, frame, max_depth=1):
     path = os.path.join(current_folder, "frame_scaled.jpg")
     cv2.imwrite(path, frame)
-    depth_map = generate_depth_map(
-        current_folder, "frame_scaled.jpg", max_depth_o=max_depth
-    )
+    depth_map = generate_depth_map(current_folder, "frame_scaled.jpg", max_depth_o=max_depth)
     return resize_output(depth_map, frame.shape)

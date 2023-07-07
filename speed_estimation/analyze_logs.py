@@ -4,7 +4,7 @@ import json
 import pandas as pd
 
 
-def analyzer(log_file):
+def analyzer(log_path):
     config = configparser.ConfigParser()
     config.read("speed_estimation/config.ini")
 
@@ -14,33 +14,30 @@ def analyzer(log_file):
     except:
         print("")
 
-    log_path = log_file
     log_dict = []
     speed_limit = int(config.get("analyzer", "speed_limit"))
     # speed_limit = 80
 
     print(log_path)
 
-    with open(log_path, "r") as fp:
-        for idx, line in enumerate(fp):
+    with open(log_path, "r", encoding='UTF-8') as log_file:
+        for _, line in enumerate(log_file):
             if not line.startswith("INFO:root:{"):
                 continue
             line_dict = json.loads(line[10:])
             if "car_id" in line_dict:
                 log_dict.append(line_dict)
 
-        df = pd.DataFrame(log_dict)
+        data_frame = pd.DataFrame(log_dict)
 
-        df_grouped = df.groupby("car_id").agg(
+        df_grouped = data_frame.groupby("car_id").agg(
             direction_indicator=("direction_indicator", "sum"),
             frame_count=("frame_count", "count"),
         )
 
         # outlier filtering
         df_grouped = df_grouped[df_grouped["frame_count"] > 20]
-        df_grouped = df_grouped[
-            df_grouped["direction_indicator"] != 0
-        ]  # both directions
+        df_grouped = df_grouped[df_grouped["direction_indicator"] != 0]  # both directions
 
         avg_frame_count = df_grouped["frame_count"].mean()
 
@@ -48,7 +45,7 @@ def analyzer(log_file):
 
         speeds = []
 
-        for index, row in df_grouped.iterrows():
+        for _, row in df_grouped.iterrows():
             speed_for_car = (avg_frame_count / row["frame_count"]) * speed_limit
             speeds.append(speed_for_car)
             # print(str(index) + ": " + str(speed_for_car))

@@ -6,19 +6,7 @@ import pickle_compat
 
 pickle_compat.patch()
 
-brno_dataset_path = "/Volumes/X/datasets/2016-ITS-BrnoCompSpeed/dataset/"
-
-
-# How to use converted labels
-# -- Only pandas import necesary
-
-# cars = pd.read_csv('cars.csv')
-
-# def avg_speed_for_time(timeStart, timeEnd):
-#     cars_to_avg = cars.loc[cars['start'].gt(timeStart) & cars['end'].le(timeEnd)]
-#     return cars_to_avg['speed'].mean()
-
-# avg_speed_for_time(50, 300)
+brno_dataset_path = "/path/to/dataset"
 
 
 def list_pkl_files_in_folder(target: Path):
@@ -53,9 +41,7 @@ def main():
 
         mapped_list = list(map(map_car_to_entry, pkl_obj["cars"]))
         mapped_list = filter(None, mapped_list)
-        df = pd.DataFrame.from_records(
-            mapped_list, columns=["start", "end", "carId", "speed"]
-        )
+        df = pd.DataFrame.from_records(mapped_list, columns=["start", "end", "carId", "speed"])
         df.to_csv(out_path, index=False)
 
 

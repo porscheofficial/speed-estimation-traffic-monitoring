@@ -115,9 +115,7 @@ class silog_loss(nn.Module):
 
     def forward(self, depth_est, depth_gt, mask):
         d = torch.log(depth_est[mask]) - torch.log(depth_gt[mask])
-        return (
-            torch.sqrt((d**2).mean() - self.variance_focus * (d.mean() ** 2)) * 10.0
-        )
+        return torch.sqrt((d**2).mean() - self.variance_focus * (d.mean() ** 2)) * 10.0
 
 
 def flip_lr(image):
@@ -187,16 +185,10 @@ def post_process_depth(depth, depth_flipped, method="mean"):
     B, C, H, W = depth.shape
     inv_depth_hat = flip_lr(depth_flipped)
     inv_depth_fused = fuse_inv_depth(depth, inv_depth_hat, method=method)
-    xs = torch.linspace(0.0, 1.0, W, device=depth.device, dtype=depth.dtype).repeat(
-        B, C, H, 1
-    )
+    xs = torch.linspace(0.0, 1.0, W, device=depth.device, dtype=depth.dtype).repeat(B, C, H, 1)
     mask = 1.0 - torch.clamp(20.0 * (xs - 0.05), 0.0, 1.0)
     mask_hat = flip_lr(mask)
-    return (
-        mask_hat * depth
-        + mask * inv_depth_hat
-        + (1.0 - mask - mask_hat) * inv_depth_fused
-    )
+    return mask_hat * depth + mask * inv_depth_hat + (1.0 - mask - mask_hat) * inv_depth_fused
 
 
 class DistributedSamplerNoEvenlyDivisible(Sampler):

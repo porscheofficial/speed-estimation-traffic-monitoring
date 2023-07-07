@@ -28,19 +28,13 @@ parser.add_argument("--model_name", type=str, help="model name", default="pixelf
 parser.add_argument(
     "--encoder", type=str, help="type of encoder, base07, large07", default="large07"
 )
-parser.add_argument(
-    "--checkpoint_path", type=str, help="path to a checkpoint to load", default=""
-)
+parser.add_argument("--checkpoint_path", type=str, help="path to a checkpoint to load", default="")
 
 # Dataset
-parser.add_argument(
-    "--dataset", type=str, help="dataset to train on, kitti or nyu", default="nyu"
-)
+parser.add_argument("--dataset", type=str, help="dataset to train on, kitti or nyu", default="nyu")
 parser.add_argument("--input_height", type=int, help="input height", default=480)
 parser.add_argument("--input_width", type=int, help="input width", default=640)
-parser.add_argument(
-    "--max_depth", type=float, help="maximum depth in estimation", default=10
-)
+parser.add_argument("--max_depth", type=float, help="maximum depth in estimation", default=10)
 
 # Preprocessing
 parser.add_argument(
@@ -48,9 +42,7 @@ parser.add_argument(
     help="if set, will perform random rotation for augmentation",
     action="store_true",
 )
-parser.add_argument(
-    "--degree", type=float, help="random rotation maximum degree", default=2.5
-)
+parser.add_argument("--degree", type=float, help="random rotation maximum degree", default=2.5)
 parser.add_argument(
     "--do_kb_crop",
     help="if set, crop input images as kitti benchmark images",
@@ -81,9 +73,7 @@ parser.add_argument(
 parser.add_argument(
     "--min_depth_eval", type=float, help="minimum depth for evaluation", default=1e-3
 )
-parser.add_argument(
-    "--max_depth_eval", type=float, help="maximum depth for evaluation", default=80
-)
+parser.add_argument("--max_depth_eval", type=float, help="maximum depth for evaluation", default=80)
 parser.add_argument(
     "--eigen_crop", help="if set, crops according to Eigen NIPS14", action="store_true"
 )
@@ -139,9 +129,7 @@ def eval(model, dataloader_eval, post_process=False):
         pred_depth[np.isinf(pred_depth)] = args.max_depth_eval
         pred_depth[np.isnan(pred_depth)] = args.min_depth_eval
 
-        valid_mask = np.logical_and(
-            gt_depth > args.min_depth_eval, gt_depth < args.max_depth_eval
-        )
+        valid_mask = np.logical_and(gt_depth > args.min_depth_eval, gt_depth < args.max_depth_eval)
 
         if args.garg_crop or args.eigen_crop:
             gt_height, gt_width = gt_depth.shape
@@ -197,9 +185,7 @@ def main_worker(args):
     num_params = sum([np.prod(p.size()) for p in model.parameters()])
     print("== Total number of parameters: {}".format(num_params))
 
-    num_params_update = sum(
-        [np.prod(p.shape) for p in model.parameters() if p.requires_grad]
-    )
+    num_params_update = sum([np.prod(p.shape) for p in model.parameters() if p.requires_grad])
     print("== Total number of learning parameters: {}".format(num_params_update))
 
     model = torch.nn.DataParallel(model)

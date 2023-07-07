@@ -1,20 +1,7 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[31]:
-
-
-path = "../datasets/video.mp4"
-# give_me_fps(path)
-
 import time
 
 import cv2
 from moviepy.video.io.VideoFileClip import VideoFileClip
-
-
-# In[30]:
-# import ffmpeg
 
 
 def get_fps_from_video(path_to_video):
@@ -47,7 +34,7 @@ def give_me_fps(path_to_dataset):
 
 def read_fps_cv2(path_to_dataset):
     video = cv2.VideoCapture(path_to_dataset)
-    (major_ver, minor_ver, subminor_ver) = (cv2.__version__).split(".")
+    (major_ver, _, _) = cv2.__version__.split(".")
 
     if int(major_ver) < 3:
         fps = video.get(cv2.cv.CV_CAP_PROP_FPS)
@@ -87,20 +74,12 @@ def read_fps_strange(path_to_dataset):
 
         # Capture frame-by-frame
 
-        ret, frame = cap.read()
+        ret, _ = cap.read()
 
         # if video finished or no Video Input
         if not ret:
             break
 
-        # Our operations on the frame come here
-        gray = frame
-
-        # resizing the frame size according to our need
-        # gray = cv2.resize(gray, (500, 300))
-
-        # font which we will be using to display FPS
-        font = cv2.FONT_HERSHEY_SIMPLEX
         # time when we finish processing for this frame
         new_frame_time = time.time()
 

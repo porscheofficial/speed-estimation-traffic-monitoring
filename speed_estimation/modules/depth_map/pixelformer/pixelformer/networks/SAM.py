@@ -43,9 +43,7 @@ def window_partition(x, window_size):
     """
     B, H, W, C = x.shape
     x = x.view(B, H // window_size, window_size, W // window_size, window_size, C)
-    windows = (
-        x.permute(0, 1, 3, 2, 4, 5).contiguous().view(-1, window_size, window_size, C)
-    )
+    windows = x.permute(0, 1, 3, 2, 4, 5).contiguous().view(-1, window_size, window_size, C)
     return windows
 
 
@@ -61,9 +59,7 @@ def window_reverse(windows, window_size, H, W):
         x: (B, H, W, C)
     """
     B = int(windows.shape[0] / (H * W / window_size / window_size))
-    x = windows.view(
-        B, H // window_size, W // window_size, window_size, window_size, -1
-    )
+    x = windows.view(B, H // window_size, W // window_size, window_size, window_size, -1)
     x = x.permute(0, 1, 3, 2, 4, 5).contiguous().view(B, H, W, -1)
     return x
 
@@ -110,12 +106,8 @@ class WindowAttention(nn.Module):
         coords_w = torch.arange(self.window_size[1])
         coords = torch.stack(torch.meshgrid([coords_h, coords_w]))  # 2, Wh, Ww
         coords_flatten = torch.flatten(coords, 1)  # 2, Wh*Ww
-        relative_coords = (
-            coords_flatten[:, :, None] - coords_flatten[:, None, :]
-        )  # 2, Wh*Ww, Wh*Ww
-        relative_coords = relative_coords.permute(
-            1, 2, 0
-        ).contiguous()  # Wh*Ww, Wh*Ww, 2
+        relative_coords = coords_flatten[:, :, None] - coords_flatten[:, None, :]  # 2, Wh*Ww, Wh*Ww
+        relative_coords = relative_coords.permute(1, 2, 0).contiguous()  # Wh*Ww, Wh*Ww, 2
         relative_coords[:, :, 0] += self.window_size[0] - 1  # shift to start from 0
         relative_coords[:, :, 1] += self.window_size[1] - 1
         relative_coords[:, :, 0] *= 2 * self.window_size[1] - 1
@@ -141,9 +133,7 @@ class WindowAttention(nn.Module):
         B_, N, C = x.shape
         q = self.q(x).view(B_, N, self.num_heads, -1).transpose(1, 2)
         kv = (
-            self.kv(v)
-            .reshape(B_, N, 2, self.num_heads, C // self.num_heads)
-            .permute(2, 0, 3, 1, 4)
+            self.kv(v).reshape(B_, N, 2, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
         )
         k, v = kv[0], kv[1]  # make torchscript happy (cannot use tensor as tuple)
 
@@ -164,9 +154,7 @@ class WindowAttention(nn.Module):
 
         if mask is not None:
             nW = mask.shape[0]
-            attn = attn.view(B_ // nW, nW, self.num_heads, N, N) + mask.unsqueeze(
-                1
-            ).unsqueeze(0)
+            attn = attn.view(B_ // nW, nW, self.num_heads, N, N) + mask.unsqueeze(1).unsqueeze(0)
             attn = attn.view(-1, self.num_heads, N, N)
             attn = self.softmax(attn)
         else:
@@ -270,15 +258,11 @@ class SAMBLOCK(nn.Module):
         _, Hp, Wp, _ = x.shape
 
         # partition windows
-        x_windows = window_partition(
-            x, self.window_size
-        )  # nW*B, window_size, window_size, C
+        x_windows = window_partition(x, self.window_size)  # nW*B, window_size, window_size, C
         x_windows = x_windows.view(
             -1, self.window_size * self.window_size, C
         )  # nW*B, window_size*window_size, C
-        v_windows = window_partition(
-            v, self.window_size
-        )  # nW*B, window_size, window_size, C
+        v_windows = window_partition(v, self.window_size)  # nW*B, window_size, window_size, C
         v_windows = v_windows.view(
             -1, self.window_size * self.window_size, v_windows.shape[-1]
         )  # nW*B, window_size*window_size, C
@@ -289,9 +273,7 @@ class SAMBLOCK(nn.Module):
         )  # nW*B, window_size*window_size, C
 
         # merge windows
-        attn_windows = attn_windows.view(
-            -1, self.window_size, self.window_size, self.v_dim
-        )
+        attn_windows = attn_windows.view(-1, self.window_size, self.window_size, self.v_dim)
         x = window_reverse(attn_windows, self.window_size, Hp, Wp)  # B H' W' C
 
         if pad_r > 0 or pad_b > 0:

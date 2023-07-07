@@ -113,9 +113,7 @@ def draw_circles_sklearn(image_path):
     # The accuracy corresponds to the bin size of a major axis.
     # The value is chosen in order to get a single high accumulator.
     # The threshold eliminates low accumulators
-    result = hough_ellipse(
-        edges, accuracy=20, threshold=250, min_size=100, max_size=120
-    )
+    result = hough_ellipse(edges, accuracy=20, threshold=250, min_size=100, max_size=120)
     result.sort(order="accumulator")
 
     # Estimated parameters for the ellipse
@@ -130,9 +128,7 @@ def draw_circles_sklearn(image_path):
     edges = color.gray2rgb(img_as_ubyte(edges))
     edges[cy, cx] = (250, 0, 0)
 
-    fig2, (ax1, ax2) = plt.subplots(
-        ncols=2, nrows=1, figsize=(8, 4), sharex=True, sharey=True
-    )
+    fig2, (ax1, ax2) = plt.subplots(ncols=2, nrows=1, figsize=(8, 4), sharex=True, sharey=True)
 
     ax1.set_title("Original picture")
     ax1.imshow(image_rgb)

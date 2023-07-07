@@ -121,9 +121,7 @@ def get_pixel_length_of_car(img_array):
     regr_line_coordinates = list(zip(x.reshape(-1), predictions.reshape(-1)))
 
     # previously calculated manually: math.sqrt((abs(predictions[0]) - abs(predictions[-1]))**2 + (x[0][0] - x[-1][0])**2)
-    car_length_in_pixels = distance.euclidean(
-        regr_line_coordinates[0], regr_line_coordinates[-1]
-    )
+    car_length_in_pixels = distance.euclidean(regr_line_coordinates[0], regr_line_coordinates[-1])
 
     plt.scatter(x, y, color="black")
     plt.plot(x, predictions, color="blue", linewidth=3)

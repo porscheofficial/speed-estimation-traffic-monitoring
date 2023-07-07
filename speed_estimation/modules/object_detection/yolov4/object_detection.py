@@ -1,10 +1,10 @@
 import cv2
 import numpy as np
-from paths import yolov4_weights, yolov4_classes, yolov4_config
+from paths import YOLOV4_WEIGHTS, YOLOV4_CLASSES, YOLOV4_CONFIG
 
 
 class ObjectDetection:
-    def __init__(self, weights_path=yolov4_weights, cfg_path=yolov4_config):
+    def __init__(self, weights_path=YOLOV4_WEIGHTS, cfg_path=YOLOV4_CONFIG):
         print("Loading Object Detection")
         print("Running opencv dnn with YOLOv4")
         self.nmsThreshold = 0.4
@@ -23,11 +23,9 @@ class ObjectDetection:
         self.load_class_names()
         self.colors = np.random.uniform(0, 255, size=(80, 3))
 
-        self.model.setInputParams(
-            size=(self.image_size, self.image_size), scale=1 / 255
-        )
+        self.model.setInputParams(size=(self.image_size, self.image_size), scale=1 / 255)
 
-    def load_class_names(self, classes_path=yolov4_classes):
+    def load_class_names(self, classes_path=YOLOV4_CLASSES):
         with open(classes_path, "r") as file_object:
             for class_name in file_object.readlines():
                 class_name = class_name.strip()

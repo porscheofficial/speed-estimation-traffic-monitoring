@@ -68,14 +68,10 @@ class NewDataLoader(object):
             self.testing_samples = DataLoadPreprocess(
                 args, mode, transform=preprocessing_transforms(mode)
             )
-            self.data = DataLoader(
-                self.testing_samples, 1, shuffle=False, num_workers=1
-            )
+            self.data = DataLoader(self.testing_samples, 1, shuffle=False, num_workers=1)
 
         else:
-            print(
-                "mode should be one of 'train, test, online_eval'. Got {}".format(mode)
-            )
+            print("mode should be one of 'train, test, online_eval'. Got {}".format(mode))
 
 
 class DataLoadPreprocess(Dataset):
@@ -125,9 +121,7 @@ class DataLoadPreprocess(Dataset):
                 depth_gt = depth_gt.crop(
                     (left_margin, top_margin, left_margin + 1216, top_margin + 352)
                 )
-                image = image.crop(
-                    (left_margin, top_margin, left_margin + 1216, top_margin + 352)
-                )
+                image = image.crop((left_margin, top_margin, left_margin + 1216, top_margin + 352))
 
             # To avoid blank boundaries due to pixel registration
             if self.args.dataset == "nyu":
@@ -162,9 +156,7 @@ class DataLoadPreprocess(Dataset):
                     random.uniform(0, 1),
                 )
                 l, u = int(a * W), int(b * H)
-                w, h = int(max((W - a * W) * c * 0.75, 1)), int(
-                    max((H - b * H) * d * 0.75, 1)
-                )
+                w, h = int(max((W - a * W) * c * 0.75, 1)), int(max((H - b * H) * d * 0.75, 1))
                 depth_copied = np.repeat(depth, 3, axis=2)
                 M = np.ones(img.shape)
                 M[l : l + h, u : u + w, :] = 0
@@ -173,10 +165,7 @@ class DataLoadPreprocess(Dataset):
             else:
                 depth_gt = depth_gt / 256.0
 
-            if (
-                image.shape[0] != self.args.input_height
-                or image.shape[1] != self.args.input_width
-            ):
+            if image.shape[0] != self.args.input_height or image.shape[1] != self.args.input_width:
                 image, depth_gt = self.random_crop(
                     image, depth_gt, self.args.input_height, self.args.input_width
                 )
@@ -222,9 +211,7 @@ class DataLoadPreprocess(Dataset):
                 width = image.shape[1]
                 top_margin = int(height - 352)
                 left_margin = int((width - 1216) / 2)
-                image = image[
-                    top_margin : top_margin + 352, left_margin : left_margin + 1216, :
-                ]
+                image = image[top_margin : top_margin + 352, left_margin : left_margin + 1216, :]
                 if self.mode == "online_eval" and has_valid_depth:
                     depth_gt = depth_gt[
                         top_margin : top_margin + 352,
@@ -304,9 +291,7 @@ class DataLoadPreprocess(Dataset):
 class ToTensor(object):
     def __init__(self, mode):
         self.mode = mode
-        self.normalize = transforms.Normalize(
-            mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
-        )
+        self.normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 
     def __call__(self, sample):
         image, focal = sample["image"], sample["focal"]
@@ -332,9 +317,7 @@ class ToTensor(object):
 
     def to_tensor(self, pic):
         if not (_is_pil_image(pic) or _is_numpy_image(pic)):
-            raise TypeError(
-                "pic should be PIL Image or ndarray. Got {}".format(type(pic))
-            )
+            raise TypeError("pic should be PIL Image or ndarray. Got {}".format(type(pic)))
 
         if isinstance(pic, np.ndarray):
             img = torch.from_numpy(pic.transpose((2, 0, 1)))

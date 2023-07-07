@@ -16,9 +16,7 @@ def generate_depth_map(folder: str, image: str, max_depth_o: int):
     output_path = os.path.join(folder, f"depth_map_midas_{max_depth}.npy")
     image = os.path.join(folder, image)
 
-    model_type = (
-        "DPT_Large"  # MiDaS v3 - Large     (highest accuracy, slowest inference speed)
-    )
+    model_type = "DPT_Large"  # MiDaS v3 - Large     (highest accuracy, slowest inference speed)
     # model_type = "DPT_Hybrid"   # MiDaS v3 - Hybrid    (medium accuracy, medium inference speed)
     # model_type = "MiDaS_small"  # MiDaS v2.1 - Small   (lowest accuracy, highest inference speed)
 

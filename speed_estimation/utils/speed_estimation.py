@@ -12,8 +12,8 @@ def clamp(n, smallest, largest):
 
 
 class Direction(Enum):
-    towards = 0
-    away = 1
+    TOWARDS = 0
+    AWAY = 1
 
 
 @dataclass
@@ -113,6 +113,6 @@ def calculate_car_direction(car: Car) -> Direction:
     last_box = car.tracked_boxes[-1]
 
     if (first_box.y - last_box.y) < 0:
-        return Direction.towards
-    else:
-        return Direction.away
+        return Direction.TOWARDS
+
+    return Direction.AWAY

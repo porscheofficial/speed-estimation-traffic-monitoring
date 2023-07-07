@@ -1,9 +1,8 @@
-path_to_haar_file = "speed_estimation/model_weights/myhaar.xml"
-yolov4_weights = "model_weights/yolov4.weights"
-yolov4_classes = "model_weights/classes.txt"
-yolov4_config = "model_weights/yolov4.cfg"
+PATH_TO_HAAR_FILE = "model_weights/myhaar.xml"
+YOLOV4_WEIGHTS = "model_weights/yolov4.weights"
+YOLOV4_CLASSES = "model_weights/classes.txt"
+YOLOV4_CONFIG = "model_weights/yolov4.cfg"
 
-session_path = "../datasets"
+SESSION_PATH = "../datasets"
 
-speed_estimation_config_file = "config.ini"
-# speed_estimation_config_file = "speed_estimation/config.ini"
+SPEED_ESTIMATION_CONFIG_FILE = "config.ini"
