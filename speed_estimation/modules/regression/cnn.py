@@ -28,10 +28,10 @@ def background_removal(filename):
     result = cv2.bitwise_and(img, img, mask=mask)
 
     # save results
-    cv2.imwrite('background_removal/thresh.png', thresh)
-    cv2.imwrite('background_removal/morph.png', morph)
-    cv2.imwrite('background_removal/mask.png', mask)
-    cv2.imwrite('background_removal/result.png', result)
+    cv2.imwrite("background_removal/thresh.png", thresh)
+    cv2.imwrite("background_removal/morph.png", morph)
+    cv2.imwrite("background_removal/mask.png", mask)
+    cv2.imwrite("background_removal/result.png", result)
 
 
 def cnn(filename):
@@ -47,12 +47,14 @@ def cnn(filename):
     # for i in range(len(model.layers)):
     #     layer = model.layers[i]
     #     if 'conv' not in layer.name:
-    #         continue    
+    #         continue
     #     print(i , layer.name , layer.output.shape)
 
     model = tf.keras.Model(inputs=model.inputs, outputs=model.layers[1].output)
 
-    image = tf.keras.preprocessing.image.load_img("extracted_cars/" + filename, target_size=(224, 224))
+    image = tf.keras.preprocessing.image.load_img(
+        "extracted_cars/" + filename, target_size=(224, 224)
+    )
 
     # convert the image to an array
     image = tf.keras.preprocessing.image.img_to_array(image)
@@ -63,7 +65,7 @@ def cnn(filename):
 
     img_array = tf.keras.preprocessing.image.img_to_array(image.squeeze())
     # save the image with a new filename
-    tf.keras.preprocessing.image.save_img('preprocessed.png', img_array)
+    tf.keras.preprocessing.image.save_img("preprocessed.png", img_array)
 
     # calculating features_map
     features = model.predict(image)
@@ -71,16 +73,16 @@ def cnn(filename):
     fig = pyplot.figure(figsize=(20, 15))
     for i in range(1, features.shape[3] + 1):
         pyplot.subplot(8, 8, i)
-        pyplot.imshow(features[0, :, :, i - 1], cmap='gray')
+        pyplot.imshow(features[0, :, :, i - 1], cmap="gray")
 
-    pyplot.savefig('vgg_' + filename)
-    pyplot.close('all')
+    pyplot.savefig("vgg_" + filename)
+    pyplot.close("all")
 
     high_contrast_image = features[0, :, :, 61]
     high_contrast_image = np.array(high_contrast_image)[..., None]
-    cv2.imwrite('test_hc.png', high_contrast_image)
+    cv2.imwrite("test_hc.png", high_contrast_image)
 
-    image_hc = cv2.imread('test_hc.png')
+    image_hc = cv2.imread("test_hc.png")
     original_image_hc = image_hc.copy()
 
     hsv = cv2.cvtColor(image_hc, cv2.COLOR_BGR2HSV)
@@ -90,10 +92,10 @@ def cnn(filename):
     mask = cv2.inRange(hsv, lower, upper)
     result = cv2.bitwise_and(original_image_hc, original_image_hc, mask=mask)
 
-    cv2.imwrite('mask.png', mask)
-    cv2.imwrite('mask_test.png', mask[91:223, :])
-    cv2.imwrite('result.png', result)
-    cv2.imwrite('original.png', original_image_hc)
+    cv2.imwrite("mask.png", mask)
+    cv2.imwrite("mask_test.png", mask[91:223, :])
+    cv2.imwrite("result.png", result)
+    cv2.imwrite("original.png", original_image_hc)
 
     # mask_image = tf.keras.preprocessing.image.load_img("mask_test.png" , target_size=(92,224))
 

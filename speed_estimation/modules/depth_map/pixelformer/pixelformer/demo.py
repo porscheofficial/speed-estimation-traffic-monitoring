@@ -5,7 +5,7 @@ import os
 import torch
 from torch.autograd import Variable
 
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "1"
 import sys
 import time
 import argparse
@@ -16,8 +16,8 @@ from scipy import ndimage
 from skimage.transform import resize
 import matplotlib.pyplot as plt
 
-plasma = plt.get_cmap('plasma')
-greys = plt.get_cmap('Greys')
+plasma = plt.get_cmap("plasma")
+greys = plt.get_cmap("Greys")
 
 # UI and OpenGL
 from PySide2 import QtCore, QtGui, QtWidgets, QtOpenGL
@@ -30,16 +30,24 @@ from utils import post_process_depth, flip_lr
 from networks.PixelFormer import PixelFormer
 
 # Argument Parser
-parser = argparse.ArgumentParser(description='PixelFormer Live 3D')
-parser.add_argument('--model_name', type=str, help='model name', default='pixelformer')
-parser.add_argument('--encoder', type=str, help='type of encoder, base07, large07', default='large07')
-parser.add_argument('--max_depth', type=float, help='maximum depth in estimation', default=10)
-parser.add_argument('--checkpoint_path', type=str, help='path to a checkpoint to load', required=True)
-parser.add_argument('--input_height', type=int, help='input height', default=480)
-parser.add_argument('--input_width', type=int, help='input width', default=640)
-parser.add_argument('--dataset', type=str, help='dataset this model trained on', default='nyu')
-parser.add_argument('--crop', type=str, help='crop: kbcrop, edge, non', default='non')
-parser.add_argument('--video', type=str, help='video path', default='')
+parser = argparse.ArgumentParser(description="PixelFormer Live 3D")
+parser.add_argument("--model_name", type=str, help="model name", default="pixelformer")
+parser.add_argument(
+    "--encoder", type=str, help="type of encoder, base07, large07", default="large07"
+)
+parser.add_argument(
+    "--max_depth", type=float, help="maximum depth in estimation", default=10
+)
+parser.add_argument(
+    "--checkpoint_path", type=str, help="path to a checkpoint to load", required=True
+)
+parser.add_argument("--input_height", type=int, help="input height", default=480)
+parser.add_argument("--input_width", type=int, help="input width", default=640)
+parser.add_argument(
+    "--dataset", type=str, help="dataset this model trained on", default="nyu"
+)
+parser.add_argument("--crop", type=str, help="crop: kbcrop, edge, non", default="non")
+parser.add_argument("--video", type=str, help="video path", default="")
 
 args = parser.parse_args()
 
@@ -52,14 +60,20 @@ height_depth, width_depth = height_rgb, width_rgb
 Use_intrs_remap = False
 # Intrinsic parameters for your own webcam camera
 camera_matrix = np.zeros(shape=(3, 3))
-camera_matrix[0, 0] = 5.4765313594010649e+02
-camera_matrix[0, 2] = 3.2516069906172453e+02
-camera_matrix[1, 1] = 5.4801781476172562e+02
-camera_matrix[1, 2] = 2.4794113960783835e+02
+camera_matrix[0, 0] = 5.4765313594010649e02
+camera_matrix[0, 2] = 3.2516069906172453e02
+camera_matrix[1, 1] = 5.4801781476172562e02
+camera_matrix[1, 2] = 2.4794113960783835e02
 camera_matrix[2, 2] = 1
 dist_coeffs = np.array(
-    [3.7230261423972011e-02, -1.6171708069773008e-01, -3.5260752900266357e-04, 1.7161234226767313e-04,
-     1.0192711400840315e-01])
+    [
+        3.7230261423972011e-02,
+        -1.6171708069773008e-01,
+        -3.5260752900266357e-04,
+        1.7161234226767313e-04,
+        1.0192711400840315e-01,
+    ]
+)
 # Parameters for a model trained on NYU Depth V2
 new_camera_matrix = np.zeros(shape=(3, 3))
 new_camera_matrix[0, 0] = 518.8579
@@ -69,17 +83,23 @@ new_camera_matrix[1, 2] = 240
 new_camera_matrix[2, 2] = 1
 
 R = np.identity(3, dtype=np.float)
-map1, map2 = cv2.initUndistortRectifyMap(camera_matrix, dist_coeffs, R, new_camera_matrix, (width_rgb, height_rgb),
-                                         cv2.CV_32FC1)
+map1, map2 = cv2.initUndistortRectifyMap(
+    camera_matrix,
+    dist_coeffs,
+    R,
+    new_camera_matrix,
+    (width_rgb, height_rgb),
+    cv2.CV_32FC1,
+)
 
 
 def load_model():
-    args.mode = 'test'
-    model = PixelFormer(version='large07', inv_depth=False, max_depth=args.max_depth)
+    args.mode = "test"
+    model = PixelFormer(version="large07", inv_depth=False, max_depth=args.max_depth)
     model = torch.nn.DataParallel(model)
 
     checkpoint = torch.load(args.checkpoint_path)
-    model.load_state_dict(checkpoint['model'])
+    model.load_state_dict(checkpoint["model"])
     model.eval()
     model.cuda()
 
@@ -91,18 +111,20 @@ ticTime = time.time()
 
 
 def tic():
-    global ticTime;
+    global ticTime
     ticTime = time.time()
 
 
 def toc():
-    print('{0} seconds.'.format(time.time() - ticTime))
+    print("{0} seconds.".format(time.time() - ticTime))
 
 
 # Conversion from Numpy to QImage and back
 def np_to_qimage(a):
     im = a.copy()
-    return QtGui.QImage(im.data, im.shape[1], im.shape[0], im.strides[0], QtGui.QImage.Format_RGB888).copy()
+    return QtGui.QImage(
+        im.data, im.shape[1], im.shape[0], im.strides[0], QtGui.QImage.Format_RGB888
+    ).copy()
 
 
 def qimage_to_np(img):
@@ -176,58 +198,64 @@ class Window(QtWidgets.QWidget):
 
         # Default example
         if self.glWidget.rgb.any() and self.glWidget.depth.any():
-            img = (self.glWidget.rgb * 255).astype('uint8')
+            img = (self.glWidget.rgb * 255).astype("uint8")
             self.inputViewer.setPixmap(QtGui.QPixmap.fromImage(np_to_qimage(img)))
-            coloredDepth = (plasma(self.glWidget.depth[:, :, 0])[:, :, :3] * 255).astype('uint8')
-            self.outputViewer.setPixmap(QtGui.QPixmap.fromImage(np_to_qimage(coloredDepth)))
+            coloredDepth = (
+                plasma(self.glWidget.depth[:, :, 0])[:, :, :3] * 255
+            ).astype("uint8")
+            self.outputViewer.setPixmap(
+                QtGui.QPixmap.fromImage(np_to_qimage(coloredDepth))
+            )
 
     def loadModel(self):
-        print('== loadModel')
+        print("== loadModel")
         QtGui.QGuiApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
         tic()
         self.model = load_model()
-        print('Model loaded.')
+        print("Model loaded.")
         toc()
         self.updateCloud()
         QtGui.QGuiApplication.restoreOverrideCursor()
 
     def loadCamera(self):
-        print('== loadCamera')
+        print("== loadCamera")
         tic()
         self.model = load_model()
-        print('Model loaded.')
+        print("Model loaded.")
         toc()
         self.capture = cv2.VideoCapture(0)
         self.updateInput.emit()
 
     def loadVideoFile(self):
-        print('== loadVideoFile')
+        print("== loadVideoFile")
         self.model = load_model()
         self.capture = cv2.VideoCapture(args.video)
         self.updateInput.emit()
 
     def loadImage(self):
-        print('== loadImage')
+        print("== loadImage")
         self.capture = None
-        img = (self.glWidget.rgb * 255).astype('uint8')
+        img = (self.glWidget.rgb * 255).astype("uint8")
         self.inputViewer.setPixmap(QtGui.QPixmap.fromImage(np_to_qimage(img)))
         self.updateCloud()
 
     def loadImageFile(self):
-        print('== loadImageFile')
+        print("== loadImageFile")
         self.capture = None
-        filename = \
-            QtWidgets.QFileDialog.getOpenFileName(None, 'Select image', '', self.tr('Image files (*.jpg *.png)'))[0]
+        filename = QtWidgets.QFileDialog.getOpenFileName(
+            None, "Select image", "", self.tr("Image files (*.jpg *.png)")
+        )[0]
         img = QtGui.QImage(filename).scaledToHeight(height_rgb)
         xstart = 0
-        if img.width() > width_rgb: xstart = (img.width() - width_rgb) // 2
+        if img.width() > width_rgb:
+            xstart = (img.width() - width_rgb) // 2
         img = img.copy(xstart, 0, xstart + width_rgb, height_rgb)
         self.inputViewer.setPixmap(QtGui.QPixmap.fromImage(img))
-        print('== loadImageFile')
+        print("== loadImageFile")
         self.updateCloud()
 
     def update_input(self):
-        print('== update_input')
+        print("== update_input")
         # Don't update anymore if no capture device is set
         if self.capture == None:
             return
@@ -244,7 +272,9 @@ class Window(QtWidgets.QWidget):
         if Use_intrs_remap:
             frame_ud = cv2.remap(frame, map1, map2, interpolation=cv2.INTER_LINEAR)
         else:
-            frame_ud = cv2.resize(frame, (width_rgb, height_rgb), interpolation=cv2.INTER_LINEAR)
+            frame_ud = cv2.resize(
+                frame, (width_rgb, height_rgb), interpolation=cv2.INTER_LINEAR
+            )
         frame = cv2.cvtColor(frame_ud, cv2.COLOR_BGR2RGB)
         image = np_to_qimage(frame)
         self.inputViewer.setPixmap(QtGui.QPixmap.fromImage(image))
@@ -253,7 +283,7 @@ class Window(QtWidgets.QWidget):
         self.updateCloud()
 
     def updateCloud(self):
-        print('== updateCloud')
+        print("== updateCloud")
         rgb8 = qimage_to_np(self.inputViewer.pixmap().toImage())
         self.glWidget.rgb = (rgb8[:, :, :3] / 255)[:, :, ::-1]
 
@@ -266,12 +296,13 @@ class Window(QtWidgets.QWidget):
             input_image[:, :, 2] = (input_image[:, :, 2] - 103.94) * 0.017
 
             H, W, _ = input_image.shape
-            if args.crop == 'kbcrop':
+            if args.crop == "kbcrop":
                 top_margin = int(H - 352)
                 left_margin = int((W - 1216) / 2)
-                input_image_cropped = input_image[top_margin:top_margin + 352,
-                                      left_margin:left_margin + 1216]
-            elif args.crop == 'edge':
+                input_image_cropped = input_image[
+                    top_margin : top_margin + 352, left_margin : left_margin + 1216
+                ]
+            elif args.crop == "edge":
                 input_image_cropped = input_image[32:-32, 32:-32, :]
             else:
                 input_image_cropped = input_image
@@ -290,16 +321,23 @@ class Window(QtWidgets.QWidget):
                     depth_cropped = post_process_depth(depth_est, depth_est_flipped)
 
             depth = np.zeros((height_depth, width_depth), dtype=np.float32)
-            if args.crop == 'kbcrop':
-                depth[top_margin:top_margin + 352, left_margin:left_margin + 1216] = \
+            if args.crop == "kbcrop":
+                depth[
+                    top_margin : top_margin + 352, left_margin : left_margin + 1216
+                ] = (depth_cropped[0].cpu().squeeze() / args.max_depth)
+            elif args.crop == "edge":
+                depth[32:-32, 32:-32] = (
                     depth_cropped[0].cpu().squeeze() / args.max_depth
-            elif args.crop == 'edge':
-                depth[32:-32, 32:-32] = depth_cropped[0].cpu().squeeze() / args.max_depth
+                )
             else:
                 depth[:, :] = depth_cropped[0].cpu().squeeze() / args.max_depth
 
-            coloredDepth = (greys(np.log10(depth * args.max_depth))[:, :, :3] * 255).astype('uint8')
-            self.outputViewer.setPixmap(QtGui.QPixmap.fromImage(np_to_qimage(coloredDepth)))
+            coloredDepth = (
+                greys(np.log10(depth * args.max_depth))[:, :, :3] * 255
+            ).astype("uint8")
+            self.outputViewer.setPixmap(
+                QtGui.QPixmap.fromImage(np_to_qimage(coloredDepth))
+            )
             self.glWidget.depth = depth
 
         else:
@@ -379,7 +417,7 @@ class GLWidget(QtOpenGL.QGLWidget):
 
     def mouseMoveEvent(self, event):
         dx = -(event.x() - self.lastPos.x())
-        dy = (event.y() - self.lastPos.y())
+        dy = event.y() - self.lastPos.y()
 
         if event.buttons() & QtCore.Qt.LeftButton:
             self.setXRotation(self.xRot + dy)
@@ -403,22 +441,28 @@ class GLWidget(QtOpenGL.QGLWidget):
         GL.glEnable(GL.GL_DEPTH_TEST)
         GL.glEnable(GL.GL_CULL_FACE)
 
-        VERTEX_SHADER = shaders.compileShader("""#version 330
+        VERTEX_SHADER = shaders.compileShader(
+            """#version 330
         layout(location = 0) in vec3 position;
         layout(location = 1) in vec3 color;
         uniform mat4 mvp; out vec4 frag_color;
-        void main() {gl_Position = mvp * vec4(position, 1.0);frag_color = vec4(color, 1.0);}""", GL.GL_VERTEX_SHADER)
+        void main() {gl_Position = mvp * vec4(position, 1.0);frag_color = vec4(color, 1.0);}""",
+            GL.GL_VERTEX_SHADER,
+        )
 
-        FRAGMENT_SHADER = shaders.compileShader("""#version 330
+        FRAGMENT_SHADER = shaders.compileShader(
+            """#version 330
         in vec4 frag_color; out vec4 out_color;
-        void main() {out_color = frag_color;}""", GL.GL_FRAGMENT_SHADER)
+        void main() {out_color = frag_color;}""",
+            GL.GL_FRAGMENT_SHADER,
+        )
 
         self.shaderProgram = shaders.compileProgram(VERTEX_SHADER, FRAGMENT_SHADER)
 
         self.UNIFORM_LOCATIONS = {
-            'position': GL.glGetAttribLocation(self.shaderProgram, 'position'),
-            'color': GL.glGetAttribLocation(self.shaderProgram, 'color'),
-            'mvp': GL.glGetUniformLocation(self.shaderProgram, 'mvp'),
+            "position": GL.glGetAttribLocation(self.shaderProgram, "position"),
+            "color": GL.glGetAttribLocation(self.shaderProgram, "color"),
+            "mvp": GL.glGetUniformLocation(self.shaderProgram, "mvp"),
         }
 
         shaders.glUseProgram(self.shaderProgram)
@@ -447,8 +491,12 @@ class GLWidget(QtOpenGL.QGLWidget):
 
     def createPointCloudVBOfromRGBD(self):
         # Create position and color VBOs
-        self.pos_vbo = vbo.VBO(data=self.pos, usage=GL.GL_DYNAMIC_DRAW, target=GL.GL_ARRAY_BUFFER)
-        self.col_vbo = vbo.VBO(data=self.col, usage=GL.GL_DYNAMIC_DRAW, target=GL.GL_ARRAY_BUFFER)
+        self.pos_vbo = vbo.VBO(
+            data=self.pos, usage=GL.GL_DYNAMIC_DRAW, target=GL.GL_ARRAY_BUFFER
+        )
+        self.col_vbo = vbo.VBO(
+            data=self.col, usage=GL.GL_DYNAMIC_DRAW, target=GL.GL_ARRAY_BUFFER
+        )
 
     def updateRGBD(self):
         # RGBD dimensions
@@ -459,8 +507,8 @@ class GLWidget(QtOpenGL.QGLWidget):
         colors = resize(self.rgb, (height, width)).reshape((height * width, 3))
 
         # Flatten and convert to float32
-        self.pos = points.astype('float32')
-        self.col = colors.reshape(height * width, 3).astype('float32')
+        self.pos = points.astype("float32")
+        self.col = colors.reshape(height * width, 3).astype("float32")
 
         # Move center of scene
         self.pos = self.pos + glm.vec3(0, -0.06, -0.3)
@@ -471,14 +519,24 @@ class GLWidget(QtOpenGL.QGLWidget):
 
     def drawObject(self):
         # Update camera
-        model, view, proj = glm.mat4(1), glm.mat4(1), glm.perspective(45, self.width() / self.height(), 0.01, 100)
-        center, up, eye = glm.vec3(0, -0.075, 0), glm.vec3(0, -1, 0), glm.vec3(0, 0, -0.4 * (self.zoomLevel / 10))
+        model, view, proj = (
+            glm.mat4(1),
+            glm.mat4(1),
+            glm.perspective(45, self.width() / self.height(), 0.01, 100),
+        )
+        center, up, eye = (
+            glm.vec3(0, -0.075, 0),
+            glm.vec3(0, -1, 0),
+            glm.vec3(0, 0, -0.4 * (self.zoomLevel / 10)),
+        )
         view = glm.lookAt(eye, center, up)
         model = glm.rotate(model, self.xRot / 160.0, glm.vec3(1, 0, 0))
         model = glm.rotate(model, self.yRot / 160.0, glm.vec3(0, 1, 0))
         model = glm.rotate(model, self.zRot / 160.0, glm.vec3(0, 0, 1))
         mvp = proj * view * model
-        GL.glUniformMatrix4fv(self.UNIFORM_LOCATIONS['mvp'], 1, False, glm.value_ptr(mvp))
+        GL.glUniformMatrix4fv(
+            self.UNIFORM_LOCATIONS["mvp"], 1, False, glm.value_ptr(mvp)
+        )
 
         # Update data
         self.pos_vbo.set_array(self.pos)
@@ -501,7 +559,7 @@ class GLWidget(QtOpenGL.QGLWidget):
         GL.glDrawArrays(GL.GL_POINTS, 0, self.pos.shape[0])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     window = Window()
     window.show()

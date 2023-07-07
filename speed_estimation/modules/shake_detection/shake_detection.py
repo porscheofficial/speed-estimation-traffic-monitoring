@@ -7,7 +7,6 @@ class ShakeDetection:
     starter_threshold = 0.4
 
     def is_hard_move(self, new_frame) -> bool:
-
         if self.last_frame is None or new_frame is None:
             return False
 

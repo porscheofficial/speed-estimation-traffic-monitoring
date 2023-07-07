@@ -5,9 +5,16 @@ from timm.models.layers import DropPath, to_2tuple, trunc_normal_
 
 
 class Mlp(nn.Module):
-    """ Multilayer perceptron."""
+    """Multilayer perceptron."""
 
-    def __init__(self, in_features, hidden_features=None, out_features=None, act_layer=nn.GELU, drop=0.):
+    def __init__(
+        self,
+        in_features,
+        hidden_features=None,
+        out_features=None,
+        act_layer=nn.GELU,
+        drop=0.0,
+    ):
         super().__init__()
         out_features = out_features or in_features
         hidden_features = hidden_features or in_features
@@ -36,7 +43,9 @@ def window_partition(x, window_size):
     """
     B, H, W, C = x.shape
     x = x.view(B, H // window_size, window_size, W // window_size, window_size, C)
-    windows = x.permute(0, 1, 3, 2, 4, 5).contiguous().view(-1, window_size, window_size, C)
+    windows = (
+        x.permute(0, 1, 3, 2, 4, 5).contiguous().view(-1, window_size, window_size, C)
+    )
     return windows
 
 
@@ -52,13 +61,15 @@ def window_reverse(windows, window_size, H, W):
         x: (B, H, W, C)
     """
     B = int(windows.shape[0] / (H * W / window_size / window_size))
-    x = windows.view(B, H // window_size, W // window_size, window_size, window_size, -1)
+    x = windows.view(
+        B, H // window_size, W // window_size, window_size, window_size, -1
+    )
     x = x.permute(0, 1, 3, 2, 4, 5).contiguous().view(B, H, W, -1)
     return x
 
 
 class WindowAttention(nn.Module):
-    """ Window based multi-head self attention (W-MSA) module with relative position bias.
+    """Window based multi-head self attention (W-MSA) module with relative position bias.
     It supports both of shifted and non-shifted window.
 
     Args:
@@ -71,26 +82,40 @@ class WindowAttention(nn.Module):
         proj_drop (float, optional): Dropout ratio of output. Default: 0.0
     """
 
-    def __init__(self, dim, window_size, num_heads, v_dim, qkv_bias=True, qk_scale=None, attn_drop=0., proj_drop=0.):
-
+    def __init__(
+        self,
+        dim,
+        window_size,
+        num_heads,
+        v_dim,
+        qkv_bias=True,
+        qk_scale=None,
+        attn_drop=0.0,
+        proj_drop=0.0,
+    ):
         super().__init__()
         self.dim = dim
         self.window_size = window_size  # Wh, Ww
         self.num_heads = num_heads
         head_dim = dim // num_heads
-        self.scale = qk_scale or head_dim ** -0.5
+        self.scale = qk_scale or head_dim**-0.5
 
         # define a parameter table of relative position bias
         self.relative_position_bias_table = nn.Parameter(
-            torch.zeros((2 * window_size[0] - 1) * (2 * window_size[1] - 1), num_heads))  # 2*Wh-1 * 2*Ww-1, nH
+            torch.zeros((2 * window_size[0] - 1) * (2 * window_size[1] - 1), num_heads)
+        )  # 2*Wh-1 * 2*Ww-1, nH
 
         # get pair-wise relative position index for each token inside the window
         coords_h = torch.arange(self.window_size[0])
         coords_w = torch.arange(self.window_size[1])
         coords = torch.stack(torch.meshgrid([coords_h, coords_w]))  # 2, Wh, Ww
         coords_flatten = torch.flatten(coords, 1)  # 2, Wh*Ww
-        relative_coords = coords_flatten[:, :, None] - coords_flatten[:, None, :]  # 2, Wh*Ww, Wh*Ww
-        relative_coords = relative_coords.permute(1, 2, 0).contiguous()  # Wh*Ww, Wh*Ww, 2
+        relative_coords = (
+            coords_flatten[:, :, None] - coords_flatten[:, None, :]
+        )  # 2, Wh*Ww, Wh*Ww
+        relative_coords = relative_coords.permute(
+            1, 2, 0
+        ).contiguous()  # Wh*Ww, Wh*Ww, 2
         relative_coords[:, :, 0] += self.window_size[0] - 1  # shift to start from 0
         relative_coords[:, :, 1] += self.window_size[1] - 1
         relative_coords[:, :, 0] *= 2 * self.window_size[1] - 1
@@ -103,11 +128,11 @@ class WindowAttention(nn.Module):
         self.proj = nn.Linear(v_dim, v_dim)
         self.proj_drop = nn.Dropout(proj_drop)
 
-        trunc_normal_(self.relative_position_bias_table, std=.02)
+        trunc_normal_(self.relative_position_bias_table, std=0.02)
         self.softmax = nn.Softmax(dim=-1)
 
     def forward(self, x, v, mask=None):
-        """ Forward function.
+        """Forward function.
 
         Args:
             x: input features with shape of (num_windows*B, N, C)
@@ -115,20 +140,33 @@ class WindowAttention(nn.Module):
         """
         B_, N, C = x.shape
         q = self.q(x).view(B_, N, self.num_heads, -1).transpose(1, 2)
-        kv = self.kv(v).reshape(B_, N, 2, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
+        kv = (
+            self.kv(v)
+            .reshape(B_, N, 2, self.num_heads, C // self.num_heads)
+            .permute(2, 0, 3, 1, 4)
+        )
         k, v = kv[0], kv[1]  # make torchscript happy (cannot use tensor as tuple)
 
         q = q * self.scale
-        attn = (q @ k.transpose(-2, -1))
+        attn = q @ k.transpose(-2, -1)
 
-        relative_position_bias = self.relative_position_bias_table[self.relative_position_index.view(-1)].view(
-            self.window_size[0] * self.window_size[1], self.window_size[0] * self.window_size[1], -1)  # Wh*Ww,Wh*Ww,nH
-        relative_position_bias = relative_position_bias.permute(2, 0, 1).contiguous()  # nH, Wh*Ww, Wh*Ww
+        relative_position_bias = self.relative_position_bias_table[
+            self.relative_position_index.view(-1)
+        ].view(
+            self.window_size[0] * self.window_size[1],
+            self.window_size[0] * self.window_size[1],
+            -1,
+        )  # Wh*Ww,Wh*Ww,nH
+        relative_position_bias = relative_position_bias.permute(
+            2, 0, 1
+        ).contiguous()  # nH, Wh*Ww, Wh*Ww
         attn = attn + relative_position_bias.unsqueeze(0)
 
         if mask is not None:
             nW = mask.shape[0]
-            attn = attn.view(B_ // nW, nW, self.num_heads, N, N) + mask.unsqueeze(1).unsqueeze(0)
+            attn = attn.view(B_ // nW, nW, self.num_heads, N, N) + mask.unsqueeze(
+                1
+            ).unsqueeze(0)
             attn = attn.view(-1, self.num_heads, N, N)
             attn = self.softmax(attn)
         else:
@@ -143,7 +181,7 @@ class WindowAttention(nn.Module):
 
 
 class SAMBLOCK(nn.Module):
-    """ 
+    """
     Args:
         dim (int): Number of feature channels
         num_heads (int): Number of attention head.
@@ -157,19 +195,20 @@ class SAMBLOCK(nn.Module):
         norm_layer (nn.Module, optional): Normalization layer. Default: nn.LayerNorm
     """
 
-    def __init__(self,
-                 dim,
-                 num_heads,
-                 v_dim,
-                 window_size=7,
-                 mlp_ratio=4.,
-                 qkv_bias=True,
-                 qk_scale=None,
-                 drop=0.,
-                 attn_drop=0.,
-                 drop_path=0.,
-                 norm_layer=nn.LayerNorm,
-                 ):
+    def __init__(
+        self,
+        dim,
+        num_heads,
+        v_dim,
+        window_size=7,
+        mlp_ratio=4.0,
+        qkv_bias=True,
+        qk_scale=None,
+        drop=0.0,
+        attn_drop=0.0,
+        drop_path=0.0,
+        norm_layer=nn.LayerNorm,
+    ):
         super().__init__()
         self.window_size = window_size
         self.dim = dim
@@ -183,16 +222,28 @@ class SAMBLOCK(nn.Module):
         self.norm1 = norm_layer(dim)
         self.normv = norm_layer(dim)
         self.attn = WindowAttention(
-            dim, window_size=to_2tuple(self.window_size), num_heads=num_heads, v_dim=v_dim,
-            qkv_bias=qkv_bias, qk_scale=qk_scale, attn_drop=attn_drop, proj_drop=drop)
+            dim,
+            window_size=to_2tuple(self.window_size),
+            num_heads=num_heads,
+            v_dim=v_dim,
+            qkv_bias=qkv_bias,
+            qk_scale=qk_scale,
+            attn_drop=attn_drop,
+            proj_drop=drop,
+        )
 
-        self.drop_path = DropPath(drop_path) if drop_path > 0. else nn.Identity()
+        self.drop_path = DropPath(drop_path) if drop_path > 0.0 else nn.Identity()
         self.norm2 = norm_layer(v_dim)
         mlp_hidden_dim = int(v_dim * mlp_ratio)
-        self.mlp = Mlp(in_features=v_dim, hidden_features=mlp_hidden_dim, act_layer=act_layer, drop=drop)
+        self.mlp = Mlp(
+            in_features=v_dim,
+            hidden_features=mlp_hidden_dim,
+            act_layer=act_layer,
+            drop=drop,
+        )
 
     def forward(self, x, v, H, W):
-        """ Forward function.
+        """Forward function.
 
         Args:
             x: Input feature, tensor size (B, H*W, C).
@@ -219,17 +270,28 @@ class SAMBLOCK(nn.Module):
         _, Hp, Wp, _ = x.shape
 
         # partition windows
-        x_windows = window_partition(x, self.window_size)  # nW*B, window_size, window_size, C
-        x_windows = x_windows.view(-1, self.window_size * self.window_size, C)  # nW*B, window_size*window_size, C
-        v_windows = window_partition(v, self.window_size)  # nW*B, window_size, window_size, C
-        v_windows = v_windows.view(-1, self.window_size * self.window_size,
-                                   v_windows.shape[-1])  # nW*B, window_size*window_size, C
+        x_windows = window_partition(
+            x, self.window_size
+        )  # nW*B, window_size, window_size, C
+        x_windows = x_windows.view(
+            -1, self.window_size * self.window_size, C
+        )  # nW*B, window_size*window_size, C
+        v_windows = window_partition(
+            v, self.window_size
+        )  # nW*B, window_size, window_size, C
+        v_windows = v_windows.view(
+            -1, self.window_size * self.window_size, v_windows.shape[-1]
+        )  # nW*B, window_size*window_size, C
 
         # W-MSA/SW-MSA
-        attn_windows = self.attn(x_windows, v_windows, mask=None)  # nW*B, window_size*window_size, C
+        attn_windows = self.attn(
+            x_windows, v_windows, mask=None
+        )  # nW*B, window_size*window_size, C
 
         # merge windows
-        attn_windows = attn_windows.view(-1, self.window_size, self.window_size, self.v_dim)
+        attn_windows = attn_windows.view(
+            -1, self.window_size, self.window_size, self.v_dim
+        )
         x = window_reverse(attn_windows, self.window_size, Hp, Wp)  # B H' W' C
 
         if pad_r > 0 or pad_b > 0:
@@ -245,16 +307,18 @@ class SAMBLOCK(nn.Module):
 
 
 class SAM(nn.Module):
-    def __init__(self,
-                 input_dim=96,
-                 embed_dim=96,
-                 v_dim=64,
-                 window_size=7,
-                 num_heads=4,
-                 patch_size=4,
-                 in_chans=3,
-                 norm_layer=nn.LayerNorm,
-                 patch_norm=True):
+    def __init__(
+        self,
+        input_dim=96,
+        embed_dim=96,
+        v_dim=64,
+        window_size=7,
+        num_heads=4,
+        patch_size=4,
+        in_chans=3,
+        norm_layer=nn.LayerNorm,
+        patch_norm=True,
+    ):
         super().__init__()
 
         self.embed_dim = embed_dim
@@ -276,16 +340,17 @@ class SAM(nn.Module):
             num_heads=num_heads,
             v_dim=v_dim,
             window_size=window_size,
-            mlp_ratio=4.,
+            mlp_ratio=4.0,
             qkv_bias=True,
             qk_scale=None,
-            drop=0.,
-            attn_drop=0.,
-            drop_path=0.,
-            norm_layer=norm_layer)
+            drop=0.0,
+            attn_drop=0.0,
+            drop_path=0.0,
+            norm_layer=norm_layer,
+        )
 
         layer = norm_layer(embed_dim)
-        layer_name = 'norm_sam'
+        layer_name = "norm_sam"
         self.add_module(layer_name, layer)
 
     def forward(self, e, q):
@@ -301,7 +366,7 @@ class SAM(nn.Module):
         e = e.flatten(2).transpose(1, 2)
 
         q_out, H, W = self.sam_block(q, e, Wh, Ww)
-        norm_layer = getattr(self, f'norm_sam')
+        norm_layer = getattr(self, f"norm_sam")
         q_out = norm_layer(q_out)
         q_out = q_out.view(-1, H, W, self.embed_dim).permute(0, 3, 1, 2).contiguous()
 

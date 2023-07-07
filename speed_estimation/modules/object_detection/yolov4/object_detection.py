@@ -23,7 +23,9 @@ class ObjectDetection:
         self.load_class_names()
         self.colors = np.random.uniform(0, 255, size=(80, 3))
 
-        self.model.setInputParams(size=(self.image_size, self.image_size), scale=1 / 255)
+        self.model.setInputParams(
+            size=(self.image_size, self.image_size), scale=1 / 255
+        )
 
     def load_class_names(self, classes_path=yolov4_classes):
         with open(classes_path, "r") as file_object:
@@ -35,4 +37,6 @@ class ObjectDetection:
         return self.classes
 
     def detect(self, frame):
-        return self.model.detect(frame, nmsThreshold=self.nmsThreshold, confThreshold=self.confThreshold)
+        return self.model.detect(
+            frame, nmsThreshold=self.nmsThreshold, confThreshold=self.confThreshold
+        )

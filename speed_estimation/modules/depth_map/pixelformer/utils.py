@@ -18,7 +18,7 @@ def convert_arg_line_to_args(arg_line):
 
 
 def block_print():
-    sys.stdout = open(os.devnull, 'w')
+    sys.stdout = open(os.devnull, "w")
 
 
 def enable_print():
@@ -26,13 +26,13 @@ def enable_print():
 
 
 def get_num_lines(file_path):
-    f = open(file_path, 'r')
+    f = open(file_path, "r")
     lines = f.readlines()
     f.close()
     return len(lines)
 
 
-def colorize(value, vmin=None, vmax=None, cmap='Greys'):
+def colorize(value, vmin=None, vmax=None, cmap="Greys"):
     value = value.cpu().numpy()[:, :, :]
     value = np.log10(value)
 
@@ -42,7 +42,7 @@ def colorize(value, vmin=None, vmax=None, cmap='Greys'):
     if vmin != vmax:
         value = (value - vmin) / (vmax - vmin)
     else:
-        value = value * 0.
+        value = value * 0.0
 
     cmapper = matplotlib.cm.get_cmap(cmap)
     value = cmapper(value, bytes=True)
@@ -61,24 +61,34 @@ def normalize_result(value, vmin=None, vmax=None):
     if vmin != vmax:
         value = (value - vmin) / (vmax - vmin)
     else:
-        value = value * 0.
+        value = value * 0.0
 
     return np.expand_dims(value, 0)
 
 
 inv_normalize = transforms.Normalize(
     mean=[-0.485 / 0.229, -0.456 / 0.224, -0.406 / 0.225],
-    std=[1 / 0.229, 1 / 0.224, 1 / 0.225]
+    std=[1 / 0.229, 1 / 0.224, 1 / 0.225],
 )
 
-eval_metrics = ['silog', 'abs_rel', 'log10', 'rms', 'sq_rel', 'log_rms', 'd1', 'd2', 'd3']
+eval_metrics = [
+    "silog",
+    "abs_rel",
+    "log10",
+    "rms",
+    "sq_rel",
+    "log_rms",
+    "d1",
+    "d2",
+    "d3",
+]
 
 
 def compute_errors(gt, pred):
     thresh = np.maximum((gt / pred), (pred / gt))
     d1 = (thresh < 1.25).mean()
-    d2 = (thresh < 1.25 ** 2).mean()
-    d3 = (thresh < 1.25 ** 3).mean()
+    d2 = (thresh < 1.25**2).mean()
+    d3 = (thresh < 1.25**3).mean()
 
     rms = (gt - pred) ** 2
     rms = np.sqrt(rms.mean())
@@ -90,7 +100,7 @@ def compute_errors(gt, pred):
     sq_rel = np.mean(((gt - pred) ** 2) / gt)
 
     err = np.log(pred) - np.log(gt)
-    silog = np.sqrt(np.mean(err ** 2) - np.mean(err) ** 2) * 100
+    silog = np.sqrt(np.mean(err**2) - np.mean(err) ** 2) * 100
 
     err = np.abs(np.log10(pred) - np.log10(gt))
     log10 = np.mean(err)
@@ -105,7 +115,9 @@ class silog_loss(nn.Module):
 
     def forward(self, depth_est, depth_gt, mask):
         d = torch.log(depth_est[mask]) - torch.log(depth_gt[mask])
-        return torch.sqrt((d ** 2).mean() - self.variance_focus * (d.mean() ** 2)) * 10.0
+        return (
+            torch.sqrt((d**2).mean() - self.variance_focus * (d.mean() ** 2)) * 10.0
+        )
 
 
 def flip_lr(image):
@@ -122,11 +134,11 @@ def flip_lr(image):
     image_flipped : torch.Tensor [B,3,H,W]
         Flipped image
     """
-    assert image.dim() == 4, 'You need to provide a [B,C,H,W] image to flip'
+    assert image.dim() == 4, "You need to provide a [B,C,H,W] image to flip"
     return torch.flip(image, [3])
 
 
-def fuse_inv_depth(inv_depth, inv_depth_hat, method='mean'):
+def fuse_inv_depth(inv_depth, inv_depth_hat, method="mean"):
     """
     Fuse inverse depth and flipped inverse depth maps
 
@@ -144,17 +156,17 @@ def fuse_inv_depth(inv_depth, inv_depth_hat, method='mean'):
     fused_inv_depth : torch.Tensor [B,1,H,W]
         Fused inverse depth map
     """
-    if method == 'mean':
+    if method == "mean":
         return 0.5 * (inv_depth + inv_depth_hat)
-    elif method == 'max':
+    elif method == "max":
         return torch.max(inv_depth, inv_depth_hat)
-    elif method == 'min':
+    elif method == "min":
         return torch.min(inv_depth, inv_depth_hat)
     else:
-        raise ValueError('Unknown post-process method {}'.format(method))
+        raise ValueError("Unknown post-process method {}".format(method))
 
 
-def post_process_depth(depth, depth_flipped, method='mean'):
+def post_process_depth(depth, depth_flipped, method="mean"):
     """
     Post-process an inverse and flipped inverse depth map
 
@@ -175,12 +187,16 @@ def post_process_depth(depth, depth_flipped, method='mean'):
     B, C, H, W = depth.shape
     inv_depth_hat = flip_lr(depth_flipped)
     inv_depth_fused = fuse_inv_depth(depth, inv_depth_hat, method=method)
-    xs = torch.linspace(0., 1., W, device=depth.device,
-                        dtype=depth.dtype).repeat(B, C, H, 1)
-    mask = 1.0 - torch.clamp(20. * (xs - 0.05), 0., 1.)
+    xs = torch.linspace(0.0, 1.0, W, device=depth.device, dtype=depth.dtype).repeat(
+        B, C, H, 1
+    )
+    mask = 1.0 - torch.clamp(20.0 * (xs - 0.05), 0.0, 1.0)
     mask_hat = flip_lr(mask)
-    return mask_hat * depth + mask * inv_depth_hat + \
-        (1.0 - mask - mask_hat) * inv_depth_fused
+    return (
+        mask_hat * depth
+        + mask * inv_depth_hat
+        + (1.0 - mask - mask_hat) * inv_depth_fused
+    )
 
 
 class DistributedSamplerNoEvenlyDivisible(Sampler):
@@ -238,7 +254,7 @@ class DistributedSamplerNoEvenlyDivisible(Sampler):
         # assert len(indices) == self.total_size
 
         # subsample
-        indices = indices[self.rank:self.total_size:self.num_replicas]
+        indices = indices[self.rank : self.total_size : self.num_replicas]
         self.num_samples = len(indices)
         # assert len(indices) == self.num_samples
 

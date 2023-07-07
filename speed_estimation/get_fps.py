@@ -4,7 +4,7 @@
 # In[31]:
 
 
-path = '../datasets/video.mp4'
+path = "../datasets/video.mp4"
 # give_me_fps(path)
 
 import time
@@ -47,7 +47,7 @@ def give_me_fps(path_to_dataset):
 
 def read_fps_cv2(path_to_dataset):
     video = cv2.VideoCapture(path_to_dataset)
-    (major_ver, minor_ver, subminor_ver) = (cv2.__version__).split('.')
+    (major_ver, minor_ver, subminor_ver) = (cv2.__version__).split(".")
 
     if int(major_ver) < 3:
         fps = video.get(cv2.cv.CV_CAP_PROP_FPS)
@@ -79,7 +79,7 @@ def read_fps_strange(path_to_dataset):
     # Reading the video file until finished
     fps_list = []
     counter = 0
-    while (cap.isOpened()):
+    while cap.isOpened():
         counter += 1
 
         if counter == 20:

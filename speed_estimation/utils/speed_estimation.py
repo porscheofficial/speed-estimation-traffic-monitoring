@@ -7,7 +7,8 @@ import cv2
 import numpy as np
 
 
-def clamp(n, smallest, largest): return max(smallest, min(n, largest))
+def clamp(n, smallest, largest):
+    return max(smallest, min(n, largest))
 
 
 class Direction(Enum):
@@ -30,7 +31,16 @@ class Line(NamedTuple):
 
 
 class TrackingBox:
-    def __init__(self, center_x: int, center_y: int, x: int, y: int, w: int, h: int, frame_count: int) -> None:
+    def __init__(
+        self,
+        center_x: int,
+        center_y: int,
+        x: int,
+        y: int,
+        w: int,
+        h: int,
+        frame_count: int,
+    ) -> None:
         self.center_x = center_x
         self.center_y = center_y
         self.x = x
@@ -41,8 +51,14 @@ class TrackingBox:
 
 
 class Car:
-    def __init__(self, tracked_boxes: List[TrackingBox], frames_seen: int, frame_start: int, frame_end: int,
-                 direction: Direction = None) -> None:
+    def __init__(
+        self,
+        tracked_boxes: List[TrackingBox],
+        frames_seen: int,
+        frame_start: int,
+        frame_end: int,
+        direction: Direction = None,
+    ) -> None:
         self.tracked_boxes = tracked_boxes
         self.frames_seen = frames_seen
         self.frame_start = frame_start
@@ -63,8 +79,9 @@ def render_detected_frames_to_video(count, fps, out_video_name, path_to_frames):
         size = (width, height)
         img_array.append(img)
 
-    out = cv2.VideoWriter(out_video_name, cv2.VideoWriter_fourcc("M", "J", "P", "G"), fps,
-                          size)  # fps have to get set automatically from orignal video
+    out = cv2.VideoWriter(
+        out_video_name, cv2.VideoWriter_fourcc("M", "J", "P", "G"), fps, size
+    )  # fps have to get set automatically from orignal video
     for i in range(len(img_array)):
         out.write(img_array[i])
     out.release()

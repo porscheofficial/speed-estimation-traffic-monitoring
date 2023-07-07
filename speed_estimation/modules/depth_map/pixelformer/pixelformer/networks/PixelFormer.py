@@ -9,11 +9,20 @@ from .swin_transformer import SwinTransformer
 
 ########################################################################################################################
 
-class BCP(nn.Module):
-    """ Multilayer perceptron."""
 
-    def __init__(self, max_depth, min_depth, in_features=512, hidden_features=512 * 4, out_features=256,
-                 act_layer=nn.GELU, drop=0.):
+class BCP(nn.Module):
+    """Multilayer perceptron."""
+
+    def __init__(
+        self,
+        max_depth,
+        min_depth,
+        in_features=512,
+        hidden_features=512 * 4,
+        out_features=256,
+        act_layer=nn.GELU,
+        drop=0.0,
+    ):
         super().__init__()
         out_features = out_features or in_features
         hidden_features = hidden_features or in_features
@@ -34,7 +43,9 @@ class BCP(nn.Module):
         bins = torch.softmax(x, dim=1)
         bins = bins / bins.sum(dim=1, keepdim=True)
         bin_widths = (self.max_depth - self.min_depth) * bins
-        bin_widths = nn.functional.pad(bin_widths, (1, 0), mode='constant', value=self.min_depth)
+        bin_widths = nn.functional.pad(
+            bin_widths, (1, 0), mode="constant", value=self.min_depth
+        )
         bin_edges = torch.cumsum(bin_widths, dim=1)
         centers = 0.5 * (bin_edges[:, :-1] + bin_edges[:, 1:])
         n, dout = centers.size()
@@ -43,31 +54,38 @@ class BCP(nn.Module):
 
 
 class PixelFormer(nn.Module):
-
-    def __init__(self, version=None, inv_depth=False, pretrained=None,
-                 frozen_stages=-1, min_depth=0.1, max_depth=100.0, **kwargs):
+    def __init__(
+        self,
+        version=None,
+        inv_depth=False,
+        pretrained=None,
+        frozen_stages=-1,
+        min_depth=0.1,
+        max_depth=100.0,
+        **kwargs,
+    ):
         super().__init__()
 
         self.inv_depth = inv_depth
         self.with_auxiliary_head = False
         self.with_neck = False
 
-        norm_cfg = dict(type='BN', requires_grad=True)
+        norm_cfg = dict(type="BN", requires_grad=True)
         # norm_cfg = dict(type='GN', requires_grad=True, num_groups=8)
 
         window_size = int(version[-2:])
 
-        if version[:-2] == 'base':
+        if version[:-2] == "base":
             embed_dim = 128
             depths = [2, 2, 18, 2]
             num_heads = [4, 8, 16, 32]
             in_channels = [128, 256, 512, 1024]
-        elif version[:-2] == 'large':
+        elif version[:-2] == "large":
             embed_dim = 192
             depths = [2, 2, 18, 2]
             num_heads = [6, 12, 24, 48]
             in_channels = [192, 384, 768, 1536]
-        elif version[:-2] == 'tiny':
+        elif version[:-2] == "tiny":
             embed_dim = 96
             depths = [2, 2, 6, 2]
             num_heads = [3, 6, 12, 24]
@@ -82,7 +100,7 @@ class PixelFormer(nn.Module):
             drop_path_rate=0.3,
             patch_norm=True,
             use_checkpoint=False,
-            frozen_stages=frozen_stages
+            frozen_stages=frozen_stages,
         )
 
         embed_dim = 512
@@ -94,18 +112,42 @@ class PixelFormer(nn.Module):
             dropout_ratio=0.0,
             num_classes=32,
             norm_cfg=norm_cfg,
-            align_corners=False
+            align_corners=False,
         )
 
         self.backbone = SwinTransformer(**backbone_cfg)
-        v_dim = decoder_cfg['num_classes'] * 4
+        v_dim = decoder_cfg["num_classes"] * 4
         win = 7
         sam_dims = [128, 256, 512, 1024]
         v_dims = [64, 128, 256, embed_dim]
-        self.sam4 = SAM(input_dim=in_channels[3], embed_dim=sam_dims[3], window_size=win, v_dim=v_dims[3], num_heads=32)
-        self.sam3 = SAM(input_dim=in_channels[2], embed_dim=sam_dims[2], window_size=win, v_dim=v_dims[2], num_heads=16)
-        self.sam2 = SAM(input_dim=in_channels[1], embed_dim=sam_dims[1], window_size=win, v_dim=v_dims[1], num_heads=8)
-        self.sam1 = SAM(input_dim=in_channels[0], embed_dim=sam_dims[0], window_size=win, v_dim=v_dims[0], num_heads=4)
+        self.sam4 = SAM(
+            input_dim=in_channels[3],
+            embed_dim=sam_dims[3],
+            window_size=win,
+            v_dim=v_dims[3],
+            num_heads=32,
+        )
+        self.sam3 = SAM(
+            input_dim=in_channels[2],
+            embed_dim=sam_dims[2],
+            window_size=win,
+            v_dim=v_dims[2],
+            num_heads=16,
+        )
+        self.sam2 = SAM(
+            input_dim=in_channels[1],
+            embed_dim=sam_dims[1],
+            window_size=win,
+            v_dim=v_dims[1],
+            num_heads=8,
+        )
+        self.sam1 = SAM(
+            input_dim=in_channels[0],
+            embed_dim=sam_dims[0],
+            window_size=win,
+            v_dim=v_dims[0],
+            num_heads=4,
+        )
 
         self.decoder = PSP(**decoder_cfg)
         self.disp_head1 = DispHead(input_dim=sam_dims[0])
@@ -121,7 +163,7 @@ class PixelFormer(nn.Module):
             pretrained (str, optional): Path to pre-trained weights.
                 Defaults to None.
         """
-        print(f'== Load encoder backbone from: {pretrained}')
+        print(f"== Load encoder backbone from: {pretrained}")
         self.backbone.init_weights(pretrained=pretrained)
         self.decoder.init_weights()
         if self.with_auxiliary_head:
@@ -132,7 +174,6 @@ class PixelFormer(nn.Module):
                 self.auxiliary_head.init_weights()
 
     def forward(self, imgs):
-
         enc_feats = self.backbone(imgs)
         if self.with_neck:
             enc_feats = self.neck(enc_feats)
@@ -168,6 +209,7 @@ class DispHead(nn.Module):
 
 
 def upsample(x, scale_factor=2, mode="bilinear", align_corners=False):
-    """Upsample input tensor by a factor of 2
-    """
-    return F.interpolate(x, scale_factor=scale_factor, mode=mode, align_corners=align_corners)
+    """Upsample input tensor by a factor of 2"""
+    return F.interpolate(
+        x, scale_factor=scale_factor, mode=mode, align_corners=align_corners
+    )

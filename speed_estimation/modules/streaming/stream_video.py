@@ -13,22 +13,44 @@ def get_video_stream_from_url(url):
     FFPROBE_BIN = "ffprobe"
 
     # get the dimensions of the stream for reading the real stream later
-    meta_pipe = sp.Popen([FFPROBE_BIN, "-v", "error",
-                          "-select_streams", "v:0",
-                          "-show_entries", "stream=width,height",  # disable audio
-                          "-of", "csv=p=0",
-                          url],
-                         stdin=sp.PIPE, stdout=sp.PIPE)
+    meta_pipe = sp.Popen(
+        [
+            FFPROBE_BIN,
+            "-v",
+            "error",
+            "-select_streams",
+            "v:0",
+            "-show_entries",
+            "stream=width,height",  # disable audio
+            "-of",
+            "csv=p=0",
+            url,
+        ],
+        stdin=sp.PIPE,
+        stdout=sp.PIPE,
+    )
     frame_size = meta_pipe.stdout.read().decode("utf-8").split("\n")[0].split(",")
 
     # get the actual stream through ffmpeg and return it
-    stream_pipe = sp.Popen([FFMPEG_BIN, "-i", url,
-                            "-loglevel", "quiet",  # no text output
-                            "-an",  # disable audio
-                            "-f", "image2pipe",
-                            "-pix_fmt", "bgr24",
-                            "-vcodec", "rawvideo", "-"],
-                           stdin=sp.PIPE, stdout=sp.PIPE)
+    stream_pipe = sp.Popen(
+        [
+            FFMPEG_BIN,
+            "-i",
+            url,
+            "-loglevel",
+            "quiet",  # no text output
+            "-an",  # disable audio
+            "-f",
+            "image2pipe",
+            "-pix_fmt",
+            "bgr24",
+            "-vcodec",
+            "rawvideo",
+            "-",
+        ],
+        stdin=sp.PIPE,
+        stdout=sp.PIPE,
+    )
     return stream_pipe, int(frame_size[0]), int(frame_size[1])
 
 
@@ -56,12 +78,12 @@ def downsample_fps(max, fps):
 
 
 # main method is only for viewing and testing the stream
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Show an m3u8 stream over http')
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Show an m3u8 stream over http")
     parser.add_argument(
-        'stream_link',
+        "stream_link",
         type=str,
-        help='Enter the link to an m3u8 stream over http',
+        help="Enter the link to an m3u8 stream over http",
     )
 
     # constant for setting max fps for down-sampling
@@ -78,16 +100,17 @@ if __name__ == '__main__':
             if thresh <= i:
                 i = 0
             else:
-                cv2.imshow("Stream", retrieve_next_frame_from_stream(stream, width, height))
+                cv2.imshow(
+                    "Stream", retrieve_next_frame_from_stream(stream, width, height)
+                )
                 i += 1
-            if cv2.waitKey(int(1000 / real_fps)) == ord('q'):
+            if cv2.waitKey(int(1000 / real_fps)) == ord("q"):
                 break
     else:
-
         print("fps under ", MAX_FPS, ": ", fps)
         while True:
             cv2.imshow("Stream", retrieve_next_frame_from_stream(stream, width, height))
-            if cv2.waitKey(int(1000 / fps)) == ord('q'):
+            if cv2.waitKey(int(1000 / fps)) == ord("q"):
                 break
 
     cv2.destroyAllWindows()

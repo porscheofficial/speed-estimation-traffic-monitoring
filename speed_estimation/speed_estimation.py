@@ -42,11 +42,11 @@ config.read("config.ini")
 
 
 def run(
-        path_to_video: str,
-        data_dir: str,
-        fps: int = 0,
-        max_frames: int = 0,
-        custom_object_detection: bool = False,
+    path_to_video: str,
+    data_dir: str,
+    fps: int = 0,
+    max_frames: int = 0,
+    custom_object_detection: bool = False,
 ):
     reload(logging)
 
@@ -289,19 +289,19 @@ def run(
                             if car.direction == Direction.towards:
                                 car_count_towards += 1
                                 total_speed_towards += (meters_moved) / (
-                                        car.frames_seen / fps
+                                    car.frames_seen / fps
                                 )
                                 total_speed_meta_appr_towards += (
-                                                                         AVG_FRAME_COUNT / int(car.frames_seen)
-                                                                 ) * SPEED_LIMIT
+                                    AVG_FRAME_COUNT / int(car.frames_seen)
+                                ) * SPEED_LIMIT
                             else:
                                 car_count_away += 1
                                 total_speed_away += (meters_moved) / (
-                                        car.frames_seen / fps
+                                    car.frames_seen / fps
                                 )
                                 total_speed_meta_appr_away += (
-                                                                      AVG_FRAME_COUNT / int(car.frames_seen)
-                                                              ) * SPEED_LIMIT
+                                    AVG_FRAME_COUNT / int(car.frames_seen)
+                                ) * SPEED_LIMIT
 
                     else:
                         # car is too old, drop from tracked_cars
@@ -347,9 +347,7 @@ def run(
         cv2.putText(
             frame, f"FPS: {fps}", (7, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, text_color, 2
         )
-        cv2.imwrite(
-            f"frames_detected/frame_after_detection.jpg", frame
-        )
+        cv2.imwrite(f"frames_detected/frame_after_detection.jpg", frame)
 
         if frame_count % 500 == 0:
             print(

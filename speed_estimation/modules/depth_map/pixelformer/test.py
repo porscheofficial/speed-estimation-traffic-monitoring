@@ -27,30 +27,30 @@ def convert_arg_line_to_args(arg_line):
         yield arg
 
 
-model_name = 'pixelformer_kittieigen'
-encoder = 'large07'
-dataset = 'kitti'
+model_name = "pixelformer_kittieigen"
+encoder = "large07"
+dataset = "kitti"
 input_height = 352
 input_width = 1216
 max_depth = 80
 do_kb_crop = True
 min_depth_eval = 1e-3
 max_depth_eval = 80
-checkpoint_path = 'modules/depth_map/pixelformer/pretrained/kitti.pth'
+checkpoint_path = "modules/depth_map/pixelformer/pretrained/kitti.pth"
 # checkpoint_path='modules/depth_map/pixelformer/pretrained/kitti.pth'
 
 args = {
-    'model_name': model_name,
-    'encoder': encoder,
-    'dataset': dataset,
-    'input_height': input_height,
-    'input_width': input_width,
-    'max_depth': max_depth,
-    'do_kb_crop': do_kb_crop,
-    'min_depth_eval': min_depth_eval,
-    'max_depth_eval': max_depth_eval,
-    'checkpoint_path': checkpoint_path,
-    'mode': 'test',
+    "model_name": model_name,
+    "encoder": encoder,
+    "dataset": dataset,
+    "input_height": input_height,
+    "input_width": input_width,
+    "max_depth": max_depth,
+    "do_kb_crop": do_kb_crop,
+    "min_depth_eval": min_depth_eval,
+    "max_depth_eval": max_depth_eval,
+    "checkpoint_path": checkpoint_path,
+    "mode": "test",
 }
 
 model_dir = os.path.dirname(checkpoint_path)
@@ -58,7 +58,7 @@ sys.path.append(model_dir)
 
 
 def get_num_lines(file_path):
-    f = open(file_path, 'r')
+    f = open(file_path, "r")
     lines = f.readlines()
     f.close()
     return len(lines)
@@ -75,18 +75,24 @@ def generate_depth_map(data_folder: str, file_name: str, *, max_depth_o: int):
         torch.cuda.set_device(device)
 
     max_depth = args.max_depth if max_depth_o is None else max_depth_o
-    output_path = os.path.join(data_folder, f'depth_map_{max_depth}.npy')
-    dataloader = NewDataLoader(args, 'test', file_list=[file_name], data_path=data_folder, do_kb_crop=do_kb_crop)
+    output_path = os.path.join(data_folder, f"depth_map_{max_depth}.npy")
+    dataloader = NewDataLoader(
+        args,
+        "test",
+        file_list=[file_name],
+        data_path=data_folder,
+        do_kb_crop=do_kb_crop,
+    )
 
-    model = PixelFormer(version='large07', inv_depth=False, max_depth=max_depth)
+    model = PixelFormer(version="large07", inv_depth=False, max_depth=max_depth)
     model = torch.nn.DataParallel(model, device_ids=[0])
 
     if use_cpu:
-        checkpoint = torch.load(checkpoint_path, map_location=torch.device('cpu'))
+        checkpoint = torch.load(checkpoint_path, map_location=torch.device("cpu"))
     else:
         checkpoint = torch.load(checkpoint_path)
 
-    model.load_state_dict(checkpoint['model'])
+    model.load_state_dict(checkpoint["model"])
     model.eval()
 
     if not use_cpu:
@@ -103,9 +109,9 @@ def generate_depth_map(data_folder: str, file_name: str, *, max_depth_o: int):
     with torch.no_grad():
         for idx, sample in enumerate(tqdm(dataloader.data)):
             if use_cpu:
-                image = Variable(sample['image'])
+                image = Variable(sample["image"])
             else:
-                image = Variable(sample['image'].cuda(device))
+                image = Variable(sample["image"].cuda(device))
 
             # Predict
             depth_est = model(image)
@@ -120,7 +126,9 @@ def generate_depth_map(data_folder: str, file_name: str, *, max_depth_o: int):
                 top_margin = int(height - 352)
                 left_margin = int((width - 1216) / 2)
                 pred_depth_uncropped = np.zeros((height, width), dtype=np.float32)
-                pred_depth_uncropped[top_margin:top_margin + 352, left_margin:left_margin + 1216] = pred_depth
+                pred_depth_uncropped[
+                    top_margin : top_margin + 352, left_margin : left_margin + 1216
+                ] = pred_depth
                 pred_depth = pred_depth_uncropped
 
             # max_depth = 100
@@ -140,10 +148,10 @@ def generate_depth_map(data_folder: str, file_name: str, *, max_depth_o: int):
             return depth_map
 
     elapsed_time = time.time() - start_time
-    print('Elapsed time: %s' % str(elapsed_time))
-    print('Done.')
+    print("Elapsed time: %s" % str(elapsed_time))
+    print("Done.")
     return output_path
 
 
-if __name__ == '__main__':
-    raise Exception('This file should not be run as main file.')
+if __name__ == "__main__":
+    raise Exception("This file should not be run as main file.")

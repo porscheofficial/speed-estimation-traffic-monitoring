@@ -35,7 +35,7 @@ class GeometricModelTests(unittest.TestCase):
 
         coords = [-1, 1]
         # going through the four quadrants in front of the camera
-        for (x, y) in product(coords, repeat=2):
+        for x, y in product(coords, repeat=2):
             wp = WorldPoint(frame, x, y, 1)
             cp = self.geometric_model.get_camera_point(wp)
             # we expect that due to point always appears in the diagonally opposite quadrant of the camera ref system
@@ -54,7 +54,7 @@ class GeometricModelTests(unittest.TestCase):
 
         coords = [0, 2]
         # going through the four quadrants of the screen
-        for (u, v) in product(coords, repeat=2):
+        for u, v in product(coords, repeat=2):
             cp = CameraPoint(frame, u, v)
             wp = self.geometric_model.get_world_point(cp)
             # we expect that due to point always appears in the diagonally opposite quadrant of the camera ref system

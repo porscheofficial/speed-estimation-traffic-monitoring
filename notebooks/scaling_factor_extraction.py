@@ -80,7 +80,6 @@ class GeometricModel:
         return unscaled_world_point
 
     def get_camera_point(self, wp: WorldPoint) -> CameraPoint:
-
         x, y, z = wp.coords()
         # Note that we here relabel the coordinates to keep the two coordinate systems aligned!
         r, theta, phi = self._cartesian_to_spherical(x=z, y=x, z=y)
@@ -115,12 +114,12 @@ class GeometricModel:
 
     @staticmethod
     def calculate_distance_between_world_points(
-            wp1: WorldPoint, wp2: WorldPoint
+        wp1: WorldPoint, wp2: WorldPoint
     ) -> float:
         return norm(wp1.coords() - wp2.coords())
 
     def get_unscaled_distance_from_camera_points(
-            self, cp1: CameraPoint, cp2: CameraPoint
+        self, cp1: CameraPoint, cp2: CameraPoint
     ):
         unscaled_wp1 = self.get_unscaled_world_point(cp1)
         unscaled_wp2 = self.get_unscaled_world_point(cp2)
@@ -133,9 +132,9 @@ class GeometricModel:
 
 
 def offline_scaling_factor_estimation_from_least_squares(
-        frames: list[NDArray],
-        geometric_model: GeometricModel,
-        ground_truths: list[GroundTruthEvent],
+    frames: list[NDArray],
+    geometric_model: GeometricModel,
+    ground_truths: list[GroundTruthEvent],
 ) -> float:
     unscaled_predictions = []
     labels = []
@@ -181,14 +180,14 @@ def online_scaling_factor_estimation_from_least_squares(stream_of_events):
         prediction = geometric_model.get_unscaled_distance_from_camera_points(cp1, cp2)
 
         mean_predictions_two_norm = (1 - 1 / counter) * mean_predictions_two_norm + (
-                prediction ** 2
+            prediction**2
         ) / counter
         mean_prediction_dot_distance = (
-                                               1 - 1 / counter
-                                       ) * mean_prediction_dot_distance + (prediction * true_distance) / counter
+            1 - 1 / counter
+        ) * mean_prediction_dot_distance + (prediction * true_distance) / counter
 
         geometric_model.scale_factor = (
-                mean_prediction_dot_distance / mean_predictions_two_norm
+            mean_prediction_dot_distance / mean_predictions_two_norm
         )
 
         # once calibration is finished, we can start using the geometric_model to perform actual predictions for

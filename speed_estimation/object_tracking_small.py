@@ -48,7 +48,7 @@ def map_box_to_our_point(frame, box, depth_map, custom_object_detection, frame_c
         meters = 0
 
     if custom_object_detection:
-        cropped_frame = frame[y: y + h, x: x + w]
+        cropped_frame = frame[y : y + h, x : x + w]
         car_length_in_pixels = get_pixel_length_of_car(cropped_frame)
         avg_car_in_meters = 5
         if car_length_in_pixels is None:
@@ -61,7 +61,7 @@ def map_box_to_our_point(frame, box, depth_map, custom_object_detection, frame_c
 
 
 def run(
-        data_dir, max_depth=None, fps=None, max_frames=None, custom_object_detection=False
+    data_dir, max_depth=None, fps=None, max_frames=None, custom_object_detection=False
 ):
     reload(logging)
     path_to_video = os.path.join(data_dir, "video.mp4")
@@ -210,10 +210,10 @@ def run(
             meters_moved = None
             if object_id in tracking_objects_prev:
                 x_movement = (
-                        tracking_objects[object_id].x - tracking_objects_prev[object_id].x
+                    tracking_objects[object_id].x - tracking_objects_prev[object_id].x
                 )
                 y_movement = (
-                        tracking_objects[object_id].y - tracking_objects_prev[object_id].y
+                    tracking_objects[object_id].y - tracking_objects_prev[object_id].y
                 )
 
                 # car direction
