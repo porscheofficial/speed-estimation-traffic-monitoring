@@ -32,7 +32,9 @@ def load_log(log_path: str):
 
 
 def avg_speed_for_time_ground_truth(cars_truth, timeStart, timeEnd):
-    cars_to_avg = cars_truth.loc[cars_truth["start"].gt(timeStart) & cars_truth["end"].le(timeEnd)]
+    cars_to_avg = cars_truth.loc[
+        cars_truth["start"].gt(timeStart) & cars_truth["end"].le(timeEnd)
+    ]
     return cars_to_avg["speed"].mean()
 
 
@@ -71,23 +73,31 @@ def plot_absolute_error(logs: "list[str]", save_file_path=None):
             raise Exception("Can only evaluate logs of the same video in one call!")
 
     cars = pd.read_csv(cars_path + "cars.csv")
-    truth, estimations, timestamps = generate_aligned_estimations(run_ids, loaded_avg_speeds, cars)
+    truth, estimations, timestamps = generate_aligned_estimations(
+        run_ids, loaded_avg_speeds, cars
+    )
 
     video_id = cars_path.strip("/").split("/")[-1]
     # Calculate values per minute
     df = pd.DataFrame({"truth": truth, **estimations, "timestamps": timestamps})
     # Remove timestamps where no estimations or truth is available
     df.dropna(axis=0, inplace=True)
-    fig = px.line(df, x="timestamps", y=df.columns, title=f"Absolute Estimations ({cars_path})")
+    fig = px.line(
+        df, x="timestamps", y=df.columns, title=f"Absolute Estimations ({cars_path})"
+    )
     id = uuid.uuid4().hex[:10]
     if save_file_path is not None:
-        fig.write_image(file=os.path.join(save_file_path, f"{video_id}_{id}_estimations.pdf"))
+        fig.write_image(
+            file=os.path.join(save_file_path, f"{video_id}_{id}_estimations.pdf")
+        )
     else:
         fig.show()
 
     run_id_list = list(run_ids)
     df[run_id_list] = df[run_id_list].sub(df["truth"], axis=0)
-    fig = px.line(df, x="timestamps", y=df.columns[1:], title=f"Mean Absolute Error ({cars_path})")
+    fig = px.line(
+        df, x="timestamps", y=df.columns[1:], title=f"Mean Absolute Error ({cars_path})"
+    )
     if save_file_path is not None:
         fig.write_image(file=os.path.join(save_file_path, f"{video_id}_{id}_mae.pdf"))
     else:

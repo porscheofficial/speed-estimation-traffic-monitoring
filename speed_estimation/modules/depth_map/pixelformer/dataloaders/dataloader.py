@@ -22,7 +22,9 @@ def preprocessing_transforms(mode):
 
 
 class NewDataLoader(object):
-    def __init__(self, args, mode, *, file_list: "list[str]", data_path: str, do_kb_crop: bool):
+    def __init__(
+        self, args, mode, *, file_list: "list[str]", data_path: str, do_kb_crop: bool
+    ):
         if mode == "test":
             self.testing_samples = DataLoadPreprocess(
                 mode,
@@ -31,15 +33,25 @@ class NewDataLoader(object):
                 do_kb_crop=do_kb_crop,
                 transform=preprocessing_transforms(mode),
             )
-            self.data = DataLoader(self.testing_samples, 1, shuffle=False, num_workers=1)
+            self.data = DataLoader(
+                self.testing_samples, 1, shuffle=False, num_workers=1
+            )
 
         else:
-            print("mode should be one of 'train, test, online_eval'. Got {}".format(mode))
+            print(
+                "mode should be one of 'train, test, online_eval'. Got {}".format(mode)
+            )
 
 
 class DataLoadPreprocess(Dataset):
     def __init__(
-        self, mode, *, file_list: "list[str]", data_path: str, do_kb_crop: bool, transform=None
+        self,
+        mode,
+        *,
+        file_list: "list[str]",
+        data_path: str,
+        do_kb_crop: bool,
+        transform=None
     ):
         self.file_list = file_list
         self.data_path = data_path
@@ -64,7 +76,9 @@ class DataLoadPreprocess(Dataset):
             width = image.shape[1]
             top_margin = int(height - 352)
             left_margin = int((width - 1216) / 2)
-            image = image[top_margin : top_margin + 352, left_margin : left_margin + 1216, :]
+            image = image[
+                top_margin : top_margin + 352, left_margin : left_margin + 1216, :
+            ]
 
         sample = {"image": image, "focal": focal}
 
@@ -91,7 +105,9 @@ class DataLoadPreprocess(Dataset):
 class ToTensor(object):
     def __init__(self, mode):
         self.mode = mode
-        self.normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        self.normalize = transforms.Normalize(
+            mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+        )
 
     def __call__(self, sample):
         image, focal = sample["image"], sample["focal"]
@@ -117,7 +133,9 @@ class ToTensor(object):
 
     def to_tensor(self, pic):
         if not (_is_pil_image(pic) or _is_numpy_image(pic)):
-            raise TypeError("pic should be PIL Image or ndarray. Got {}".format(type(pic)))
+            raise TypeError(
+                "pic should be PIL Image or ndarray. Got {}".format(type(pic))
+            )
 
         if isinstance(pic, np.ndarray):
             img = torch.from_numpy(pic.transpose((2, 0, 1)))

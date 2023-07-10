@@ -43,7 +43,9 @@ class BCP(nn.Module):
         bins = torch.softmax(x, dim=1)
         bins = bins / bins.sum(dim=1, keepdim=True)
         bin_widths = (self.max_depth - self.min_depth) * bins
-        bin_widths = nn.functional.pad(bin_widths, (1, 0), mode="constant", value=self.min_depth)
+        bin_widths = nn.functional.pad(
+            bin_widths, (1, 0), mode="constant", value=self.min_depth
+        )
         bin_edges = torch.cumsum(bin_widths, dim=1)
         centers = 0.5 * (bin_edges[:, :-1] + bin_edges[:, 1:])
         n, dout = centers.size()
@@ -208,4 +210,6 @@ class DispHead(nn.Module):
 
 def upsample(x, scale_factor=2, mode="bilinear", align_corners=False):
     """Upsample input tensor by a factor of 2"""
-    return F.interpolate(x, scale_factor=scale_factor, mode=mode, align_corners=align_corners)
+    return F.interpolate(
+        x, scale_factor=scale_factor, mode=mode, align_corners=align_corners
+    )

@@ -126,9 +126,13 @@ def load_state_dict(module, state_dict, strict=False, logger=None):
     missing_keys = [key for key in all_missing_keys if "num_batches_tracked" not in key]
 
     if unexpected_keys:
-        err_msg.append("unexpected key in source " f'state_dict: {", ".join(unexpected_keys)}\n')
+        err_msg.append(
+            "unexpected key in source " f'state_dict: {", ".join(unexpected_keys)}\n'
+        )
     if missing_keys:
-        err_msg.append(f'missing keys in source state_dict: {", ".join(missing_keys)}\n')
+        err_msg.append(
+            f'missing keys in source state_dict: {", ".join(missing_keys)}\n'
+        )
 
     rank, _ = get_dist_info()
     if len(err_msg) > 0 and rank == 0:
@@ -184,7 +188,8 @@ def _load_checkpoint(filename, map_location=None):
     """
     if filename.startswith("modelzoo://"):
         warnings.warn(
-            'The URL scheme of "modelzoo://" is deprecated, please ' 'use "torchvision://" instead'
+            'The URL scheme of "modelzoo://" is deprecated, please '
+            'use "torchvision://" instead'
         )
         model_urls = get_torchvision_models()
         model_name = filename[11:]
@@ -230,7 +235,9 @@ def load_checkpoint(model, filename, map_location="cpu", strict=False, logger=No
     # for MoBY, load model of online branch
     if sorted(list(state_dict.keys()))[0].startswith("encoder"):
         state_dict = {
-            k.replace("encoder.", ""): v for k, v in state_dict.items() if k.startswith("encoder.")
+            k.replace("encoder.", ""): v
+            for k, v in state_dict.items()
+            if k.startswith("encoder.")
         }
 
     # reshape absolute position embedding
@@ -241,9 +248,9 @@ def load_checkpoint(model, filename, map_location="cpu", strict=False, logger=No
         if N1 != N2 or C1 != C2 or L != H * W:
             logger.warning("Error in loading absolute_pos_embed, pass")
         else:
-            state_dict["absolute_pos_embed"] = absolute_pos_embed.view(N2, H, W, C2).permute(
-                0, 3, 1, 2
-            )
+            state_dict["absolute_pos_embed"] = absolute_pos_embed.view(
+                N2, H, W, C2
+            ).permute(0, 3, 1, 2)
 
     # interpolate position bias table if needed
     relative_position_bias_table_keys = [
@@ -265,7 +272,9 @@ def load_checkpoint(model, filename, map_location="cpu", strict=False, logger=No
                     size=(S2, S2),
                     mode="bicubic",
                 )
-                state_dict[table_key] = table_pretrained_resized.view(nH2, L2).permute(1, 0)
+                state_dict[table_key] = table_pretrained_resized.view(nH2, L2).permute(
+                    1, 0
+                )
 
     # load state_dict
     load_state_dict(model, state_dict, strict, logger)

@@ -100,7 +100,9 @@ if __name__ == "__main__":
             if thresh <= i:
                 i = 0
             else:
-                cv2.imshow("Stream", retrieve_next_frame_from_stream(stream, width, height))
+                cv2.imshow(
+                    "Stream", retrieve_next_frame_from_stream(stream, width, height)
+                )
                 i += 1
             if cv2.waitKey(int(1000 / real_fps)) == ord("q"):
                 break

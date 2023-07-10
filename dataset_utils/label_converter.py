@@ -41,7 +41,9 @@ def main():
 
         mapped_list = list(map(map_car_to_entry, pkl_obj["cars"]))
         mapped_list = filter(None, mapped_list)
-        df = pd.DataFrame.from_records(mapped_list, columns=["start", "end", "carId", "speed"])
+        df = pd.DataFrame.from_records(
+            mapped_list, columns=["start", "end", "carId", "speed"]
+        )
         df.to_csv(out_path, index=False)
 
 

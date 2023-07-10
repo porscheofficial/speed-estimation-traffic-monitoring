@@ -67,7 +67,9 @@ def run(
     log_name = f"logs/{now_str}_run_{run_id}.log"
     os.makedirs(os.path.dirname(log_name), exist_ok=True)
 
-    logging.basicConfig(filename=f"logs/{now_str}_run_{run_id}.log", level=logging.DEBUG)
+    logging.basicConfig(
+        filename=f"logs/{now_str}_run_{run_id}.log", level=logging.DEBUG
+    )
     logging.info(f"Run No.: {run_id}, Video: {data_dir}")
 
     start = time.time()
@@ -142,7 +144,11 @@ def run(
         else:
             # TODO: look into scores
             (class_ids, scores, boxes) = object_detection.detect(frame)
-            boxes = [boxes[i] for i, class_id in enumerate(class_ids) if class_id == CAR_CLASS_ID]
+            boxes = [
+                boxes[i]
+                for i, class_id in enumerate(class_ids)
+                if class_id == CAR_CLASS_ID
+            ]
 
         # collect tracking boxes
         tracking_boxes_cur_frame: List[TrackingBox] = []
@@ -152,11 +158,17 @@ def run(
             center_y = int((y_coord + y_coord + height) / 2)
 
             tracking_boxes_cur_frame.append(
-                TrackingBox(center_x, center_y, x_coord, y_coord, width, height, frame_count)
+                TrackingBox(
+                    center_x, center_y, x_coord, y_coord, width, height, frame_count
+                )
             )
 
             cv2.rectangle(
-                frame, (x_coord, y_coord), (x_coord + width, y_coord + height), (255, 0, 0), 2
+                frame,
+                (x_coord, y_coord),
+                (x_coord + width, y_coord + height),
+                (255, 0, 0),
+                2,
             )
 
         ############################
@@ -207,7 +219,9 @@ def run(
                             geo_model, ground_truth_events
                         )
                     )
-                    logging.info(f"Is calibrated: scale_factor: {geo_model.scale_factor}")
+                    logging.info(
+                        f"Is calibrated: scale_factor: {geo_model.scale_factor}"
+                    )
                     print(
                         f"Is calibrated: scale_factor: {geo_model.scale_factor}",
                         flush=True,
@@ -242,7 +256,9 @@ def run(
                     tracked_cars[object_id].frames_seen += 1
                     tracked_cars[object_id].frame_end += 1
                 else:
-                    tracked_cars[object_id] = Car([tracking_box], 1, frame_count, frame_count)
+                    tracked_cars[object_id] = Car(
+                        [tracking_box], 1, frame_count, frame_count
+                    )
 
             ############################
             # speed estimation
@@ -280,13 +296,17 @@ def run(
 
                             if car.direction == Direction.TOWARDS:
                                 car_count_towards += 1
-                                total_speed_towards += (meters_moved) / (car.frames_seen / fps)
+                                total_speed_towards += (meters_moved) / (
+                                    car.frames_seen / fps
+                                )
                                 total_speed_meta_appr_towards += (
                                     AVG_FRAME_COUNT / int(car.frames_seen)
                                 ) * SPEED_LIMIT
                             else:
                                 car_count_away += 1
-                                total_speed_away += (meters_moved) / (car.frames_seen / fps)
+                                total_speed_away += (meters_moved) / (
+                                    car.frames_seen / fps
+                                )
                                 total_speed_meta_appr_away += (
                                     AVG_FRAME_COUNT / int(car.frames_seen)
                                 ) * SPEED_LIMIT
@@ -299,13 +319,17 @@ def run(
                     del tracked_cars[car_id]
 
                 if car_count_towards > 0:
-                    avg_speed = round((total_speed_towards / car_count_towards) * 3.6, 2)
+                    avg_speed = round(
+                        (total_speed_towards / car_count_towards) * 3.6, 2
+                    )
                     print(f"Average speed towards: {avg_speed} km/h")
                     print(
                         f"Average META speed towards: "
                         f"{(total_speed_meta_appr_towards / car_count_towards)} km/h"
                     )
-                    logging.info(json.dumps(dict(frameId=frame_count, avgSpeedTowards=avg_speed)))
+                    logging.info(
+                        json.dumps(dict(frameId=frame_count, avgSpeedTowards=avg_speed))
+                    )
 
                 if car_count_away > 0:
                     avg_speed = round((total_speed_away / car_count_away) * 3.6, 2)
@@ -314,7 +338,9 @@ def run(
                         f"Average META speed away: "
                         f"{(total_speed_meta_appr_away / car_count_away)} km/h"
                     )
-                    logging.info(json.dumps(dict(frameId=frame_count, avgSpeedAway=avg_speed)))
+                    logging.info(
+                        json.dumps(dict(frameId=frame_count, avgSpeedAway=avg_speed))
+                    )
 
         ############################
         # output text on video stream
@@ -329,11 +355,15 @@ def run(
             text_color,
             2,
         )
-        cv2.putText(frame, f"FPS: {fps}", (7, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, text_color, 2)
+        cv2.putText(
+            frame, f"FPS: {fps}", (7, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, text_color, 2
+        )
         cv2.imwrite("frames_detected/frame_after_detection.jpg", frame)
 
         if frame_count % 500 == 0:
-            print(f"Frame no. {frame_count} time since start: {(time.time() - start):.2f}s")
+            print(
+                f"Frame no. {frame_count} time since start: {(time.time() - start):.2f}s"
+            )
         frame_count += 1
         if max_frames != 0 and frame_count >= max_frames:
             if not is_calibrated:

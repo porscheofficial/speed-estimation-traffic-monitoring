@@ -55,7 +55,9 @@ class GeometricModel:
         normalised_v = self.s_v * (cp.v - self.c_v)
 
         # we relabel the axis here to deal with different reference conventions
-        _, theta, phi = self._cartesian_to_spherical(x=self.f, y=normalised_u, z=normalised_v)
+        _, theta, phi = self._cartesian_to_spherical(
+            x=self.f, y=normalised_u, z=normalised_v
+        )
 
         depth_map = self.depth_model.predict_depth(cp.frame)
         unscaled_depth = depth_map[cp.u, cp.v]
@@ -111,16 +113,22 @@ class GeometricModel:
         return r, theta, phi
 
     @staticmethod
-    def calculate_distance_between_world_points(wp1: WorldPoint, wp2: WorldPoint) -> float:
+    def calculate_distance_between_world_points(
+        wp1: WorldPoint, wp2: WorldPoint
+    ) -> float:
         return norm(wp1.coords() - wp2.coords())
 
-    def get_unscaled_distance_from_camera_points(self, cp1: CameraPoint, cp2: CameraPoint):
+    def get_unscaled_distance_from_camera_points(
+        self, cp1: CameraPoint, cp2: CameraPoint
+    ):
         unscaled_wp1 = self.get_unscaled_world_point(cp1)
         unscaled_wp2 = self.get_unscaled_world_point(cp2)
         return self.calculate_distance_between_world_points(unscaled_wp1, unscaled_wp2)
 
     def get_distance_from_camera_points(self, cp1: CameraPoint, cp2: CameraPoint):
-        return self.scale_factor * self.get_unscaled_distance_from_camera_points(cp1, cp2)
+        return self.scale_factor * self.get_unscaled_distance_from_camera_points(
+            cp1, cp2
+        )
 
 
 def offline_scaling_factor_estimation_from_least_squares(
@@ -142,7 +150,9 @@ def offline_scaling_factor_estimation_from_least_squares(
         labels.append(distance)
 
     # return optimal scaling factor under least sum of squares estimator
-    return np.dot(unscaled_predictions, labels) / np.dot(unscaled_predictions, unscaled_predictions)
+    return np.dot(unscaled_predictions, labels) / np.dot(
+        unscaled_predictions, unscaled_predictions
+    )
 
 
 def online_scaling_factor_estimation_from_least_squares(stream_of_events):
@@ -172,11 +182,13 @@ def online_scaling_factor_estimation_from_least_squares(stream_of_events):
         mean_predictions_two_norm = (1 - 1 / counter) * mean_predictions_two_norm + (
             prediction**2
         ) / counter
-        mean_prediction_dot_distance = (1 - 1 / counter) * mean_prediction_dot_distance + (
-            prediction * true_distance
-        ) / counter
+        mean_prediction_dot_distance = (
+            1 - 1 / counter
+        ) * mean_prediction_dot_distance + (prediction * true_distance) / counter
 
-        geometric_model.scale_factor = mean_prediction_dot_distance / mean_predictions_two_norm
+        geometric_model.scale_factor = (
+            mean_prediction_dot_distance / mean_predictions_two_norm
+        )
 
         # once calibration is finished, we can start using the geometric_model to perform actual predictions for
         # velocities, however, even then we can still continue updating the scale factor

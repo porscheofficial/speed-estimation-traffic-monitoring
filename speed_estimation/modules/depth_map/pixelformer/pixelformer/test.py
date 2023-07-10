@@ -41,7 +41,9 @@ parser.add_argument(
 )
 parser.add_argument("--input_height", type=int, help="input height", default=480)
 parser.add_argument("--input_width", type=int, help="input width", default=640)
-parser.add_argument("--max_depth", type=float, help="maximum depth in estimation", default=10)
+parser.add_argument(
+    "--max_depth", type=float, help="maximum depth in estimation", default=10
+)
 parser.add_argument(
     "--checkpoint_path",
     type=str,
@@ -167,16 +169,26 @@ def test(params):
                 + lines[s].split()[0].split("/")[-1].replace(".jpg", ".png")
             )
             filename_image_png = (
-                save_name + "/rgb/" + date_drive + "_" + lines[s].split()[0].split("/")[-1]
+                save_name
+                + "/rgb/"
+                + date_drive
+                + "_"
+                + lines[s].split()[0].split("/")[-1]
             )
         elif args.dataset == "kittipred":
             filename_pred_png = (
-                save_name + "/raw/" + lines[s].split()[0].split("/")[-1].replace(".jpg", ".png")
+                save_name
+                + "/raw/"
+                + lines[s].split()[0].split("/")[-1].replace(".jpg", ".png")
             )
             filename_cmap_png = (
-                save_name + "/cmap/" + lines[s].split()[0].split("/")[-1].replace(".jpg", ".png")
+                save_name
+                + "/cmap/"
+                + lines[s].split()[0].split("/")[-1].replace(".jpg", ".png")
             )
-            filename_image_png = save_name + "/rgb/" + lines[s].split()[0].split("/")[-1]
+            filename_image_png = (
+                save_name + "/rgb/" + lines[s].split()[0].split("/")[-1]
+            )
         else:
             scene_name = lines[s].split()[0].split("/")[0]
             filename_pred_png = (
@@ -201,14 +213,20 @@ def test(params):
                 + lines[s].split()[0].split("/rgb_")[1].replace(".jpg", "_gt.png")
             )
             filename_image_png = (
-                save_name + "/rgb/" + scene_name + "_" + lines[s].split()[0].split("/rgb_")[1]
+                save_name
+                + "/rgb/"
+                + scene_name
+                + "_"
+                + lines[s].split()[0].split("/rgb_")[1]
             )
 
         rgb_path = os.path.join(args.data_path, "./" + lines[s].split()[0])
         image = cv2.imread(rgb_path)
         if args.dataset == "nyu":
             gt_path = os.path.join(args.data_path, "./" + lines[s].split()[1])
-            gt = cv2.imread(gt_path, -1).astype(np.float32) / 1000.0  # Visualization purpose only
+            gt = (
+                cv2.imread(gt_path, -1).astype(np.float32) / 1000.0
+            )  # Visualization purpose only
             gt[gt == 0] = np.amax(gt)
 
         pred_depth = pred_depths[s]
@@ -219,7 +237,9 @@ def test(params):
             pred_depth_scaled = pred_depth * 1000.0
 
         pred_depth_scaled = pred_depth_scaled.astype(np.uint16)
-        cv2.imwrite(filename_pred_png, pred_depth_scaled, [cv2.IMWRITE_PNG_COMPRESSION, 0])
+        cv2.imwrite(
+            filename_pred_png, pred_depth_scaled, [cv2.IMWRITE_PNG_COMPRESSION, 0]
+        )
 
         if args.save_viz:
             cv2.imwrite(filename_image_png, image[10 : -1 - 9, 10 : -1 - 9, :])

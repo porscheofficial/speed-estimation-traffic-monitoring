@@ -35,13 +35,17 @@ parser.add_argument("--model_name", type=str, help="model name", default="pixelf
 parser.add_argument(
     "--encoder", type=str, help="type of encoder, base07, large07", default="large07"
 )
-parser.add_argument("--max_depth", type=float, help="maximum depth in estimation", default=10)
+parser.add_argument(
+    "--max_depth", type=float, help="maximum depth in estimation", default=10
+)
 parser.add_argument(
     "--checkpoint_path", type=str, help="path to a checkpoint to load", required=True
 )
 parser.add_argument("--input_height", type=int, help="input height", default=480)
 parser.add_argument("--input_width", type=int, help="input width", default=640)
-parser.add_argument("--dataset", type=str, help="dataset this model trained on", default="nyu")
+parser.add_argument(
+    "--dataset", type=str, help="dataset this model trained on", default="nyu"
+)
 parser.add_argument("--crop", type=str, help="crop: kbcrop, edge, non", default="non")
 parser.add_argument("--video", type=str, help="video path", default="")
 
@@ -196,8 +200,12 @@ class Window(QtWidgets.QWidget):
         if self.glWidget.rgb.any() and self.glWidget.depth.any():
             img = (self.glWidget.rgb * 255).astype("uint8")
             self.inputViewer.setPixmap(QtGui.QPixmap.fromImage(np_to_qimage(img)))
-            coloredDepth = (plasma(self.glWidget.depth[:, :, 0])[:, :, :3] * 255).astype("uint8")
-            self.outputViewer.setPixmap(QtGui.QPixmap.fromImage(np_to_qimage(coloredDepth)))
+            coloredDepth = (
+                plasma(self.glWidget.depth[:, :, 0])[:, :, :3] * 255
+            ).astype("uint8")
+            self.outputViewer.setPixmap(
+                QtGui.QPixmap.fromImage(np_to_qimage(coloredDepth))
+            )
 
     def loadModel(self):
         print("== loadModel")
@@ -264,7 +272,9 @@ class Window(QtWidgets.QWidget):
         if Use_intrs_remap:
             frame_ud = cv2.remap(frame, map1, map2, interpolation=cv2.INTER_LINEAR)
         else:
-            frame_ud = cv2.resize(frame, (width_rgb, height_rgb), interpolation=cv2.INTER_LINEAR)
+            frame_ud = cv2.resize(
+                frame, (width_rgb, height_rgb), interpolation=cv2.INTER_LINEAR
+            )
         frame = cv2.cvtColor(frame_ud, cv2.COLOR_BGR2RGB)
         image = np_to_qimage(frame)
         self.inputViewer.setPixmap(QtGui.QPixmap.fromImage(image))
@@ -312,16 +322,22 @@ class Window(QtWidgets.QWidget):
 
             depth = np.zeros((height_depth, width_depth), dtype=np.float32)
             if args.crop == "kbcrop":
-                depth[top_margin : top_margin + 352, left_margin : left_margin + 1216] = (
+                depth[
+                    top_margin : top_margin + 352, left_margin : left_margin + 1216
+                ] = (depth_cropped[0].cpu().squeeze() / args.max_depth)
+            elif args.crop == "edge":
+                depth[32:-32, 32:-32] = (
                     depth_cropped[0].cpu().squeeze() / args.max_depth
                 )
-            elif args.crop == "edge":
-                depth[32:-32, 32:-32] = depth_cropped[0].cpu().squeeze() / args.max_depth
             else:
                 depth[:, :] = depth_cropped[0].cpu().squeeze() / args.max_depth
 
-            coloredDepth = (greys(np.log10(depth * args.max_depth))[:, :, :3] * 255).astype("uint8")
-            self.outputViewer.setPixmap(QtGui.QPixmap.fromImage(np_to_qimage(coloredDepth)))
+            coloredDepth = (
+                greys(np.log10(depth * args.max_depth))[:, :, :3] * 255
+            ).astype("uint8")
+            self.outputViewer.setPixmap(
+                QtGui.QPixmap.fromImage(np_to_qimage(coloredDepth))
+            )
             self.glWidget.depth = depth
 
         else:
@@ -475,8 +491,12 @@ class GLWidget(QtOpenGL.QGLWidget):
 
     def createPointCloudVBOfromRGBD(self):
         # Create position and color VBOs
-        self.pos_vbo = vbo.VBO(data=self.pos, usage=GL.GL_DYNAMIC_DRAW, target=GL.GL_ARRAY_BUFFER)
-        self.col_vbo = vbo.VBO(data=self.col, usage=GL.GL_DYNAMIC_DRAW, target=GL.GL_ARRAY_BUFFER)
+        self.pos_vbo = vbo.VBO(
+            data=self.pos, usage=GL.GL_DYNAMIC_DRAW, target=GL.GL_ARRAY_BUFFER
+        )
+        self.col_vbo = vbo.VBO(
+            data=self.col, usage=GL.GL_DYNAMIC_DRAW, target=GL.GL_ARRAY_BUFFER
+        )
 
     def updateRGBD(self):
         # RGBD dimensions
@@ -514,7 +534,9 @@ class GLWidget(QtOpenGL.QGLWidget):
         model = glm.rotate(model, self.yRot / 160.0, glm.vec3(0, 1, 0))
         model = glm.rotate(model, self.zRot / 160.0, glm.vec3(0, 0, 1))
         mvp = proj * view * model
-        GL.glUniformMatrix4fv(self.UNIFORM_LOCATIONS["mvp"], 1, False, glm.value_ptr(mvp))
+        GL.glUniformMatrix4fv(
+            self.UNIFORM_LOCATIONS["mvp"], 1, False, glm.value_ptr(mvp)
+        )
 
         # Update data
         self.pos_vbo.set_array(self.pos)

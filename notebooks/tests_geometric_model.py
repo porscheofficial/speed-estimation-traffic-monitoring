@@ -64,7 +64,9 @@ class GeometricModelTests(unittest.TestCase):
         frame = np.empty((100, 100))
         wp1 = WorldPoint(frame, 0, 0, 1)
         wp2 = WorldPoint(frame, 0, 0, 0)
-        self.assertEqual(1, self.geometric_model.calculate_distance_between_world_points(wp1, wp2))
+        self.assertEqual(
+            1, self.geometric_model.calculate_distance_between_world_points(wp1, wp2)
+        )
 
         wp1 = WorldPoint(frame, 1, 1, 1)
         self.assertTrue(

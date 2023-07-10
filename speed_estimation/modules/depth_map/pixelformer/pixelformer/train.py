@@ -35,18 +35,26 @@ parser.add_argument("--model_name", type=str, help="model name", default="pixelf
 parser.add_argument(
     "--encoder", type=str, help="type of encoder, base07, large07", default="large07"
 )
-parser.add_argument("--pretrain", type=str, help="path of pretrained encoder", default=None)
+parser.add_argument(
+    "--pretrain", type=str, help="path of pretrained encoder", default=None
+)
 
 # Dataset
-parser.add_argument("--dataset", type=str, help="dataset to train on, kitti or nyu", default="nyu")
+parser.add_argument(
+    "--dataset", type=str, help="dataset to train on, kitti or nyu", default="nyu"
+)
 parser.add_argument("--data_path", type=str, help="path to the data", required=True)
-parser.add_argument("--gt_path", type=str, help="path to the groundtruth data", required=True)
+parser.add_argument(
+    "--gt_path", type=str, help="path to the groundtruth data", required=True
+)
 parser.add_argument(
     "--filenames_file", type=str, help="path to the filenames text file", required=True
 )
 parser.add_argument("--input_height", type=int, help="input height", default=480)
 parser.add_argument("--input_width", type=int, help="input width", default=640)
-parser.add_argument("--max_depth", type=float, help="maximum depth in estimation", default=10)
+parser.add_argument(
+    "--max_depth", type=float, help="maximum depth in estimation", default=10
+)
 
 # Log and save
 parser.add_argument(
@@ -55,8 +63,12 @@ parser.add_argument(
     help="directory to save checkpoints and summaries",
     default="",
 )
-parser.add_argument("--checkpoint_path", type=str, help="path to a checkpoint to load", default="")
-parser.add_argument("--log_freq", type=int, help="Logging frequency in global steps", default=100)
+parser.add_argument(
+    "--checkpoint_path", type=str, help="path to a checkpoint to load", default=""
+)
+parser.add_argument(
+    "--log_freq", type=int, help="Logging frequency in global steps", default=100
+)
 parser.add_argument(
     "--save_freq",
     type=int,
@@ -76,11 +88,17 @@ parser.add_argument(
     help="if used with checkpoint_path, will restart training from step zero",
     action="store_true",
 )
-parser.add_argument("--adam_eps", type=float, help="epsilon in Adam optimizer", default=1e-6)
+parser.add_argument(
+    "--adam_eps", type=float, help="epsilon in Adam optimizer", default=1e-6
+)
 parser.add_argument("--batch_size", type=int, help="batch size", default=4)
 parser.add_argument("--num_epochs", type=int, help="number of epochs", default=50)
-parser.add_argument("--learning_rate", type=float, help="initial learning rate", default=1e-4)
-parser.add_argument("--end_learning_rate", type=float, help="end learning rate", default=-1)
+parser.add_argument(
+    "--learning_rate", type=float, help="initial learning rate", default=1e-4
+)
+parser.add_argument(
+    "--end_learning_rate", type=float, help="end learning rate", default=-1
+)
 parser.add_argument(
     "--variance_focus",
     type=float,
@@ -94,7 +112,9 @@ parser.add_argument(
     help="if set, will perform random rotation for augmentation",
     action="store_true",
 )
-parser.add_argument("--degree", type=float, help="random rotation maximum degree", default=2.5)
+parser.add_argument(
+    "--degree", type=float, help="random rotation maximum degree", default=2.5
+)
 parser.add_argument(
     "--do_kb_crop",
     help="if set, crop input images as kitti benchmark images",
@@ -116,14 +136,18 @@ parser.add_argument(
 parser.add_argument(
     "--world_size", type=int, help="number of nodes for distributed training", default=1
 )
-parser.add_argument("--rank", type=int, help="node rank for distributed training", default=0)
+parser.add_argument(
+    "--rank", type=int, help="node rank for distributed training", default=0
+)
 parser.add_argument(
     "--dist_url",
     type=str,
     help="url used to set up distributed training",
     default="tcp://127.0.0.1:1234",
 )
-parser.add_argument("--dist_backend", type=str, help="distributed backend", default="nccl")
+parser.add_argument(
+    "--dist_backend", type=str, help="distributed backend", default="nccl"
+)
 parser.add_argument("--gpu", type=int, help="GPU id to use.", default=None)
 parser.add_argument(
     "--multiprocessing_distributed",
@@ -160,7 +184,9 @@ parser.add_argument(
 parser.add_argument(
     "--min_depth_eval", type=float, help="minimum depth for evaluation", default=1e-3
 )
-parser.add_argument("--max_depth_eval", type=float, help="maximum depth for evaluation", default=80)
+parser.add_argument(
+    "--max_depth_eval", type=float, help="maximum depth for evaluation", default=80
+)
 parser.add_argument(
     "--eigen_crop", help="if set, crops according to Eigen NIPS14", action="store_true"
 )
@@ -229,7 +255,9 @@ def online_eval(model, dataloader_eval, gpu, ngpus, post_process=False):
         pred_depth[np.isinf(pred_depth)] = args.max_depth_eval
         pred_depth[np.isnan(pred_depth)] = args.min_depth_eval
 
-        valid_mask = np.logical_and(gt_depth > args.min_depth_eval, gt_depth < args.max_depth_eval)
+        valid_mask = np.logical_and(
+            gt_depth > args.min_depth_eval, gt_depth < args.max_depth_eval
+        )
 
         if args.garg_crop or args.eigen_crop:
             gt_height, gt_width = gt_depth.shape
@@ -320,7 +348,9 @@ def main_worker(gpu, ngpus_per_node, args):
     num_params = sum([np.prod(p.size()) for p in model.parameters()])
     print("== Total number of parameters: {}".format(num_params))
 
-    num_params_update = sum([np.prod(p.shape) for p in model.parameters() if p.requires_grad])
+    num_params_update = sum(
+        [np.prod(p.shape) for p in model.parameters() if p.requires_grad]
+    )
     print("== Total number of learning parameters: {}".format(num_params_update))
 
     if args.distributed:
@@ -333,7 +363,9 @@ def main_worker(gpu, ngpus_per_node, args):
             )
         else:
             model.cuda()
-            model = torch.nn.parallel.DistributedDataParallel(model, find_unused_parameters=True)
+            model = torch.nn.parallel.DistributedDataParallel(
+                model, find_unused_parameters=True
+            )
     else:
         model = torch.nn.DataParallel(model)
         model.cuda()
@@ -349,7 +381,9 @@ def main_worker(gpu, ngpus_per_node, args):
     best_eval_steps = np.zeros(9, dtype=np.int32)
 
     # Training parameters
-    optimizer = torch.optim.Adam([{"params": model.module.parameters()}], lr=args.learning_rate)
+    optimizer = torch.optim.Adam(
+        [{"params": model.module.parameters()}], lr=args.learning_rate
+    )
 
     model_just_loaded = False
     if args.checkpoint_path != "":
@@ -392,9 +426,13 @@ def main_worker(gpu, ngpus_per_node, args):
         )
         if args.do_online_eval:
             if args.eval_summary_directory != "":
-                eval_summary_path = os.path.join(args.eval_summary_directory, args.model_name)
+                eval_summary_path = os.path.join(
+                    args.eval_summary_directory, args.model_name
+                )
             else:
-                eval_summary_path = os.path.join(args.log_directory, args.model_name, "eval")
+                eval_summary_path = os.path.join(
+                    args.log_directory, args.model_name, "eval"
+                )
             eval_summary_writer = SummaryWriter(eval_summary_path, flush_secs=30)
 
     silog_criterion = silog_loss(variance_focus=args.variance_focus)
@@ -404,14 +442,20 @@ def main_worker(gpu, ngpus_per_node, args):
 
     num_log_images = args.batch_size
     end_learning_rate = (
-        args.end_learning_rate if args.end_learning_rate != -1 else 0.1 * args.learning_rate
+        args.end_learning_rate
+        if args.end_learning_rate != -1
+        else 0.1 * args.learning_rate
     )
 
     var_sum = [var.sum().item() for var in model.parameters() if var.requires_grad]
     var_cnt = len(var_sum)
     var_sum = np.sum(var_sum)
 
-    print("== Initial variables' sum: {:.3f}, avg: {:.3f}".format(var_sum, var_sum / var_cnt))
+    print(
+        "== Initial variables' sum: {:.3f}, avg: {:.3f}".format(
+            var_sum, var_sum / var_cnt
+        )
+    )
 
     steps_per_epoch = len(dataloader.data)
     num_total_steps = args.num_epochs * steps_per_epoch
@@ -462,8 +506,14 @@ def main_worker(gpu, ngpus_per_node, args):
                     return -1
 
             duration += time.time() - before_op_time
-            if global_step and global_step % args.log_freq == 0 and not model_just_loaded:
-                var_sum = [var.sum().item() for var in model.parameters() if var.requires_grad]
+            if (
+                global_step
+                and global_step % args.log_freq == 0
+                and not model_just_loaded
+            ):
+                var_sum = [
+                    var.sum().item() for var in model.parameters() if var.requires_grad
+                ]
                 var_cnt = len(var_sum)
                 var_sum = np.sum(var_sum)
                 examples_per_sec = args.batch_size / duration * args.log_freq
@@ -492,8 +542,12 @@ def main_worker(gpu, ngpus_per_node, args):
                 ):
                     writer.add_scalar("silog_loss", loss, global_step)
                     writer.add_scalar("learning_rate", current_lr, global_step)
-                    writer.add_scalar("var average", var_sum.item() / var_cnt, global_step)
-                    depth_gt = torch.where(depth_gt < 1e-3, depth_gt * 0 + 1e3, depth_gt)
+                    writer.add_scalar(
+                        "var average", var_sum.item() / var_cnt, global_step
+                    )
+                    depth_gt = torch.where(
+                        depth_gt < 1e-3, depth_gt * 0 + 1e3, depth_gt
+                    )
                     for i in range(num_log_images):
                         writer.add_image(
                             "depth_gt/image/{}".format(i),
@@ -535,7 +589,9 @@ def main_worker(gpu, ngpus_per_node, args):
                             old_best = best_eval_measures_lower_better[i].item()
                             best_eval_measures_lower_better[i] = measure.item()
                             is_best = True
-                        elif i >= 6 and measure > best_eval_measures_higher_better[i - 6]:
+                        elif (
+                            i >= 6 and measure > best_eval_measures_higher_better[i - 6]
+                        ):
                             old_best = best_eval_measures_higher_better[i - 6].item()
                             best_eval_measures_higher_better[i - 6] = measure.item()
                             is_best = True
@@ -544,7 +600,12 @@ def main_worker(gpu, ngpus_per_node, args):
                             old_best_name = "/model-{}-best_{}_{:.5f}".format(
                                 old_best_step, eval_metrics[i], old_best
                             )
-                            model_path = args.log_directory + "/" + args.model_name + old_best_name
+                            model_path = (
+                                args.log_directory
+                                + "/"
+                                + args.model_name
+                                + old_best_name
+                            )
                             if os.path.exists(model_path):
                                 command = "rm {}".format(model_path)
                                 os.system(command)
@@ -560,7 +621,10 @@ def main_worker(gpu, ngpus_per_node, args):
                             checkpoint = {"model": model.state_dict()}
                             torch.save(
                                 checkpoint,
-                                args.log_directory + "/" + args.model_name + model_save_name,
+                                args.log_directory
+                                + "/"
+                                + args.model_name
+                                + model_save_name,
                             )
                     eval_summary_writer.flush()
                 model.train()
