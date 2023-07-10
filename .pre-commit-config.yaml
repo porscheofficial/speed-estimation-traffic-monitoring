@@ -1,0 +1,7 @@
+repos:
+  - repo: https://github.com/ambv/black
+    rev: 23.3.0
+    hooks:
+    - id: black
+      exclude: ((?:logs|datasets|output|frames_detected|model_weights|venv|yolov[0-9]))
+      language_version: python3.10.8
