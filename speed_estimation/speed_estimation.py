@@ -184,8 +184,8 @@ def run(
             # Find nearest bounding box
             for tracking_box_cur in tracking_boxes_cur_frame:
                 distance = math.hypot(
-                    tracking_box_prev.x - tracking_box_cur.x,
-                    tracking_box_prev.y - tracking_box_cur.y,
+                    tracking_box_prev.x_coord - tracking_box_cur.x_coord,
+                    tracking_box_prev.y_coord - tracking_box_cur.y_coord,
                 )
 
                 # Only take bounding box if it is closest AND somewhat close to bounding

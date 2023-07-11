@@ -238,14 +238,22 @@ def get_ground_truth_events(tracking_boxes: Dict[int, List[TrackingBox]]):
         # extract ground truth value for each tracking box
         for box in tracking_boxes[object_id]:
             # check each of the for lines, spanned by the bounding box rectangle
-            upper_line = Line(Point(box.x, box.y), Point(box.x + box.w, box.y))
+            upper_line = Line(
+                Point(box.x_coord, box.y_coord),
+                Point(box.x_coord + box.width, box.y_coord),
+            )
             right_line = Line(
-                Point(box.x + box.w, box.y), Point(box.x + box.w, box.y + box.h)
+                Point(box.x_coord + box.width, box.y_coord),
+                Point(box.x_coord + box.width, box.y_coord + box.height),
             )
             lower_line = Line(
-                Point(box.x, box.y + box.h), Point(box.x + box.w, box.y + box.h)
+                Point(box.x_coord, box.y_coord + box.height),
+                Point(box.x_coord + box.width, box.y_coord + box.height),
             )
-            left_line = Line(Point(box.x, box.y), Point(box.x, box.y + box.h))
+            left_line = Line(
+                Point(box.x_coord, box.y_coord),
+                Point(box.x_coord, box.y_coord + box.height),
+            )
 
             intersections = []
             for bounding_box_line in [upper_line, right_line, lower_line, left_line]:
@@ -258,8 +266,16 @@ def get_ground_truth_events(tracking_boxes: Dict[int, List[TrackingBox]]):
                 intersect1, intersect2 = intersections
                 ground_truth_events.append(
                     GroundTruthEvent(
-                        (box.frame_count, int(intersect1.x), int(intersect1.y)),
-                        (box.frame_count, int(intersect2.x), int(intersect2.y)),
+                        (
+                            box.frame_count,
+                            int(intersect1.x_coord),
+                            int(intersect1.y_coord),
+                        ),
+                        (
+                            box.frame_count,
+                            int(intersect2.x_coord),
+                            int(intersect2.y_coord),
+                        ),
                         6,
                     )
                 )

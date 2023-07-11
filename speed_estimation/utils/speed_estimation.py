@@ -18,11 +18,11 @@ class Direction(Enum):
 
 @dataclass
 class Point:
-    x: int
-    y: int
+    x_coord: int
+    y_coord: int
 
     def coords(self):
-        return np.array([self.x, self.y])
+        return np.array([self.x_coord, self.y_coord])
 
 
 class Line(NamedTuple):
@@ -35,18 +35,18 @@ class TrackingBox:
         self,
         center_x: int,
         center_y: int,
-        x: int,
-        y: int,
-        w: int,
-        h: int,
+        x_coord: int,
+        y_coord: int,
+        width: int,
+        height: int,
         frame_count: int,
     ) -> None:
         self.center_x = center_x
         self.center_y = center_y
-        self.x = x
-        self.y = y
-        self.w = w
-        self.h = h
+        self.x_coord = x_coord
+        self.y_coord = y_coord
+        self.width = width
+        self.height = height
         self.frame_count = frame_count
 
 
@@ -90,18 +90,18 @@ def render_detected_frames_to_video(count, fps, out_video_name, path_to_frames):
 def get_intersection(line_a: Line, line_b: Line) -> Point:
     b = Point(*line_a.end.coords() - line_a.start.coords())
     d = Point(*line_b.end.coords() - line_b.start.coords())
-    b_dot_d = b.x * d.y - b.y * d.x
+    b_dot_d = b.x_coord * d.y_coord - b.y_coord * d.x_coord
 
     if b_dot_d == 0:
         # lines are parallel, no intersection
         return False
 
     c = Point(*line_b.start.coords() - line_a.start.coords())
-    t = (c.x * d.y - c.y * d.x) / b_dot_d
+    t = (c.x_coord * d.y_coord - c.y_coord * d.x_coord) / b_dot_d
     if t < 0 or t > 1:
         return False
 
-    u = (c.x * b.y - c.y * b.x) / b_dot_d
+    u = (c.x_coord * b.y_coord - c.y_coord * b.x_coord) / b_dot_d
     if u < 0 or u > 1:
         return False
 
@@ -112,7 +112,7 @@ def calculate_car_direction(car: Car) -> Direction:
     first_box = car.tracked_boxes[0]
     last_box = car.tracked_boxes[-1]
 
-    if (first_box.y - last_box.y) < 0:
+    if (first_box.y_coord - last_box.y_coord) < 0:
         return Direction.TOWARDS
 
     return Direction.AWAY

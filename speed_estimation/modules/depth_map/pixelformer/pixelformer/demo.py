@@ -416,8 +416,8 @@ class GLWidget(QtOpenGL.QGLWidget):
         self.lastPos = QtCore.QPoint(event.pos())
 
     def mouseMoveEvent(self, event):
-        dx = -(event.x() - self.lastPos.x())
-        dy = event.y() - self.lastPos.y()
+        dx = -(event.x_coord() - self.lastPos.x_coord())
+        dy = event.y_coord() - self.lastPos.y_coord()
 
         if event.buttons() & QtCore.Qt.LeftButton:
             self.setXRotation(self.xRot + dy)
