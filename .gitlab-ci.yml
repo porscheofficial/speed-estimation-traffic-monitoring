@@ -26,22 +26,14 @@ formatting:
 linting:
   stage: linting
   image: python:3.10.8
-  before_script:
-    - export CI_JOB_NAME="linting"
-    - mkdir -p public/badges public/lint
-    - echo undefined > public/badges/$CI_JOB_NAME.score
   script:
-    - pylint --exit-zero --output-format=text $(find -type f -name "*.py" ! -path "**/.venv/**") | tee /tmp/pylint.txt
-    - sed -n 's/^Your code has been rated at \([-0-9.]*\)\/.*/\1/p' /tmp/pylint.txt > public/badges/$CI_JOB_NAME.score
-    - pylint --exit-zero --output-format=pylint_gitlab.GitlabCodeClimateReporter $(find -type f -name "*.py" ! -path "**/.venv/**") > codeclimate.json
-    - pylint --exit-zero --output-format=pylint_gitlab.GitlabPagesHtmlReporter $(find -type f -name "*.py" ! -path "**/.venv/**") > public/lint/index.html
-  after_script:
-    - anybadge --overwrite --label $CI_JOB_NAME --value=$(cat public/badges/$CI_JOB_NAME.score) --file=public/badges/$CI_JOB_NAME.svg 4=red 6=orange 8=yellow 10=green
-    - |
-      echo "Your score is: $(cat public/badges/$CI_JOB_NAME.score)"
+    - cd ..
+    - pwd
+    - pylint --exit-zero --output-format=text --ignore-patterns="((?:logs|datasets|output|frames_detected|model_weights|venv|yolov[0-9]))" /builds/porsche-digital/industry-solutions/research/farsec | tee /builds/porsche-digital/industry-solutions/research/farsec/report/pylint.txt
+    - pylint --exit-zero --output-format=pylint_gitlab.GitlabPagesHtmlReporter --ignore-patterns="((?:logs|datasets|output|frames_detected|model_weights|venv|yolov[0-9]))" /builds/porsche-digital/industry-solutions/research/farsec > /builds/porsche-digital/industry-solutions/research/farsec/report/index.html
   artifacts:
     paths:
-      - public
+      - report
     reports:
       codequality: codeclimate.json
     when: always
