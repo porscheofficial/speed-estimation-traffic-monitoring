@@ -33,7 +33,7 @@ linting:
     - pylint --exit-zero --output-format=pylint_gitlab.GitlabPagesHtmlReporter --ignore-patterns="((?:logs|datasets|output|frames_detected|model_weights|venv|yolov[0-9]))" /builds/porsche-digital/industry-solutions/research/farsec > /builds/porsche-digital/industry-solutions/research/farsec/report/index.html
   artifacts:
     paths:
-      - public
+      - report
     reports:
       codequality: codeclimate.json
     when: always
