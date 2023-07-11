@@ -27,10 +27,9 @@ linting:
   stage: linting
   image: python:3.10.8
   script:
-    - cd ..
-    - pylint --exit-zero --output-format=text --ignore-patterns="((?:logs|datasets|output|frames_detected|model_weights|venv|yolov[0-9]))" ./farsec | tee farsec/report/pylint.txt
+    - pylint --exit-zero --output-format=text --ignore-patterns="((?:logs|datasets|output|frames_detected|model_weights|venv|yolov[0-9]))" . | tee report/pylint.txt
     - sed -n 's/^Your code has been rated at \([-0-9.]*\)\/.*/\1/p' /tmp/pylint.txt > public/badges/$CI_JOB_NAME.score
-    - pylint --exit-zero --output-format=pylint_gitlab.GitlabPagesHtmlReporter --ignore-patterns="((?:logs|datasets|output|frames_detected|model_weights|venv|yolov[0-9]))" ./farsec > farsec/report/index.html
+    - pylint --exit-zero --output-format=pylint_gitlab.GitlabPagesHtmlReporter --ignore-patterns="((?:logs|datasets|output|frames_detected|model_weights|venv|yolov[0-9]))" . > report/index.html
   artifacts:
     paths:
       - public
