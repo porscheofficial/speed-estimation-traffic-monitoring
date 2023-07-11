@@ -246,8 +246,8 @@ def run(
                     frame,
                     f"ID:{object_id}",
                     (
-                        tracking_box.x + tracking_box.w + 5,
-                        tracking_box.y + tracking_box.h,
+                        tracking_box.x_coord + tracking_box.width + 5,
+                        tracking_box.y_coord + tracking_box.height,
                     ),
                     0,
                     1,
