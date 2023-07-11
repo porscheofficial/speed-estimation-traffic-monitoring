@@ -51,13 +51,13 @@ CUSTOM_OBJECT_DETECTION = config.getboolean("main", "custom_object_detection")
 
 
 def run(
-        path_to_video: str,
-        data_dir: str,
-        fps: int = 0,
-        max_frames: int = 0,
-        custom_object_detection: bool = False,
+    path_to_video: str,
+    data_dir: str,
+    fps: int = 0,
+    max_frames: int = 0,
+    custom_object_detection: bool = False,
 ) -> str:
-    """ Run the full speed estimation pipeline
+    """Run the full speed estimation pipeline
 
     This method runs the full speed estimation pipeline, including the automatic calibration using
     depth maps, object detection and speed estimation.
