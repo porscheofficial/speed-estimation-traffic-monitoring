@@ -35,5 +35,5 @@ linting:
     paths:
       - report
     reports:
-      codequality: codeclimate.json
+      codequality: report/codeclimate.json
     when: always
