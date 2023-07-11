@@ -70,7 +70,7 @@ def run(
     logging.basicConfig(
         filename=f"logs/{now_str}_run_{run_id}.log", level=logging.DEBUG
     )
-    logging.info(f"Run No.: {run_id}, Video: {data_dir}")
+    logging.info("Run No.: %s, Video: %s", str(run_id), str(data_dir))
 
     start = time.time()
 
@@ -131,7 +131,10 @@ def run(
         # for shake_detection
         if shake_detection.is_hard_move(frame):
             logging.info(
-                f"Run No.: {run_id}, Video: {data_dir}, Hard Move Detected Frame: {frame_count}"
+                "Run No.: %s, Video: %s, Hard Move Detected Frame: %d",
+                str(run_id),
+                str(data_dir),
+                frame_count,
             )
 
         ############################
@@ -220,7 +223,7 @@ def run(
                         )
                     )
                     logging.info(
-                        f"Is calibrated: scale_factor: {geo_model.scale_factor}"
+                        "Is calibrated: scale_factor: %d", geo_model.scale_factor
                     )
                     print(
                         f"Is calibrated: scale_factor: {geo_model.scale_factor}",

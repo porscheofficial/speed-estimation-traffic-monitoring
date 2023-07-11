@@ -17,7 +17,7 @@ from .utils import post_process_depth, flip_lr
 config = configparser.ConfigParser()
 config.read("config.ini")
 
-use_cpu = config.getboolean("device", "use_cpu")
+use_cpu = not torch.cuda.is_available()  # config.getboolean("device", "use_cpu")
 
 
 def convert_arg_line_to_args(arg_line):

@@ -11,8 +11,8 @@ def analyzer(log_path):
     # add a new section and some values
     try:
         config.add_section("analyzer")
-    except:
-        print("")
+    except configparser.Error as error:
+        print(error.message)
 
     log_dict = []
     speed_limit = int(config.get("analyzer", "speed_limit"))
@@ -53,7 +53,7 @@ def analyzer(log_path):
         df_grouped["speed"] = speeds
         print(df_grouped)
 
-        with open("speed_estimation/config.ini", "w") as configfile:
+        with open("speed_estimation/config.ini", "w", encoding='UTF-8') as configfile:
             config.write(configfile)
 
         return avg_frame_count, speed_limit
