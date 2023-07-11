@@ -27,6 +27,7 @@ linting:
   stage: linting
   image: python:3.10.8
   before_script:
+    - export CI_JOB_NAME="linting"
     - mkdir -p public/badges public/lint
     - echo undefined > public/badges/$CI_JOB_NAME.score
   script:
