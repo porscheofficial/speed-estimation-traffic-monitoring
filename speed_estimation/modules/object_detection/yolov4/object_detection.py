@@ -23,18 +23,49 @@ class ObjectDetection:
         self.load_class_names()
         self.colors = np.random.uniform(0, 255, size=(80, 3))
 
-        self.model.setInputParams(size=(self.image_size, self.image_size), scale=1 / 255)
+        self.model.setInputParams(
+            size=(self.image_size, self.image_size), scale=1 / 255
+        )
 
-    def load_class_names(self, classes_path=YOLOV4_CLASSES):
-        with open(classes_path, "r") as file_object:
+    def load_class_names(self, classes_path: str = YOLOV4_CLASSES) -> list[str]:
+        """Get all classes the model can classify in an image.
+
+        @param classes_path: The path to the classes.txt file
+            (e.g., `speed_estimation/model_weights/classes.txt`).
+
+        @return: Returns a list of all classes the model can detect.
+        """
+
+        with open(classes_path, "r", encoding="UTF-8") as file_object:
             for class_name in file_object.readlines():
                 class_name = class_name.strip()
                 self.classes.append(class_name)
 
         self.colors = np.random.uniform(0, 255, size=(80, 3))
+
         return self.classes
 
-    def detect(self, frame):
+    def detect(
+        self, frame: np.ndarray
+    ) -> tuple[np.ndarray, np.ndarray, list[np.ndarray]]:
+        """Detect cars in frame and put bounding boxes around.
+
+        This function detects all cars in the frame and puts 2D bounding boxes around.
+        A YoloV4 model is used.
+
+        @param frame:
+            The frame that should be analyzed.
+
+        @return:
+            Returns a tuple of class_ids, scores, and boxes.
+            The class_id identifies which object was detected, while the scores indicate the
+            confidence level of the prediction.
+            The boxes are represented as a list of NumPy ndarrays, where each array corresponds to
+            a bounding box that identifies a car in the frame.
+            Each ndarray in the list holds the following information:
+            (x_coordinate, y_coordinate, width, height).
+        """
+
         return self.model.detect(
             frame, nmsThreshold=self.nmsThreshold, confThreshold=self.confThreshold
         )

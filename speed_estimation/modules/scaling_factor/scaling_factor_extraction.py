@@ -41,9 +41,9 @@ class GroundTruthEvent(NamedTuple):
 class GeometricModel:
     def __init__(self, depth_model) -> None:
         self.depth_model = depth_model
-        self.f: float = 105.0  # focal length
-        self.s_u: int = 1  # translating pixels into m in u direction
-        self.s_v: int = 1  # translating pixels into m in v direction
+        self.f: float = 105.0  # focal length of camera recording the video/stream
+        self.s_u: int = 1  # translating pixels into meters in u direction
+        self.s_v: int = 1  # translating pixels into meters in v direction
         self.c_u: int = (
             1  # this would usually be chosen at half the frame resolution width
         )

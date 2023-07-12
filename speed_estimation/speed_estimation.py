@@ -57,29 +57,33 @@ def run(
     max_frames: int = 0,
     custom_object_detection: bool = False,
 ) -> str:
-    """Run the full speed estimation pipeline
+    """Run the full speed estimation pipeline.
 
     This method runs the full speed estimation pipeline, including the automatic calibration using
-    depth maps, object detection and speed estimation.
+    depth maps, object detection, and speed estimation.
 
-    @param path_to_video: str, required
-        The path to the video that should be analyzed. The default path are defined in
-        speed_estimation/paths.py
-    @param data_dir: str, required
-        The path to the dataset directory. The default path are defined in
-        speed_estimation/paths.py
-    @param fps: int, optional
+    @param path_to_video:
+        The path to the video that should be analyzed. The default path is defined in
+        `speed_estimation/paths.py`.
+
+    @param data_dir:
+        The path to the dataset directory. The default path is defined in `speed_estimation/paths.py`.
+
+    @param fps:
         The frames per second of the video that should be analyzed. If nothing is defined, the
         pipeline will derive the fps automatically.
-    @param max_frames: int, optional
-        The maximal frames that should be analyzed. The pipeline will stop as soon as the given
+
+    @param max_frames:
+        The maximum frames that should be analyzed. The pipeline will stop as soon as the given
         number is reached. If nothing is defined, the pipeline will analyze the whole video.
-    @param custom_object_detection: bool, optional
+
+    @param custom_object_detection:
         If a custom/other object detection should be used, set this parameter to true. If the
-        parameter is set to true the pipeline expects the detection model in
-        speed_estimation/modules/custom_object_detection. The default detection is a YoloV4 model.
-    @return: str
-        The string to the log file containing the speed estimates is returned.
+        parameter is set to true, the pipeline expects the detection model in
+        `speed_estimation/modules/custom_object_detection`. The default detection is a YoloV4 model.
+
+    @return:
+        The string to the log file containing the speed estimates.
     """
     reload(logging)
 

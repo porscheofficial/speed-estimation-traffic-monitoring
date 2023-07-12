@@ -20,7 +20,7 @@ def analyzer(log_path):
 
     print(log_path)
 
-    with open(log_path, "r", encoding='UTF-8') as log_file:
+    with open(log_path, "r", encoding="UTF-8") as log_file:
         for _, line in enumerate(log_file):
             if not line.startswith("INFO:root:{"):
                 continue
@@ -37,7 +37,9 @@ def analyzer(log_path):
 
         # outlier filtering
         df_grouped = df_grouped[df_grouped["frame_count"] > 20]
-        df_grouped = df_grouped[df_grouped["direction_indicator"] != 0]  # both directions
+        df_grouped = df_grouped[
+            df_grouped["direction_indicator"] != 0
+        ]  # both directions
 
         avg_frame_count = df_grouped["frame_count"].mean()
 
@@ -53,7 +55,7 @@ def analyzer(log_path):
         df_grouped["speed"] = speeds
         print(df_grouped)
 
-        with open("speed_estimation/config.ini", "w", encoding='UTF-8') as configfile:
+        with open("speed_estimation/config.ini", "w", encoding="UTF-8") as configfile:
             config.write(configfile)
 
         return avg_frame_count, speed_limit
