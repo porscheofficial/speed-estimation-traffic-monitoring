@@ -45,8 +45,4 @@ codequality:
   script:
     - pip install mypy mypy-gitlab-code-quality
     - mypy --exclude="((?:logs|datasets|output|frames_detected|model_weights|venv|yolov[0-9]))" --ignore-missing-imports  /builds/porsche-digital/industry-solutions/research/farsec/speed_estimation
-  artifacts:
-    when: always
-    reports:
-      codequality: report/codequality.json
   allow_failure: true
