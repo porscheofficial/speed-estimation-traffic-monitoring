@@ -11,7 +11,7 @@ class ShakeDetection:
             The percentage of pixel that are allowed to change from one one frame to another.
         """
         self.last_frame = None
-        self.last_frames_zero_percentage = list[float]
+        self.last_frames_zero_percentage: list[float] = []
         self.threshold = threshold
 
     def is_hard_move(self, new_frame: np.ndarray) -> bool:

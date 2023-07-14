@@ -6,9 +6,11 @@ from enum import Enum
 from typing import List
 from typing import NamedTuple
 from numpy.typing import NDArray
+from typing import Optional
 
 import cv2
 import numpy as np
+
 
 
 class Direction(Enum):
@@ -54,14 +56,14 @@ class TrackingBox:
     """
 
     def __init__(
-        self,
-        center_x: int,
-        center_y: int,
-        x_coord: int,
-        y_coord: int,
-        width: int,
-        height: int,
-        frame_count: int,
+            self,
+            center_x: int,
+            center_y: int,
+            x_coord: int,
+            y_coord: int,
+            width: int,
+            height: int,
+            frame_count: int,
     ) -> None:
         """Init method for a TrackingBox
 
@@ -93,12 +95,12 @@ class Car:
     """This class represents a car with all the relevant information for a speed estimation."""
 
     def __init__(
-        self,
-        tracked_boxes: List[TrackingBox],
-        frames_seen: int,
-        frame_start: int,
-        frame_end: int,
-        direction: Direction = Direction.UNDEFINED,
+            self,
+            tracked_boxes: List[TrackingBox],
+            frames_seen: int,
+            frame_start: int,
+            frame_end: int,
+            direction: Direction = Direction.UNDEFINED,
     ) -> None:
         """The init method for a car.
 
@@ -120,44 +122,32 @@ class Car:
         self.direction = direction
 
 
-def render_detected_frames_to_video(count, fps, out_video_name, path_to_frames):
-    img_array = []
-    for c in range(0, count):
-        c += 1
-        img = cv2.imread(path_to_frames % c)
+def get_intersection(line_a: Line, line_b: Line) -> Optional[Point]:
+    """Find the intersection of two lines
 
-        if img is None:
-            continue
-
-        height, width, layers = img.shape
-        size = (width, height)
-        img_array.append(img)
-
-    out = cv2.VideoWriter(
-        out_video_name, cv2.VideoWriter_fourcc("M", "J", "P", "G"), fps, size
-    )  # fps have to get set automatically from orignal video
-    for i in range(len(img_array)):
-        out.write(img_array[i])
-    out.release()
-
-
-def get_intersection(line_a: Line, line_b: Line) -> Point:
+    @param line_a:
+        First line.
+    @param line_b:
+        Second line.
+    @return:
+        Returns the intersection coordinates of line_a and line_b wrapped in a Point object.
+    """
     b = Point(*line_a.end.coords() - line_a.start.coords())
     d = Point(*line_b.end.coords() - line_b.start.coords())
     b_dot_d = b.x_coord * d.y_coord - b.y_coord * d.x_coord
 
     if b_dot_d == 0:
         # lines are parallel, no intersection
-        return False
+        return None
 
     c = Point(*line_b.start.coords() - line_a.start.coords())
     t = (c.x_coord * d.y_coord - c.y_coord * d.x_coord) / b_dot_d
     if t < 0 or t > 1:
-        return False
+        return None
 
     u = (c.x_coord * b.y_coord - c.y_coord * b.x_coord) / b_dot_d
     if u < 0 or u > 1:
-        return False
+        return None
 
     return Point(*line_a.start.coords() + t * b.coords())
 

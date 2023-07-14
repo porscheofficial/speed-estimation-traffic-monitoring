@@ -258,7 +258,7 @@ def get_ground_truth_events(tracking_boxes: Dict[int, List[TrackingBox]]):
             intersections = []
             for bounding_box_line in [upper_line, right_line, lower_line, left_line]:
                 intersection = get_intersection(center_points_line, bounding_box_line)
-                if intersection:
+                if intersection is not None:
                     intersections.append(intersection)
 
             if len(intersections) == 2:

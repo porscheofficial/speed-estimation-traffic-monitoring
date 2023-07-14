@@ -7,8 +7,10 @@ from numpy.typing import NDArray
 
 
 class DepthModel:
+    """This class holds the depth map generation."""
+
     def __init__(self, data_dir: str) -> None:
-        """Initialize the Depth Model
+        """Create an instance of DepthModel.
 
         @param data_dir:
             The directory where the generated depth maps should be stored and loaded from.

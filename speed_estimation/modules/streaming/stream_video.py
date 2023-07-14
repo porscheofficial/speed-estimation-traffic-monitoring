@@ -99,6 +99,7 @@ class StreamHandler:
             stdin=sp.PIPE,
             stdout=sp.PIPE,
         )
+
         frame_size = meta_pipe.stdout.read().decode("utf-8").split("\n")[0].split(",")
 
         # get the actual stream through ffmpeg and return it
