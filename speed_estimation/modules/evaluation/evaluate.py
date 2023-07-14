@@ -69,8 +69,22 @@ def generate_aligned_estimations(run_ids, loaded_avg_speeds, ground_truth):
     return truth, estimations, timestamps
 
 
-def plot_absolute_error(logs: "list[str]", save_file_path=None):
+def plot_absolute_error(logs: list[str], save_file_path: str = "") -> None:
+    """After the speed estimation is done, this function will plot the absolut error of the
+    predictions.
+
+    This function is designed to operate on the Brno Dataset, as this dataset has a ground truth.
+    If you have a dataset with ground truth in a different format, you can add a custom evaluation
+    script.
+
+    @param logs:
+        Array of logs that should be analyzed.
+
+    @param save_file_path:
+        Path to the directory where the plot should be saved.
+    """
     run_ids, loaded_avg_speeds, cars_paths = zip(*list(map(load_log, logs)))
+
     # Check that all logs are from the same video
     cars_path = cars_paths[0]
     for c in cars_paths:
@@ -90,8 +104,10 @@ def plot_absolute_error(logs: "list[str]", save_file_path=None):
     fig = px.line(
         df, x="timestamps", y=df.columns, title=f"Absolute Estimations ({cars_path})"
     )
+
     id = uuid.uuid4().hex[:10]
-    if save_file_path is not None:
+
+    if save_file_path != "":
         fig.write_image(
             file=os.path.join(save_file_path, f"{video_id}_{id}_estimations.pdf")
         )
@@ -103,6 +119,7 @@ def plot_absolute_error(logs: "list[str]", save_file_path=None):
     fig = px.line(
         df, x="timestamps", y=df.columns[1:], title=f"Mean Absolute Error ({cars_path})"
     )
+
     if save_file_path is not None:
         fig.write_image(file=os.path.join(save_file_path, f"{video_id}_{id}_mae.pdf"))
     else:
@@ -113,84 +130,12 @@ def plot_absolute_error(logs: "list[str]", save_file_path=None):
         df[run_id_list].mean(axis=0).to_csv(csv_path)
 
 
-def get_gt_for_cctv_dataset(path):
-    # 0: towards camera, 1: away from camera
-    lanes_to_use = [
-        1,
-        1,
-        1,
-        1,
-        0,
-        0,
-        0,
-        1,
-        0,
-        0,
-        1,
-        0,
-        0,
-        1,
-        1,
-        1,
-        0,
-        1,
-        1,
-        1,
-        1,
-        1,
-        0,
-        0,
-        0,
-        1,
-        1,
-        0,
-        1,
-        0,
-        0,
-        0,
-        1,
-        0,
-        1,
-        1,
-        1,
-        0,
-        0,
-        1,
-    ]
-    fps = 25
-
-    summary = []
-    count = 0
-
-    for file in sorted(os.listdir(path)):
-        filename = os.fsdecode(file)
-        file_number = filename.split(".")[0]
-        n = np.load(os.path.join(path, filename))
-
-        speed = round(np.mean(n["speeds"]), 2)
-        frames_seen = n["timestamps"][len(n["timestamps"]) - 1] - n["timestamps"][0]
-
-        gt = {
-            "filename": file_number,
-            "speed_in_kmh": speed,
-            "time_seen": frames_seen / fps,
-            "lane_to_use": lanes_to_use[count],
-        }
-
-        summary.append(gt)
-        count += 1
-
-    return summary
-
-
 def main():
-    arr = ["/home/ssawicki/porsche_digital_hpi/logs/20230204-090410_run_371dbc8dd5.log"]
+    """Runs the evaluation scripts"""
+
+    arr = ["speed_estimation/logs/xyz.log"]
 
     plot_absolute_error(arr, "logs/")
-
-    gf_cctv = get_gt_for_cctv_dataset(
-        "/Users/matthiasschneider/Downloads/cctv_dataset/data/cctv_videos/gt"
-    )
 
 
 if __name__ == "__main__":

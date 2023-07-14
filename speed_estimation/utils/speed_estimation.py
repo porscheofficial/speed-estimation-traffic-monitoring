@@ -1,6 +1,5 @@
 """
 The utility functions and classes for the speed estimation pipeline.
-Especially the logic to calculate the scaling factor is defined in this module.
 """
 from dataclasses import dataclass
 from enum import Enum
@@ -52,6 +51,7 @@ class Line(NamedTuple):
     end: Point
 
 
+@dataclass
 class TrackingBox:
     """
     This class stores all the relevant information to detect a car in a frame.
@@ -94,6 +94,7 @@ class TrackingBox:
         self.frame_count = frame_count
 
 
+@dataclass
 class Car:
     """This class represents a car with all the relevant information for a speed estimation."""
 

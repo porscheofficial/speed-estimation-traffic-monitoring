@@ -92,7 +92,8 @@ def run(
         `speed_estimation/paths.py`.
 
     @param data_dir:
-        The path to the dataset directory. The default path is defined in `speed_estimation/paths.py`.
+        The path to the dataset directory. The default path is defined in
+        `speed_estimation/paths.py`.
 
     @param fps:
         The frames per second of the video that should be analyzed. If nothing is defined, the
