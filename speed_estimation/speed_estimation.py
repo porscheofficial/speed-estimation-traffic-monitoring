@@ -15,7 +15,7 @@ import cv2
 import torch
 from tqdm import tqdm
 
-from get_fps import give_me_fps
+from get_fps import get_fps
 from modules.depth_map.depth_map_utils import DepthModel
 from modules.evaluation.evaluate import plot_absolute_error
 from modules import ShakeDetection
@@ -111,7 +111,7 @@ def run(
 
     input_video = cv2.VideoCapture(path_to_video)
 
-    fps = give_me_fps(path_to_video) if fps == 0 else fps
+    fps = get_fps(path_to_video) if fps == 0 else fps
 
     sliding_window = SLIDING_WINDOW_SEC * fps
 
