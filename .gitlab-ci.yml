@@ -17,6 +17,7 @@ before_script:
 stages:
     - formatting
     - linting
+    - codequality
 
 formatting:
     stage: formatting
@@ -37,3 +38,14 @@ linting:
     reports:
       codequality: report/codeclimate.json
     when: always
+
+codequality:
+  stage: codequality
+  script:
+    - pip install mypy mypy-gitlab-code-quality
+    - mypy --exclude="((?:logs|datasets|output|frames_detected|model_weights|venv|yolov[0-9]))" /builds/porsche-digital/industry-solutions/research/farsec/speed_estimation
+  artifacts:
+    when: always
+    reports:
+      codequality: report/codequality.json
+  allow_failure: true
