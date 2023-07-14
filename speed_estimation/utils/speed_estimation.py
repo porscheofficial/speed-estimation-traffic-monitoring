@@ -11,10 +11,6 @@ import cv2
 import numpy as np
 
 
-def clamp(n, smallest, largest):
-    return max(smallest, min(n, largest))
-
-
 class Direction(Enum):
     """This enum holds the driving directions that can be detected.
 
@@ -51,7 +47,6 @@ class Line(NamedTuple):
     end: Point
 
 
-@dataclass
 class TrackingBox:
     """
     This class stores all the relevant information to detect a car in a frame.
@@ -94,7 +89,6 @@ class TrackingBox:
         self.frame_count = frame_count
 
 
-@dataclass
 class Car:
     """This class represents a car with all the relevant information for a speed estimation."""
 

@@ -2,7 +2,14 @@ import numpy as np
 
 
 class ShakeDetection:
+    """This class detects whether the camera perspective changed or not."""
+
     def __init__(self, threshold: float = 0.4) -> None:
+        """Create a new instance of ShakeDetection.
+
+        @param threshold:
+            The percentage of pixel that are allowed to change from one one frame to another.
+        """
         self.last_frame = None
         self.last_frames_zero_percentage = list[float]
         self.threshold = threshold
@@ -39,11 +46,14 @@ class ShakeDetection:
             self.last_frames_zero_percentage = []
             return True
 
-        self.updateChanges()
+        self.update_changes()
 
         return False
 
-    def updateChanges(self):
+    def update_changes(self) -> None:
+        """Update the last frame to detect perspective changes in new frame."""
+
         length_f = len(self.last_frames_zero_percentage)
         last100 = length_f - 102
+
         del self.last_frames_zero_percentage[last100:]

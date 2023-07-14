@@ -13,7 +13,7 @@ import pandas as pd
 import plotly.express as px
 
 
-def load_log(log_path: str):
+def __load_log(log_path: str):
     cars_path = None
     max_depth = 0
     avg_speeds = []
@@ -36,14 +36,14 @@ def load_log(log_path: str):
     return (f"{video_id}_depth_{max_depth}", estimation, cars_path)
 
 
-def avg_speed_for_time_ground_truth(cars_truth, timeStart, timeEnd):
+def __avg_speed_for_time_ground_truth(cars_truth, timeStart, timeEnd):
     cars_to_avg = cars_truth.loc[
         cars_truth["start"].gt(timeStart) & cars_truth["end"].le(timeEnd)
     ]
     return cars_to_avg["speed"].mean()
 
 
-def avg_speed_for_time_estimation(estimation, timeStart, timeEnd):
+def __avg_speed_for_time_estimation(estimation, timeStart, timeEnd):
     timeStart *= 50
     timeEnd *= 50
     estimation_avg = estimation.loc[
@@ -52,17 +52,17 @@ def avg_speed_for_time_estimation(estimation, timeStart, timeEnd):
     return estimation_avg["avgSpeedTowards"].mean()
 
 
-def generate_aligned_estimations(run_ids, loaded_avg_speeds, ground_truth):
+def __generate_aligned_estimations(run_ids, loaded_avg_speeds, ground_truth):
     truth = []
     estimations = {k: [] for k in run_ids}
     timestamps = []
 
     for start in range(300, 30 * 60, 60):
         end = start + 60
-        truth.append(avg_speed_for_time_ground_truth(ground_truth, start, end))
+        truth.append(__avg_speed_for_time_ground_truth(ground_truth, start, end))
         for idx, id in enumerate(run_ids):
             estimations[id].append(
-                avg_speed_for_time_estimation(loaded_avg_speeds[idx], start, end)
+                __avg_speed_for_time_estimation(loaded_avg_speeds[idx], start, end)
             )
         timestamps.append(end)
 
@@ -83,7 +83,7 @@ def plot_absolute_error(logs: list[str], save_file_path: str = "") -> None:
     @param save_file_path:
         Path to the directory where the plot should be saved.
     """
-    run_ids, loaded_avg_speeds, cars_paths = zip(*list(map(load_log, logs)))
+    run_ids, loaded_avg_speeds, cars_paths = zip(*list(map(__load_log, logs)))
 
     # Check that all logs are from the same video
     cars_path = cars_paths[0]
@@ -92,7 +92,7 @@ def plot_absolute_error(logs: list[str], save_file_path: str = "") -> None:
             raise Exception("Can only evaluate logs of the same video in one call!")
 
     cars = pd.read_csv(cars_path + "cars.csv")
-    truth, estimations, timestamps = generate_aligned_estimations(
+    truth, estimations, timestamps = __generate_aligned_estimations(
         run_ids, loaded_avg_speeds, cars
     )
 
