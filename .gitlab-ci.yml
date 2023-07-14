@@ -16,8 +16,8 @@ before_script:
   - pip install -r /builds/porsche-digital/industry-solutions/research/farsec/requirements.txt
 
 stages:
-    #- formatting
-    #- linting
+    - formatting
+    - linting
     - codequality
 
 formatting:
