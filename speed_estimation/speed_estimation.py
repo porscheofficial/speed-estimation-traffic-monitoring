@@ -1,3 +1,25 @@
+"""
+This module defines the pipeline that takes a video or stream as input and estimates the speed of
+the vehicles in the video footage.
+Therefore, the different modules implemented in `speed_estimation/modules` are combined to derive
+the vehicles' speeds.
+
+The  main steps are:
+1. Initialize the logging that will later on capture the speed estimates
+
+2. Initialize the object detection that detects the vehicles. Per default a YoloV4 model.
+
+3. Analyze if the video perspective changed. If yes pause the speed estimation and recalibrate
+(future work)
+
+4. Detect the vehicles and assign unique ids to each recognized bounding box. The ids are used for
+tracking the vehicles and distinguish them.
+
+5. As long as the pipeline is not calibrated, do a scaling factor estimation.
+
+6. As soon as the calibration is done, do the speed estimation based on the scaling factor and the
+detected bounding boxes for the vehicles.
+"""
 import configparser
 import json
 import logging
@@ -48,6 +70,9 @@ SPEED_LIMIT = config.getint("analyzer", "speed_limit")
 SLIDING_WINDOW_SEC = config.getint("main", "sliding_window_sec")
 FPS = config.getint("main", "fps")
 CUSTOM_OBJECT_DETECTION = config.getboolean("main", "custom_object_detection")
+OBJECT_DETECTION_MIN_CONFIDENCE_SCORE = config.getfloat(
+    "main", "object_detection_min_confidence_score"
+)
 
 
 def run(
@@ -173,12 +198,13 @@ def run(
             if len(boxes) == 0:
                 continue
         else:
-            # TODO: look into scores
             (class_ids, scores, boxes) = object_detection.detect(frame)
+
             boxes = [
                 boxes[i]
                 for i, class_id in enumerate(class_ids)
                 if class_id == CAR_CLASS_ID
+                and scores[i] >= OBJECT_DETECTION_MIN_CONFIDENCE_SCORE
             ]
 
         # collect tracking boxes
@@ -408,6 +434,9 @@ def run(
 
 
 def main():
+    """
+    The main function to start the speed estimation pipeline.
+    """
     max_frames = FPS * 60 * 20  # fps * sec * min
 
     session_path_local = sys.argv[1] if len(sys.argv) > 1 else SESSION_PATH
