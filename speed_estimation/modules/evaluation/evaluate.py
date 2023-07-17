@@ -22,7 +22,8 @@ def __load_log(log_path: str):
         for idx, line in enumerate(fp):
             if idx == 0:
                 result = re.search("Video: (.*)", line)
-                cars_path = result.group(1)
+                if result is not None:
+                    cars_path = result.group(1)
                 print(f"Found cars path from log: {cars_path}")
             if not line.startswith("INFO:root:{"):
                 continue
@@ -30,7 +31,7 @@ def __load_log(log_path: str):
             if "avgSpeedTowards" in line_dict:
                 avg_speeds.append(line_dict)
 
-    video_id = cars_path.strip("/").split("/")[-1]
+    video_id = cars_path.strip("/").split("/")[-1] if cars_path is not None else "-1"
     estimation = pd.DataFrame(avg_speeds)
     # estimation.rename({'avgSpeedLastMinute': f"{video_id}_depth_{max_depth}"}, inplace=True)
     return (f"{video_id}_depth_{max_depth}", estimation, cars_path)

@@ -34,11 +34,14 @@ class DepthModel:
             distances for each pixel.
         """
         if frame_id in self.memo:
+            # Depth map already predicted
             return self.memo[frame_id]
 
         if len(self.memo) > 10:
-            depth_maps = [self.memo[frame] for frame in self.memo]
-            return sum(depth_maps) / len(depth_maps)
+            # Take the mean over all depth maps
+            depth_maps: list[NDArray] = [self.memo[frame] for frame in self.memo]
+
+            return sum(depth_maps) / len(depth_maps)  # type: ignore
 
         self.memo[frame_id] = load_depth_map(
             self.data_dir, max_depth=1, frame_idx=frame_id

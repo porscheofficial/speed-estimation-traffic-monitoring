@@ -100,7 +100,7 @@ class StreamHandler:
             stdout=sp.PIPE,
         )
 
-        frame_size = meta_pipe.stdout.read().decode("utf-8").split("\n")[0].split(",")
+        frame_size = meta_pipe.stdout.read().decode("utf-8").split("\n")[0].split(",")  # type: ignore
 
         # get the actual stream through ffmpeg and return it
         stream_pipe = sp.Popen(
@@ -139,7 +139,7 @@ class StreamHandler:
         @return:
             The next frame.
         """
-        raw_image = stream.stdout.read(w * h * 3)
+        raw_image = stream.stdout.read(w * h * 3)  # type: ignore
         return numpy.frombuffer(raw_image, numpy.uint8).reshape((h, w, 3))
 
     # function to estimate fps for a stream from 1000 frames

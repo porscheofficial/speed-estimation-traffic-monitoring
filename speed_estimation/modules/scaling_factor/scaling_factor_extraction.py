@@ -66,7 +66,7 @@ class GeometricModel:
         )
 
         depth_map = self.depth_model.predict_depth(cp.frame)
-        unscaled_depth = depth_map[cp.v, cp.u]
+        unscaled_depth: float = depth_map[cp.v, cp.u]
 
         # we also mirror theta around pi and phi around 0
         theta = np.pi - theta

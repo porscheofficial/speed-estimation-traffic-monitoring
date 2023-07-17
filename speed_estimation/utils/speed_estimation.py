@@ -5,10 +5,9 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import List
 from typing import NamedTuple
-from numpy.typing import NDArray
 from typing import Optional
+from numpy.typing import NDArray
 
-import cv2
 import numpy as np
 
 
