@@ -31,10 +31,11 @@ import uuid
 from collections import defaultdict
 from datetime import datetime
 from importlib import reload
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import cv2
 import torch
+import argparse
 from tqdm import tqdm
 
 from get_fps import get_fps
@@ -49,7 +50,7 @@ from modules.scaling_factor.scaling_factor_extraction import (
     offline_scaling_factor_estimation_from_least_squares,
 )
 
-from paths import SESSION_PATH
+from paths import SESSION_PATH, VIDEO_NAME
 from utils.speed_estimation import (
     Direction,
     TrackingBox,
@@ -147,7 +148,7 @@ def run(
     tracking_objects: Dict[int, TrackingBox] = {}
     tracked_cars: Dict[int, Car] = {}
     tracked_boxes: Dict[int, List[TrackingBox]] = defaultdict(list)
-    depth_model = DepthModel(data_dir)
+    depth_model = DepthModel(data_dir, path_to_video)
     geo_model = GeometricModel(depth_model)
     is_calibrated = False
     text_color = (255, 255, 255)
@@ -434,15 +435,17 @@ def run(
     return log_name
 
 
-def main():
+def main(session_path_local: str, path_to_video: str):
     """
     The main function to start the speed estimation pipeline.
     """
     max_frames = FPS * 60 * 20  # fps * sec * min
 
-    session_path_local = sys.argv[1] if len(sys.argv) > 1 else SESSION_PATH
+    print(session_path_local)
+    print(path_to_video)
+
     log_name = run(
-        os.path.join(session_path_local, "video.mp4"),
+        path_to_video,
         session_path_local,
         FPS,
         max_frames=max_frames,
@@ -452,10 +455,25 @@ def main():
     if log_name is None:
         print("Calibration did not finish, skip evaluation.")
     else:
-        ### Evaluation
+        # Evaluation
         plot_absolute_error([log_name], "logs/")
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "session_path_local",
+        nargs="?",
+        help="Path to session (e.g., the directory where the video is stored)",
+        default=SESSION_PATH,
+    )
+    parser.add_argument(
+        "path_to_video",
+        nargs="?",
+        help="Path to video",
+        default=os.path.join(SESSION_PATH, VIDEO_NAME),
+    )
+    args = parser.parse_args()
+
     # Run pipeline
-    main()
+    main(args.session_path_local, args.path_to_video)

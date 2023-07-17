@@ -10,12 +10,16 @@ from typing import Tuple
 class DepthModel:
     """This class holds the depth map generation."""
 
-    def __init__(self, data_dir: str) -> None:
+    def __init__(self, data_dir: str, path_to_video: str) -> None:
         """Create an instance of DepthModel.
 
         @param data_dir:
             The directory where the generated depth maps should be stored and loaded from.
+
+        @param path_to_video:
+            The path to the video that should be analyzed.
         """
+        self.path_to_video = path_to_video
         self.data_dir = data_dir
         self.memo: dict[int, NDArray] = {}
 
@@ -44,7 +48,7 @@ class DepthModel:
             return sum(depth_maps) / len(depth_maps)  # type: ignore
 
         self.memo[frame_id] = load_depth_map(
-            self.data_dir, max_depth=1, frame_idx=frame_id
+            self.data_dir, self.path_to_video, max_depth=1, frame_idx=frame_id
         )
 
         # predict depth here
@@ -169,7 +173,7 @@ def extract_frame(
 
 
 def load_depth_map(
-    current_folder: str, max_depth: int = 1, frame_idx: int = 0
+    current_folder: str, path_to_video: str, max_depth: int = 1, frame_idx: int = 0
 ) -> NDArray:
     """Load the depth map
 
@@ -179,6 +183,9 @@ def load_depth_map(
     @param current_folder:
         The folder the depth map generation should work on. Usually the folder where the input
         video is stored.
+
+    @param path_to_video:
+        The path to the video that should be analyzed.
 
     @param max_depth:
         Configures the maximum depth allowed for the depth map estimation. Since the depth map is
@@ -190,11 +197,10 @@ def load_depth_map(
     @return:
         Returns the depth map of the specified frame.
     """
-    input_video = os.path.join(current_folder, "video.mp4")
 
     print("Depth map generation.")
     scaled_image_name, original_shape = extract_frame(
-        input_video, current_folder, "frame_%d_scaled.jpg", frame_idx
+        path_to_video, current_folder, "frame_%d_scaled.jpg", frame_idx
     )
     print(f"Extracted scaled frame to {scaled_image_name}")
     return resize_output(

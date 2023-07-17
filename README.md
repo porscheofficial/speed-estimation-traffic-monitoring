@@ -40,8 +40,9 @@ it up yourself ;)
 ### Local Setup
 
 0. (Have python virtual environments set up, e.g. through `conda`)
-1. Install requirements from `environment.yml`
-2. Install [ffmpeg](https://ffmpeg.org/) for your machine.
+1. Install requirements from `environment.yml` or if you are using macOS from `environment_mac.yml`
+2. `conda activate farsec`
+3. Install [ffmpeg](https://ffmpeg.org/) for your machine.
 
 ```sh
 # Mac
@@ -49,11 +50,12 @@ it up yourself ;)
 # Ubuntu / Debian
 > sudo apt install ffmpeg
 ```
-
-3. Download the weights for the depth map from
+4. Download the weights for the depth map from
    here: https://drive.google.com/file/d/1s7AdfwrV_6-svzfntBJih011u2IGkjf4/view?usp=share_link
-4. Place the weights in that folder: `speed_estimation/modules/depth_map/pixelformer/pretrained`
-5. Go to `speed_estimation/speed_estimation.py` and run it
+5. Place the weights in that folder: `speed_estimation/modules/depth_map/pixelformer/pretrained`
+6. Update the paths in `speed_estimation/paths.py`
+7. `cd speed_estimation`
+8. `python speed_estimation.py`
 
 ### Docker Setup
 
@@ -72,6 +74,8 @@ docker run --rm \
 Replace `$PATH_TO_REPO`, `$PATH_TO_VIDEO_ROOT_FOLDER` and `$PATH_TO_VIDEO_FILE_IN_DOCKER` with the paths on your
 machine.
 
+#### Note: This repository has a default configuration (`speed_estimation/config.ini`) that can be adjusted if necessary.
+
 ## Dataset
 
 As a test dataset to run the estimation on, we provide you with a excerpt of the BrnoCompSpeed Dataset
@@ -81,9 +85,7 @@ As a test dataset to run the estimation on, we provide you with a excerpt of the
 
 ## Run
 
-Only for object_tracking_small.py:
-The path to the video that should be analysed can be set in *speed_estimation/paths.py*
-Only for speed_estimation.py
-The path to the video should be given to `speed_estimation/speed_estimation.py` as argument
+The path to the video should be given to `speed_estimation/speed_estimation.py` as argument.
+If you do not give the path as argument adjust the `speed_estimation/paths.py` accordingly.
 
-An example run command could be `python speed_estimation/speed_estimation.py '/data/my_video.mp4'`
+An example run command could be `python speed_estimation.py /path/to/session /path/to/video.mp4`
