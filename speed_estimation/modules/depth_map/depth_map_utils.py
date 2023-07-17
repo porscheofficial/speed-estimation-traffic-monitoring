@@ -7,7 +7,6 @@ from numpy.typing import NDArray
 from typing import Tuple
 
 
-
 class DepthModel:
     """This class holds the depth map generation."""
 

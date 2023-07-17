@@ -74,7 +74,7 @@ def generate_depth_map(data_folder: str, file_name: str, *, max_depth_o: int):
         device = "cuda:0"
         torch.cuda.set_device(device)
 
-    max_depth = args['max_depth'] if max_depth_o is None else max_depth_o
+    max_depth = args["max_depth"] if max_depth_o is None else max_depth_o
     output_path = os.path.join(data_folder, f"depth_map_{max_depth}.npy")
     dataloader = NewDataLoader(
         args,
