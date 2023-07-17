@@ -23,7 +23,7 @@ stages:
 formatting:
     stage: formatting
     script:
-      - black . --exclude="((?:logs|datasets|output|frames_detected|model_weights|venv|yolov[0-9]))" --check --verbose --diff --color
+      - black . --exclude="((?:logs|datasets|output|pixelformer|frames_detected|model_weights|venv|yolov[0-9]))" --check --verbose --diff --color
 
 linting:
   stage: linting
@@ -31,7 +31,7 @@ linting:
   script:
     - cd ..
     - pwd
-    - pylint --exit-zero --output-format=text --ignore-patterns="((?:logs|datasets|output|frames_detected|model_weights|venv|yolov[0-9]))" /builds/porsche-digital/industry-solutions/research/farsec | tee /builds/porsche-digital/industry-solutions/research/farsec/report/pylint.txt
+    - pylint --exit-zero --output-format=text --ignore-patterns="((?:logs|datasets|output|pixelformer|frames_detected|model_weights|venv|yolov[0-9]))" /builds/porsche-digital/industry-solutions/research/farsec | tee /builds/porsche-digital/industry-solutions/research/farsec/report/pylint.txt
   artifacts:
     paths:
       - report
@@ -43,5 +43,5 @@ codequality:
   stage: codequality
   script:
     - pip install mypy mypy-gitlab-code-quality
-    - mypy --exclude="((?:logs|datasets|output|frames_detected|model_weights|venv|yolov[0-9]))" --ignore-missing-imports  /builds/porsche-digital/industry-solutions/research/farsec/speed_estimation
+    - mypy --exclude="((?:logs|datasets|output|pixelformer|frames_detected|model_weights|venv|yolov[0-9]))" --ignore-missing-imports  /builds/porsche-digital/industry-solutions/research/farsec/speed_estimation
   allow_failure: true
