@@ -74,7 +74,7 @@ def generate_depth_map(data_folder: str, file_name: str, *, max_depth_o: int):
         device = "cuda:0"
         torch.cuda.set_device(device)
 
-    max_depth = args.max_depth if max_depth_o is None else max_depth_o
+    max_depth = args['max_depth'] if max_depth_o is None else max_depth_o
     output_path = os.path.join(data_folder, f"depth_map_{max_depth}.npy")
     dataloader = NewDataLoader(
         args,
@@ -84,8 +84,8 @@ def generate_depth_map(data_folder: str, file_name: str, *, max_depth_o: int):
         do_kb_crop=do_kb_crop,
     )
 
-    model = PixelFormer(version="large07", inv_depth=False, max_depth=max_depth)
-    model = torch.nn.DataParallel(model, device_ids=[0])
+    pixel_former = PixelFormer(version="large07", inv_depth=False, max_depth=max_depth)
+    model = torch.nn.DataParallel(pixel_former, device_ids=[0])
 
     if use_cpu:
         checkpoint = torch.load(checkpoint_path, map_location=torch.device("cpu"))
@@ -104,10 +104,9 @@ def generate_depth_map(data_folder: str, file_name: str, *, max_depth_o: int):
     def normalize_between_zero_one(data):
         return (data - np.min(data)) / (np.max(data) - np.min(data))
 
-    pred_depths = []
     start_time = time.time()
     with torch.no_grad():
-        for idx, sample in enumerate(tqdm(dataloader.data)):
+        for _, sample in enumerate(tqdm(dataloader.data)):
             if use_cpu:
                 image = Variable(sample["image"])
             else:
@@ -131,19 +130,7 @@ def generate_depth_map(data_folder: str, file_name: str, *, max_depth_o: int):
                 ] = pred_depth
                 pred_depth = pred_depth_uncropped
 
-            # max_depth = 100
             depth_map = normalize_between_zero_one(pred_depth) * max_depth
-            # x: 1040 y: 370
-            # x: 740 y:0
-            # our_meters[214][375] - our_meters[20][528] session1_center
-            # our_meters[230][426] - our_meters[75][720] session4_right
-            # our_meters[213][751] - our_meters[132][511] session6_left
-
-            # 1188, 266
-            # 1113, 215
-
-            # 494, 70
-            # 494, 16
 
             return depth_map
 

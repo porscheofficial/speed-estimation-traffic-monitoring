@@ -4,6 +4,8 @@ import cv2
 import imutils
 from .pixelformer import generate_depth_map
 from numpy.typing import NDArray
+from typing import Tuple
+
 
 
 class DepthModel:
@@ -16,7 +18,7 @@ class DepthModel:
             The directory where the generated depth maps should be stored and loaded from.
         """
         self.data_dir = data_dir
-        self.memo = {}
+        self.memo: dict[int, NDArray] = {}
 
     def predict_depth(self, frame_id: int) -> NDArray:
         """Predict the depth map for the defined frame.
@@ -47,7 +49,7 @@ class DepthModel:
         return self.memo[frame_id]
 
 
-def get_padding_right(shape: tuple[int, int, int], height: int = 352) -> int:
+def get_padding_right(shape: Tuple[int, int, int], height: int = 352) -> int:
     """Get the right padding.
 
     This function returns the required right padding in pixels that need to be added to the frame.
