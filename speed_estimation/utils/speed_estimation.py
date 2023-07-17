@@ -12,7 +12,6 @@ import cv2
 import numpy as np
 
 
-
 class Direction(Enum):
     """This enum holds the driving directions that can be detected.
 
@@ -56,14 +55,14 @@ class TrackingBox:
     """
 
     def __init__(
-            self,
-            center_x: int,
-            center_y: int,
-            x_coord: int,
-            y_coord: int,
-            width: int,
-            height: int,
-            frame_count: int,
+        self,
+        center_x: int,
+        center_y: int,
+        x_coord: int,
+        y_coord: int,
+        width: int,
+        height: int,
+        frame_count: int,
     ) -> None:
         """Init method for a TrackingBox
 
@@ -95,12 +94,12 @@ class Car:
     """This class represents a car with all the relevant information for a speed estimation."""
 
     def __init__(
-            self,
-            tracked_boxes: List[TrackingBox],
-            frames_seen: int,
-            frame_start: int,
-            frame_end: int,
-            direction: Direction = Direction.UNDEFINED,
+        self,
+        tracked_boxes: List[TrackingBox],
+        frames_seen: int,
+        frame_start: int,
+        frame_end: int,
+        direction: Direction = Direction.UNDEFINED,
     ) -> None:
         """The init method for a car.
 
