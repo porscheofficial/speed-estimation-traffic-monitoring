@@ -54,8 +54,6 @@ it up yourself ;)
    here: https://drive.google.com/file/d/1s7AdfwrV_6-svzfntBJih011u2IGkjf4/view?usp=share_link
 5. Place the weights in that folder: `speed_estimation/modules/depth_map/pixelformer/pretrained`
 6. Update the paths in `speed_estimation/paths.py`
-7. `cd speed_estimation`
-8. `python speed_estimation.py`
 
 ### Docker Setup
 
@@ -68,10 +66,10 @@ it up yourself ;)
 docker run --rm \
         --gpus '"device=0"' -v $PATH_TO_REPO:/storage -v $PATH_TO_VIDEO_ROOT_FOLDER:/scratch2 \
         -t cv-cuda python3 /storage/speed_estimation/speed_estimation.py \
-        "$PATH_TO_VIDEO_FILE_IN_DOCKER"
+        "$PATH_TO_SESSION_DIRECTORY" "$PATH_TO_VIDEO_FILE_IN_DOCKER"
 ```
 
-Replace `$PATH_TO_REPO`, `$PATH_TO_VIDEO_ROOT_FOLDER` and `$PATH_TO_VIDEO_FILE_IN_DOCKER` with the paths on your
+Replace `$PATH_TO_REPO`, `$PATH_TO_VIDEO_ROOT_FOLDER, "$PATH_TO_SESSION_DIRECTORY"` and `$PATH_TO_VIDEO_FILE_IN_DOCKER` with the paths on your
 machine.
 
 #### Note: This repository has a default configuration (`speed_estimation/config.ini`) that can be adjusted if necessary.
@@ -88,4 +86,5 @@ As a test dataset to run the estimation on, we provide you with a excerpt of the
 The path to the video should be given to `speed_estimation/speed_estimation.py` as argument.
 If you do not give the path as argument adjust the `speed_estimation/paths.py` accordingly.
 
-An example run command could be `python speed_estimation.py /path/to/session /path/to/video.mp4`
+1. `cd speed_estimation`
+2. `python speed_estimation.py /path/to/session /path/to/video.mp4` or `python speed_estimation.py` (this will use the default paths configured)
