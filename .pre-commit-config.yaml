@@ -25,3 +25,7 @@ repos:
               "--output-format=text",
               "--ignore-patterns=\"((?:logs|datasets|output|frames_detected|model_weights|venv|yolov[0-9]))\""
           ]
+
+  - repo: https://github.com/PyCQA/pydocstyle
+    hooks:
+      - id: pydocstyle

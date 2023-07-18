@@ -38,7 +38,7 @@ import torch
 from tqdm import tqdm
 
 from get_fps import get_fps
-from modules import ObjectDetectionYoloV4, ObjectDetectionCustom
+from modules import ObjectDetectionYoloV4
 from modules import ShakeDetection
 from modules.depth_map.depth_map_utils import DepthModel
 from modules.evaluation.evaluate import plot_absolute_error
@@ -129,8 +129,8 @@ def run(
 
     # Initialize Object Detection
     if custom_object_detection:
-        weights = "speed_estimation/model_weights/custom_object_detection/best.pt"
-        object_detection = ObjectDetectionCustom(weights=weights)
+        # Insert your custom object detection here
+        object_detection = ObjectDetectionYoloV4()
     else:
         object_detection = ObjectDetectionYoloV4()
 
@@ -154,9 +154,6 @@ def run(
     # for shake_detection
     shake_detection = ShakeDetection()
 
-    if custom_object_detection:
-        fgbg = cv2.bgsegm.createBackgroundSubtractorMOG()
-
     progress_bar = tqdm(total=NUM_TRACKED_CARS)
     progress_bar.set_description("Calibrating")
 
@@ -175,12 +172,6 @@ def run(
         if not ret:
             break
 
-        if custom_object_detection:
-            frame = fgbg.apply(frame)
-            frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2RGB)
-            path_to_frame = f"speed_estimation/frames_detected/frame_{run_id}.jpg"
-            cv2.imwrite(path_to_frame, frame)
-
         # for shake_detection
         if shake_detection.is_hard_move(frame):
             logging.info(
@@ -194,9 +185,8 @@ def run(
         # Detect cars on frame
         ############################
         if custom_object_detection:
-            boxes = object_detection.detect(path_to_frame)
-            if len(boxes) == 0:
-                continue
+            # Detect cars with your custom object detection
+            boxes = []
         else:
             (class_ids, scores, boxes) = object_detection.detect(frame)
 
