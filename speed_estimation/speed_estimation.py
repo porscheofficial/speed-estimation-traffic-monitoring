@@ -20,36 +20,34 @@ tracking the vehicles and distinguish them.
 6. As soon as the calibration is done, do the speed estimation based on the scaling factor and the
 detected bounding boxes for the vehicles.
 """
+import argparse
 import configparser
 import json
 import logging
 import math
 import os
-import sys
 import time
 import uuid
 from collections import defaultdict
 from datetime import datetime
 from importlib import reload
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 import cv2
 import torch
-import argparse
 from tqdm import tqdm
 
 from get_fps import get_fps
+from modules import ObjectDetectionYoloV4, ObjectDetectionCustom
+from modules import ShakeDetection
 from modules.depth_map.depth_map_utils import DepthModel
 from modules.evaluation.evaluate import plot_absolute_error
-from modules import ShakeDetection
-from modules import ObjectDetectionYoloV4, ObjectDetectionCustom
 from modules.scaling_factor.scaling_factor_extraction import (
     GeometricModel,
     CameraPoint,
     get_ground_truth_events,
     offline_scaling_factor_estimation_from_least_squares,
 )
-
 from paths import SESSION_PATH, VIDEO_NAME
 from utils.speed_estimation import (
     Direction,
