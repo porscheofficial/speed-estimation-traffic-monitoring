@@ -14,7 +14,7 @@ before_script:
   - pip install mypy
   - pip install black
   - pip install safety
-  - pip imstall pydocstyle
+  - pip install pydocstyle
   # - pip install -r /builds/porsche-digital/industry-solutions/research/farsec/requirements.txt
 
 stages:
