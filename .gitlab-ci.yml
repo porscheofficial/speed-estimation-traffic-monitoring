@@ -13,12 +13,14 @@ before_script:
   - pip install pylint-gitlab
   - pip install mypy
   - pip install black
+  - pip install safety
   # - pip install -r /builds/porsche-digital/industry-solutions/research/farsec/requirements.txt
 
 stages:
     - formatting
     - linting
     - codequality
+    - safety
 
 formatting:
     stage: formatting
@@ -45,3 +47,8 @@ codequality:
     - pip install mypy mypy-gitlab-code-quality
     - mypy --exclude="((?:logs|datasets|output|pixelformer|frames_detected|model_weights|venv|yolov[0-9]))" --ignore-missing-imports  /builds/porsche-digital/industry-solutions/research/farsec/speed_estimation
   allow_failure: true
+
+safety:
+  stage: safety
+  script:
+    - safety check
