@@ -20,6 +20,7 @@ stages:
     - formatting
     - linting
     - codequality
+    - docstyle
     - safety
 
 formatting:
@@ -47,6 +48,11 @@ codequality:
     - pip install mypy mypy-gitlab-code-quality
     - mypy --exclude="((?:logs|datasets|output|pixelformer|frames_detected|model_weights|venv|yolov[0-9]))" --ignore-missing-imports  /builds/porsche-digital/industry-solutions/research/farsec/speed_estimation
   allow_failure: true
+
+docstyle:
+  stage: docstyle
+  script:
+    - pydocstyle --ignore-self-only-init --match-dir='^(?:(?!logs|datasets|output|pixelformer|frames_detected|model_weights|venv|yolov[0-9]).)*$' .
 
 safety:
   stage: safety
