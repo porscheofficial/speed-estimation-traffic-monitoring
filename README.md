@@ -40,7 +40,8 @@ it up yourself ;)
 ### Local Setup
 
 0. (Have python virtual environments set up, e.g. through `conda`)
-1. Install requirements from `environment.yml` or if you are using macOS from `environment_mac.yml`
+1. Install requirements from `environment.yml` or if you are using macOS from `environment_mac.yml`:\
+`conda env create -f environment.yml`
 2. `conda activate farsec`
 3. Install [ffmpeg](https://ffmpeg.org/) for your machine.
 
