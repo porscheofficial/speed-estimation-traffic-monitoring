@@ -1,10 +1,11 @@
 import os
+from typing import Tuple
 
 import cv2
 import imutils
-from .pixelformer import generate_depth_map
 from numpy.typing import NDArray
-from typing import Tuple
+
+from .pixelformer import generate_depth_map
 
 
 class DepthModel:
@@ -113,7 +114,7 @@ def resize_input(frame: NDArray) -> NDArray:
 
 
 def resize_output(prediction: NDArray, shape: tuple[int, int, int]) -> NDArray:
-    """Remove the right padding
+    """Remove the right padding.
 
     This function removes the right padding that was needed to generate the depth map.
 
@@ -138,7 +139,7 @@ def resize_output(prediction: NDArray, shape: tuple[int, int, int]) -> NDArray:
 def extract_frame(
     video_path: str, output_folder: str, output_file: str, frame_idx: int = 0
 ) -> tuple[str, tuple[int, int, int]]:
-    """Extracts a specific frame from the video.
+    """Extract a specific frame from the video.
 
     This function extracts a frame and its size from the video by using the frame count.
 
@@ -175,7 +176,7 @@ def extract_frame(
 def load_depth_map(
     current_folder: str, path_to_video: str, max_depth: int = 1, frame_idx: int = 0
 ) -> NDArray:
-    """Load the depth map
+    """Load the depth map.
 
     This function loads the depth map for one specific frame. The output size of the depth map is
     the same as the one of the original frame
@@ -197,7 +198,6 @@ def load_depth_map(
     @return:
         Returns the depth map of the specified frame.
     """
-
     print("Depth map generation.")
     scaled_image_name, original_shape = extract_frame(
         path_to_video, current_folder, "frame_%d_scaled.jpg", frame_idx

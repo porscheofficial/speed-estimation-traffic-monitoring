@@ -1,6 +1,4 @@
-"""
-The utility functions and classes for the speed estimation pipeline.
-"""
+"""The utility functions and classes for the speed estimation pipeline."""
 from dataclasses import dataclass
 from enum import Enum
 from typing import List
@@ -36,19 +34,19 @@ class Point:
         @return:
             The x and y coordinates of the point are returned.
         """
-
         return np.array([self.x_coord, self.y_coord])
 
 
 class Line(NamedTuple):
-    """This class defines a line with a start point (see Point) and an end point (see Point)"""
+    """This class defines a line with a start point (see Point) and an end point (see Point)."""
 
     start: Point
     end: Point
 
 
 class TrackingBox:
-    """
+    """A TrackingBox is used to detect a car in a frame.
+
     This class stores all the relevant information to detect a car in a frame.
     A TrackingBox is always a rectangle.
     """
@@ -63,7 +61,7 @@ class TrackingBox:
         height: int,
         frame_count: int,
     ) -> None:
-        """Init method for a TrackingBox
+        """Create an instance of TrackingBox.
 
         @param center_x:
             The x coordinate of the center point of the TrackingBox.
@@ -100,7 +98,7 @@ class Car:
         frame_end: int,
         direction: Direction = Direction.UNDEFINED,
     ) -> None:
-        """The init method for a car.
+        """Create an instance of Car.
 
         @param tracked_boxes:
             The tracking boxes that belong to the car.
@@ -121,7 +119,7 @@ class Car:
 
 
 def get_intersection(line_a: Line, line_b: Line) -> Optional[Point]:
-    """Find the intersection of two lines
+    """Find the intersection of two lines.
 
     @param line_a:
         First line.

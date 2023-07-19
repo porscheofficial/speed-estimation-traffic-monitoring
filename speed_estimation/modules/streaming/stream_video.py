@@ -1,4 +1,5 @@
-"""
+"""Video Streaming Module.
+
 This module helps you to stream video footage and directly analyze it with the speed estimation
 pipeline.
 The main function that should be called therefore is get_video_stream_from_url. Since the pipline
@@ -11,15 +12,11 @@ import time
 
 import cv2
 import numpy
-
 from numpy.typing import NDArray
 
 
 class StreamHandler:
-    """
-    This class can be used when the speed estimation should be applied to a video stream instead of
-    a video.
-    """
+    """This class is used when the speed estimation is applied to a video stream."""
 
     def __init__(self, url: str) -> None:
         """Create an instance of the StreamHandler.
@@ -33,7 +30,7 @@ class StreamHandler:
         self.FFPROBE_BIN = "ffprobe"
 
     def run(self, visually: bool = False) -> NDArray:
-        """Get the next frame in the stream
+        """Get the next frame in the stream.
 
         @param visually:
             For demo purpose set this to True. It will prompt a window with the stream. Press q to
@@ -81,7 +78,6 @@ class StreamHandler:
             The method returns a Popen object holding the stream, and the expected width and height
             of the frames extracted from the stream.
         """
-
         # get the dimensions of the stream for reading the real stream later
         meta_pipe = sp.Popen(
             [

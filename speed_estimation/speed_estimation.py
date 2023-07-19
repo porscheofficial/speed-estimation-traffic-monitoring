@@ -1,4 +1,5 @@
-"""
+"""Speed Estimation Pipeline.
+
 This module defines the pipeline that takes a video or stream as input and estimates the speed of
 the vehicles in the video footage.
 Therefore, the different modules implemented in `speed_estimation/modules` are combined to derive
@@ -165,9 +166,9 @@ def run(
 
         if frame_count == 0:
             # set normalization axes once at beginning
-            c_u = int(frame.shape[1] / 2)
-            c_v = int(frame.shape[0] / 2)
-            geo_model.set_normalization_axes(c_u, c_v)
+            center_x = int(frame.shape[1] / 2)
+            center_y = int(frame.shape[0] / 2)
+            geo_model.set_normalization_axes(center_x, center_y)
 
         if not ret:
             break
@@ -424,9 +425,7 @@ def run(
 
 
 def main(session_path_local: str, path_to_video: str):
-    """
-    The main function to start the speed estimation pipeline.
-    """
+    """Run the speed estimation pipeline."""
     max_frames = FPS * 60 * 20  # fps * sec * min
 
     print(session_path_local)

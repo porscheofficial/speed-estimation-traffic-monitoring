@@ -1,4 +1,5 @@
-"""
+"""FPS Module.
+
 This module holds functions to derive the frames per second (fps) from the video or stream that
 should be analyzed.
 This module will only be used if the FPS are not defined in speed_estimation/config.ini

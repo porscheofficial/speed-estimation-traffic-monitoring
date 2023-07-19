@@ -1,4 +1,5 @@
-"""
+"""Configurations for the paths and directories.
+
 All paths that are needed for the speed estimation are defined in this file.
 The paths are all relative to `speed_estimation/`.
 """

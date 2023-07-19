@@ -12,26 +12,77 @@ from utils.speed_estimation import Line, Point, TrackingBox, get_intersection
 
 @dataclass
 class CameraPoint:
+    """A Camera Point in the frame.
+
+    A camera point is always two-dimensional, in a given frame and uses pixels as unit.
+
+    @param frame
+        The count of the frame the point belongs to.
+    @param x_coord
+        The x coordinate of the point in pixels.
+    @param y_coord
+        The y coordinate of the point in pixels.
+    """
+
     frame: int
-    u: int
-    v: int
+    x_coord: int
+    y_coord: int
 
     def coords(self) -> NDArray:
-        return np.array([self.u, self.v])
+        """Get coordinates of the CameraPoint.
+
+        @return:
+            Returns the x and y coordinate of the point.
+        """
+        return np.array([self.x_coord, self.y_coord])
 
 
 @dataclass
 class WorldPoint:
+    """A three-dimensional world point.
+
+    A world point is always three-dimensional and the projection of a CameraPoint into the real
+    world.
+
+    @param frame
+        The count of the frame the point belongs to.
+    @param x_coord
+        The x coordinate of the point in pixels.
+    @param y_coord
+        The y coordinate of the point in pixels.
+    @param z_coord
+        The z coordinate of the point in pixels.
+    """
+
     frame: int
-    x: float
-    y: float
-    z: float
+    x_coord: float
+    y_coord: float
+    z_coord: float
 
     def coords(self) -> NDArray:
-        return np.array([self.x, self.y, self.z])
+        """Get coordinates of WorldPoint.
+
+        @return:
+            Returns the x, y and z coordinate of the point.
+        """
+        return np.array([self.x_coord, self.y_coord, self.z_coord])
 
 
 class GroundTruthEvent(NamedTuple):
+    """A car tracked during the calibration phase.
+
+    GroundTruth events are created from cars that have been tracked during the calibration phase.
+    Cars and their tracking boxes are used as reference and calibration ground truth.
+
+    @param coords1
+        The first tuple holding the frame count, x coordinate and y coordinate
+    @param coords2
+        The second tuple holding the frame count, x coordinate and y coordinate
+    @param distance
+        The distance that lies between coord1 and coord2. Per default hard coded to 6m as this is
+        a reasonable value for the ground truth length of a car.
+    """
+
     coords1: tuple
     coords2: tuple
     distance: float
@@ -39,76 +90,140 @@ class GroundTruthEvent(NamedTuple):
 
 @dataclass
 class GeometricModel:
+    """Geometric model that is used to retrieve the distance between two points.
+
+    This model hold the most important information to get the distance between two CameraPoints in
+    meters.
+
+    @param depth_model
+        The depth model that has to be applied to predict the depth of the whole frame.
+    @param focal_length
+        Focal length of the camera recording the video/stream.
+    @param scaling_x
+        Scaling factor in x direction to translate pixels into meters.
+    @param scaling _y
+        Scaling factor in y direction to translate pixels into meters.
+    @param center_x
+        The center point in x direction.
+    @param center_y
+        The center point in y direction.
+    """
+
     def __init__(self, depth_model) -> None:
+        """Create a instance of GeometricModel
+
+        @param depth_model:
+            The depth model that has to be applied to predict the depth of the whole frame.
+        """
         self.depth_model = depth_model
-        self.f: float = 105.0  # focal length of camera recording the video/stream
-        self.s_u: int = 1  # translating pixels into meters in u direction
-        self.s_v: int = 1  # translating pixels into meters in v direction
-        self.c_u: int = (
-            1  # this would usually be chosen at half the frame resolution width
-        )
-        self.c_v: int = (
-            1  # this would usually be chosen at half the frame resolution height
-        )
+        self.focal_length: float = 105.0
+        self.scaling_x: int = 1
+        self.scaling_y: int = 1
+        self.center_x: int = 1
+        self.center_y: int = 1
         self.scale_factor: float = 1
 
-    def set_normalization_axes(self, c_u, c_v):
-        self.c_u = c_u
-        self.c_v = c_v
+    def set_normalization_axes(self, center_x: int, center_y: int) -> None:
+        """Set the normalization axis.
 
-    def get_unscaled_world_point(self, cp: CameraPoint) -> WorldPoint:
-        normalised_u = self.s_u * (cp.u - self.c_u)
-        normalised_v = self.s_v * (cp.v - self.c_v)
+        @param center_x:
+            The x coordinate of the center point.
+        @param center_y:
+            The y coordinate of the center point.
+        """
+        self.center_x = center_x
+        self.center_y = center_y
+
+    def get_unscaled_distance_from_camera_points(
+        self, cp1: CameraPoint, cp2: CameraPoint
+    ) -> float:
+        """Get the unscaled distance between two two-dimensional CameraPoints.
+
+        @param cp1:
+            First CameraPoint.
+        @param cp2:
+            Second CameraPoint.
+        @return:
+            Returns the unscaled distance between those CameraPoints.
+        """
+        unscaled_wp1 = self.__get_unscaled_world_point(cp1)
+        unscaled_wp2 = self.__get_unscaled_world_point(cp2)
+
+        return self.__calculate_distance_between_world_points(
+            unscaled_wp1, unscaled_wp2
+        )
+
+    def get_distance_from_camera_points(
+        self, cp1: CameraPoint, cp2: CameraPoint
+    ) -> float:
+        """Get the scaled distance between two two-dimensional CameraPoints in meters.
+
+        @param cp1:
+            First CameraPoint.
+        @param cp2:
+            Second CameraPoint.
+        @return:
+            Returns the scaled distance between those CameraPoints in meters.
+        """
+        return self.scale_factor * self.__get_unscaled_distance_from_camera_points(
+            cp1, cp2
+        )
+
+    def __get_unscaled_world_point(self, cp: CameraPoint) -> WorldPoint:
+        normalised_u = self.scaling_x * (cp.x_coord - self.center_x)
+        normalised_v = self.scaling_y * (cp.y_coord - self.center_y)
 
         # we relabel the axis here to deal with different reference conventions
-        _, theta, phi = self._cartesian_to_spherical(
-            x=self.f, y=normalised_u, z=normalised_v
+        _, theta, phi = self.__cartesian_to_spherical(
+            x=self.focal_length, y=normalised_u, z=normalised_v
         )
 
         depth_map = self.depth_model.predict_depth(cp.frame)
-        unscaled_depth: float = depth_map[cp.v, cp.u]
+        unscaled_depth: float = depth_map[cp.y_coord, cp.x_coord]
 
         # we also mirror theta around pi and phi around 0
         theta = np.pi - theta
         phi = -phi
 
-        x, y, z = self._spherical_to_cartesian(r=unscaled_depth, theta=theta, phi=phi)
+        x, y, z = self.__spherical_to_cartesian(r=unscaled_depth, theta=theta, phi=phi)
 
         # relabeling again for the world reference system
-        return WorldPoint(frame=cp.frame, x=y, y=z, z=x)
+        return WorldPoint(frame=cp.frame, x_coord=y, y_coord=z, z_coord=x)
 
-    def get_world_point(self, cp: CameraPoint) -> WorldPoint:
-        unscaled_world_point = self.get_unscaled_world_point(cp)
-        unscaled_world_point.x *= self.scale_factor
-        unscaled_world_point.y *= self.scale_factor
-        unscaled_world_point.z *= self.scale_factor
+    def __get_world_point(self, cp: CameraPoint) -> WorldPoint:
+        unscaled_world_point = self.__get_unscaled_world_point(cp)
+        unscaled_world_point.x_coord *= self.scale_factor
+        unscaled_world_point.y_coord *= self.scale_factor
+        unscaled_world_point.z_coord *= self.scale_factor
 
         return unscaled_world_point
 
-    def get_camera_point(self, wp: WorldPoint) -> CameraPoint:
+    def __get_camera_point(self, wp: WorldPoint) -> CameraPoint:
         x, y, z = wp.coords()
         # Note that we here relabel the coordinates to keep the two coordinate systems aligned!
-        r, theta, phi = self._cartesian_to_spherical(x=z, y=x, z=y)
+        r, theta, phi = self.__cartesian_to_spherical(x=z, y=x, z=y)
         # we also mirror theta around pi and phi around 0
         theta = np.pi - theta
         phi = -phi
-        z_inner, x_inner, y_inner = self._spherical_to_cartesian(
-            r=np.abs(self.f / (np.sin(theta) * np.cos(phi))), theta=theta, phi=phi
+        z_inner, x_inner, y_inner = self.__spherical_to_cartesian(
+            r=np.abs(self.focal_length / (np.sin(theta) * np.cos(phi))),
+            theta=theta,
+            phi=phi,
         )
 
-        assert np.isclose(z_inner, self.f)
+        assert np.isclose(z_inner, self.focal_length)
 
-        return CameraPoint(frame=wp.frame, u=x_inner, v=y_inner)
+        return CameraPoint(frame=wp.frame, x_coord=x_inner, y_coord=y_inner)
 
     @staticmethod
-    def _spherical_to_cartesian(r, theta, phi):
+    def __spherical_to_cartesian(r, theta, phi):
         x = r * np.sin(theta) * np.cos(phi)
         y = r * np.sin(theta) * np.sin(phi)
         z = r * np.cos(theta)
         return x, y, z
 
     @staticmethod
-    def _cartesian_to_spherical(x, y, z):
+    def __cartesian_to_spherical(x, y, z):
         r = norm([x, y, z])
         if r == 0:
             return 0, 0, 0
@@ -119,23 +234,18 @@ class GeometricModel:
         return r, theta, phi
 
     @staticmethod
-    def calculate_distance_between_world_points(
+    def __calculate_distance_between_world_points(
         wp1: WorldPoint, wp2: WorldPoint
     ) -> float:
         return norm(wp1.coords() - wp2.coords())
 
-    def get_unscaled_distance_from_camera_points(
+    def __get_unscaled_distance_from_camera_points(
         self, cp1: CameraPoint, cp2: CameraPoint
     ):
-        unscaled_wp1 = self.get_unscaled_world_point(cp1)
-        unscaled_wp2 = self.get_unscaled_world_point(cp2)
-        return self.calculate_distance_between_world_points(unscaled_wp1, unscaled_wp2)
-
-    def get_distance_from_camera_points(
-        self, cp1: CameraPoint, cp2: CameraPoint
-    ) -> float:
-        return self.scale_factor * self.get_unscaled_distance_from_camera_points(
-            cp1, cp2
+        unscaled_wp1 = self.__get_unscaled_world_point(cp1)
+        unscaled_wp2 = self.__get_unscaled_world_point(cp2)
+        return self.__calculate_distance_between_world_points(
+            unscaled_wp1, unscaled_wp2
         )
 
 
@@ -143,14 +253,27 @@ def offline_scaling_factor_estimation_from_least_squares(
     geometric_model: GeometricModel,
     ground_truths: list,
 ) -> float:
+    """Get the scaling factor that should be applied for the speed estimation.
+
+    By applying the least square method to multiple unscaled length predictions this method
+    extracts the scaling factor.
+
+    @param geometric_model:
+        The GeoMetric model that should be applied to find the scaling factor.
+    @param ground_truths:
+        The ground truth events that where detected in the video (cars). Each tuple in the list
+        holds two points and the distance between those points in meters.
+    @return:
+        The scaling factor that should be applied for the speed estimation.
+    """
     unscaled_predictions = []
     labels = []
 
     for coords1, coords2, distance in ground_truths:
         f1, u1, v1 = coords1
         f2, u2, v2 = coords2
-        cp1 = CameraPoint(frame=f1, u=u1, v=v1)
-        cp2 = CameraPoint(frame=f2, u=u2, v=v2)
+        cp1 = CameraPoint(frame=f1, x_coord=u1, y_coord=v1)
+        cp2 = CameraPoint(frame=f2, x_coord=u2, y_coord=v2)
         unscaled_predictions.append(
             geometric_model.get_unscaled_distance_from_camera_points(cp1, cp2)
         )
@@ -162,7 +285,7 @@ def offline_scaling_factor_estimation_from_least_squares(
     )
 
 
-def online_scaling_factor_estimation_from_least_squares(stream_of_events):
+def __online_scaling_factor_estimation_from_least_squares(stream_of_events):
     ###################
     # TODO: integrate
     ###################
@@ -185,8 +308,8 @@ def online_scaling_factor_estimation_from_least_squares(stream_of_events):
         _, u2, v2 = coords2
 
         # calculate the unscaled predicted distance
-        cp1 = CameraPoint(frame=frame, u=u1, v=v1)
-        cp2 = CameraPoint(frame=frame, u=u2, v=v2)
+        cp1 = CameraPoint(frame=frame, x_coord=u1, y_coord=v1)
+        cp2 = CameraPoint(frame=frame, x_coord=u2, y_coord=v2)
         prediction = geometric_model.get_unscaled_distance_from_camera_points(cp1, cp2)
 
         mean_predictions_two_norm = (1 - 1 / counter) * mean_predictions_two_norm + (
@@ -204,7 +327,19 @@ def online_scaling_factor_estimation_from_least_squares(stream_of_events):
         # velocities, however, even then we can still continue updating the scale factor
 
 
-def get_ground_truth_events(tracking_boxes: Dict[int, List[TrackingBox]]):
+def get_ground_truth_events(
+    tracking_boxes: Dict[int, List[TrackingBox]]
+) -> list[GroundTruthEvent]:
+    """Get ground truth events to calculate the scaling factor.
+
+    The method takes tracking boxes as input and derives two points with the corresponding distance
+    in meters.
+
+    @param tracking_boxes:
+        The TrackingBoxes of the cars that should be analyzed.
+    @return:
+        Returns a list of GroundTruth events extracted from the TrackingBoxes.
+    """
     # extract medium pixel distance traveled by object
     box_distances = []
     for object_id in tracking_boxes:
@@ -237,7 +372,7 @@ def get_ground_truth_events(tracking_boxes: Dict[int, List[TrackingBox]]):
 
         # extract ground truth value for each tracking box
         for box in tracking_boxes[object_id]:
-            # check each of the for lines, spanned by the bounding box rectangle
+            # check each of the four lines, spanned by the bounding box rectangle
             upper_line = Line(
                 Point(box.x_coord, box.y_coord),
                 Point(box.x_coord + box.width, box.y_coord),

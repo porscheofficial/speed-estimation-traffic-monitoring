@@ -1,6 +1,4 @@
-"""
-Modules that are used in the speed estimation pipeline are defined in this module.
-"""
+"""Modules that are used in the speed estimation pipeline are defined in this module."""
 
 from .depth_map.depth_map_utils import DepthModel
 from .object_detection.yolov4.object_detection import (

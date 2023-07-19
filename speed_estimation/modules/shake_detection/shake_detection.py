@@ -26,7 +26,6 @@ class ShakeDetection:
         @return:
             A bool is returned indicating if the camera perspective has changed.
         """
-
         if self.last_frame is None or new_frame is None:
             return False
 
@@ -52,7 +51,6 @@ class ShakeDetection:
 
     def update_changes(self) -> None:
         """Update the last frame to detect perspective changes in new frame."""
-
         length_f = len(self.last_frames_zero_percentage)
         last100 = length_f - 102
 
