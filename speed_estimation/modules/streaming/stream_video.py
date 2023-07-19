@@ -4,6 +4,8 @@ This module helps you to stream video footage and directly analyze it with the s
 pipeline.
 The main function that should be called therefore is get_video_stream_from_url. Since the pipline
 per default operates on videos you have to replace the loading of the video with this method.
+
+NOTE: This module is work in progress and not integrated into the speed estimation pipeline yet.
 """
 import argparse
 import math
