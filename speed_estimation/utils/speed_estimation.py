@@ -139,11 +139,15 @@ def get_intersection(line_a: Line, line_b: Line) -> Optional[Point]:
         return None
 
     point_c = Point(*line_b.start.coords() - line_a.start.coords())
-    point_t = (point_c.x_coord * point_d.y_coord - point_c.y_coord * point_d.x_coord) / b_dot_d
+    point_t = (
+        point_c.x_coord * point_d.y_coord - point_c.y_coord * point_d.x_coord
+    ) / b_dot_d
     if point_t < 0 or point_t > 1:
         return None
 
-    point_u = (point_c.x_coord * point_b.y_coord - point_c.y_coord * point_b.x_coord) / b_dot_d
+    point_u = (
+        point_c.x_coord * point_b.y_coord - point_c.y_coord * point_b.x_coord
+    ) / b_dot_d
     if point_u < 0 or point_u > 1:
         return None
 
