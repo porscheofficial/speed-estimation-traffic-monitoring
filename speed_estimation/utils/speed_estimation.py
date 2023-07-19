@@ -6,9 +6,9 @@ from enum import Enum
 from typing import List
 from typing import NamedTuple
 from typing import Optional
-from numpy.typing import NDArray
 
 import numpy as np
+from numpy.typing import NDArray
 
 
 class Direction(Enum):
@@ -130,24 +130,24 @@ def get_intersection(line_a: Line, line_b: Line) -> Optional[Point]:
     @return:
         Returns the intersection coordinates of line_a and line_b wrapped in a Point object.
     """
-    b = Point(*line_a.end.coords() - line_a.start.coords())
-    d = Point(*line_b.end.coords() - line_b.start.coords())
-    b_dot_d = b.x_coord * d.y_coord - b.y_coord * d.x_coord
+    point_b = Point(*line_a.end.coords() - line_a.start.coords())
+    point_d = Point(*line_b.end.coords() - line_b.start.coords())
+    b_dot_d = point_b.x_coord * point_d.y_coord - point_b.y_coord * point_d.x_coord
 
     if b_dot_d == 0:
         # lines are parallel, no intersection
         return None
 
-    c = Point(*line_b.start.coords() - line_a.start.coords())
-    t = (c.x_coord * d.y_coord - c.y_coord * d.x_coord) / b_dot_d
-    if t < 0 or t > 1:
+    point_c = Point(*line_b.start.coords() - line_a.start.coords())
+    point_t = (point_c.x_coord * point_d.y_coord - point_c.y_coord * point_d.x_coord) / b_dot_d
+    if point_t < 0 or point_t > 1:
         return None
 
-    u = (c.x_coord * b.y_coord - c.y_coord * b.x_coord) / b_dot_d
-    if u < 0 or u > 1:
+    point_u = (point_c.x_coord * point_b.y_coord - point_c.y_coord * point_b.x_coord) / b_dot_d
+    if point_u < 0 or point_u > 1:
         return None
 
-    return Point(*line_a.start.coords() + t * b.coords())
+    return Point(*line_a.start.coords() + point_t * point_b.coords())
 
 
 def calculate_car_direction(car: Car) -> Direction:
