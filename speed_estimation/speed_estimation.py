@@ -81,7 +81,7 @@ def run(
     fps: int = 0,
     max_frames: int = 0,
     custom_object_detection: bool = False,
-    enable_visual: bool = False
+    enable_visual: bool = False,
 ) -> str:
     """Run the full speed estimation pipeline.
 
@@ -447,7 +447,7 @@ def main(session_path_local: str, path_to_video: str, enable_visual: bool):
         FPS,
         max_frames=max_frames,
         custom_object_detection=CUSTOM_OBJECT_DETECTION,
-        enable_visual=enable_visual
+        enable_visual=enable_visual,
     )
 
     if log_name is None:
