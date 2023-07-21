@@ -15,7 +15,8 @@ can be changed.
 |  speed_limit            |  Speed limit on the road segment shown in the video (in km/h)                                                                                                              |  integer |
 
 The project is split into multiple modules, each handling a part of the total pipeline.
-![image info](images/pipeline.png) 
+
+<img src="images/pipeline.png"  width="50%" style="display: block; margin-left: auto; margin-right: auto; width: 50%;">
 
 The different modules of this project can be found inside the folder *speed_estimation/modules*
 Currently, there are:
@@ -52,11 +53,11 @@ it up yourself ;)
 > sudo apt install ffmpeg
 ```
 4. `cd scripts/`
-5. Run `/bin/bash customize_pixelformer.sh`. With this command the pixelformer repository will be cloned and customized so that everything works smoothly.
-6. If you want to clean up the customization, run `/bin/bash cleanup.sh`. This step is not manditory. 
+5. Run `/bin/bash customize_pixelformer.sh`. With this command the pixelformer repository will be cloned into the correct folder hierarchy and for this use case customized.
+6. If you want to clean up the customization scripts used in step 5, run `/bin/bash cleanup.sh`. This step is not mandatory. 
 7. Download the weights for the depth map from
    here: https://drive.google.com/file/d/1s7AdfwrV_6-svzfntBJih011u2IGkjf4/view?usp=share_link
-8. Place the weights in that folder: `speed_estimation/modules/depth_map/Pixelformer/pretrained`
+8. Place the weights in that folder: `speed_estimation/modules/depth_map/PixelFormer/pretrained`
 9. Update the paths in `speed_estimation/paths.py`
 
 ### Docker Setup
