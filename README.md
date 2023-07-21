@@ -59,10 +59,11 @@ PixelFormer)
 8. `mv custom_pixelformer/load.py PixelFormer/pixelformer`
 9. `mv custom_pixelformer/dataloader.py PixelFormer/pixelformer/dataloaders`
 10. `rm -r custom_pixelformer`
-6. Download the weights for the depth map from
+11. `mkdir PixelFormer/pretrained`
+12. Download the weights for the depth map from
    here: https://drive.google.com/file/d/1s7AdfwrV_6-svzfntBJih011u2IGkjf4/view?usp=share_link
-5. Place the weights in that folder: `speed_estimation/modules/depth_map/pixelformer/pretrained`
-6. Update the paths in `speed_estimation/paths.py`
+13. Place the weights in that folder: `speed_estimation/modules/depth_map/Pixelformer/pretrained`
+14. Update the paths in `speed_estimation/paths.py`
 
 ### Docker Setup
 
