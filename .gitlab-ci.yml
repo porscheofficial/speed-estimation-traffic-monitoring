@@ -27,7 +27,7 @@ stages:
 formatting:
     stage: formatting
     script:
-      - black . --exclude="((?:logs|datasets|output|pixelformer|frames_detected|model_weights|venv|yolov[0-9]))" --check --verbose --diff --color
+      - black . --exclude="((?:logs|datasets|output|PixelFormer|frames_detected|model_weights|venv|yolov[0-9]))" --check --verbose --diff --color
 
 linting:
   stage: linting
@@ -35,7 +35,7 @@ linting:
   script:
     - cd ..
     - pwd
-    - pylint --exit-zero --output-format=text --disable=E0401,R0914,R1702,R1735,R0912,R0915,R0913,R0903 --ignore-patterns="((?:logs|datasets|output|pixelformer|frames_detected|model_weights|venv|yolov[0-9]))" /builds/porsche-digital/industry-solutions/research/farsec 2> /builds/porsche-digital/industry-solutions/research/farsec/report/pylint.txt || exit 1
+    - pylint --exit-zero --output-format=text --disable=E0401,R0914,R1702,R1735,R0912,R0915,R0913,R0903 --ignore-patterns="((?:logs|datasets|output|PixelFormer|frames_detected|model_weights|venv|yolov[0-9]))" /builds/porsche-digital/industry-solutions/research/farsec 2> /builds/porsche-digital/industry-solutions/research/farsec/report/pylint.txt || exit 1
   artifacts:
     paths:
       - report
@@ -47,13 +47,13 @@ codequality:
   stage: codequality
   script:
     - pip install mypy mypy-gitlab-code-quality
-    - mypy --exclude="((?:logs|datasets|output|pixelformer|frames_detected|model_weights|venv|yolov[0-9]))" --ignore-missing-imports  /builds/porsche-digital/industry-solutions/research/farsec/speed_estimation
+    - mypy --exclude="((?:logs|datasets|output|PixelFormer|frames_detected|model_weights|venv|yolov[0-9]))" --ignore-missing-imports  /builds/porsche-digital/industry-solutions/research/farsec/speed_estimation
   allow_failure: true
 
 docstyle:
   stage: docstyle
   script:
-    - pydocstyle --ignore-self-only-init --match-dir='^(?:(?!logs|datasets|output|pixelformer|frames_detected|model_weights|venv|yolov[0-9]).)*$' .
+    - pydocstyle --ignore-self-only-init --match-dir='^(?:(?!logs|datasets|output|PixelFormer|frames_detected|model_weights|venv|yolov[0-9]).)*$' .
 
 safety:
   stage: safety
