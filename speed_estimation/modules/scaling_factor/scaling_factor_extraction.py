@@ -110,7 +110,7 @@ class GeometricModel:
     """
 
     def __init__(self, depth_model) -> None:
-        """Create a instance of GeometricModel
+        """Create an instance of GeometricModel.
 
         @param depth_model:
             The depth model that has to be applied to predict the depth of the whole frame.

@@ -4,7 +4,16 @@ from paths import YOLOV4_WEIGHTS, YOLOV4_CLASSES, YOLOV4_CONFIG
 
 
 class ObjectDetection:
+    """This class is used to detect the cars in a frame."""
+
     def __init__(self, weights_path=YOLOV4_WEIGHTS, cfg_path=YOLOV4_CONFIG):
+        """Create an instance of ObjectDetection.
+
+        @param weights_path:
+            The path to the model weights.
+        @param cfg_path:
+            The path to config file.
+        """
         print("Loading Object Detection")
         print("Running opencv dnn with YOLOv4")
         self.nmsThreshold = 0.4
@@ -35,7 +44,6 @@ class ObjectDetection:
 
         @return: Returns a list of all classes the model can detect.
         """
-
         with open(classes_path, "r", encoding="UTF-8") as file_object:
             for class_name in file_object.readlines():
                 class_name = class_name.strip()
@@ -65,7 +73,6 @@ class ObjectDetection:
             Each ndarray in the list holds the following information:
             (x_coordinate, y_coordinate, width, height).
         """
-
         return self.model.detect(
             frame, nmsThreshold=self.nmsThreshold, confThreshold=self.confThreshold
         )

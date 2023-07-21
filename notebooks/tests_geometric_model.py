@@ -12,6 +12,8 @@ from notebooks.scaling_factor_extraction import (
 
 
 class GeometricModelTests(unittest.TestCase):
+    """Test class to test the Geometric Model"""
+
     def setUp(self) -> None:
         self.depth_model = DepthModel()
         self.geometric_model = GeometricModel(self.depth_model)

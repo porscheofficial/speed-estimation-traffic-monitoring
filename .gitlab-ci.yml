@@ -53,7 +53,7 @@ codequality:
 docstyle:
   stage: docstyle
   script:
-    - pydocstyle --ignore-self-only-init --match-dir='^(?:(?!logs|datasets|output|pixelformer|frames_detected|model_weights|venv|yolov[0-9]).)*$' .
+    - pydocstyle --ignore-self-only-init --ignore=D100,D104,D213,D203,D404 --match-dir='^(?:(?!logs|datasets|output|PixelFormer|frames_detected|model_weights|custom_pixelformer|notebooks|venv|yolov[0-9]).)*$' .
 
 safety:
   stage: safety

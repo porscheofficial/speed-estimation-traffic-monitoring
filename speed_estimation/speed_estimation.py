@@ -101,7 +101,7 @@ def run(
 
     @param max_frames:
         The maximum frames that should be analyzed. The pipeline will stop as soon as the given
-        number is reached. If nothing is defined, the pipeline will analyze the whole video.
+        number is reached.
 
     @param custom_object_detection:
         If a custom/other object detection should be used, set this parameter to true. If the
