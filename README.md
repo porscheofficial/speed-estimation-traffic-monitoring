@@ -1,4 +1,4 @@
-# Traffic speed estimation for uncalibrated camera footage
+# FARSEC: A Reproducible Framework for Automatic Real-Time Vehicle Speed Estimation Using Traffic Camera
 
 Goal of this repository is to provide an easy way of estimating the speed of traffic from uncalibrated video footage.
 
@@ -15,7 +15,7 @@ can be changed.
 |  speed_limit            |  Speed limit on the road segment shown in the video (in km/h)                                                                                                              |  integer |
 
 The project is split into multiple modules, each handling a part of the total pipeline.
-![](.github/modules.png)
+![image info](images/pipeline.png) 
 
 The different modules of this project can be found inside the folder *speed_estimation/modules*
 Currently, there are:
@@ -96,3 +96,13 @@ To get a visual output of the detections and tracking in the frame, set `enable_
 The visual output will be enabled when running the following command `python speed_estimation.py /path/to/session /path/to/video.mp4 true`
 
 During speed analysis the pipline will update the picture `speed_estimation/frames_detected/frame_after_detection`, which gives you an visual impression of what cars are detected and tracked.
+
+## How to cite
+
+Please consider citing our paper if you use our code in your project.
+
+Liebe L., Sauerwald F., Sawicki S., Schneider M., Schuhmann L., Buz T., Boes P., Ahmadov A. (2023). ["FARSEC: A Reproducible Framework for Automatic Real-Time Vehicle Speed Estimation Using Traffic Camera"] (https://arxiv.org/abs/XXXXX). arXiv preprint arXiv:XXXXXXX
+
+```
+@bibtex_ref{}
+```
