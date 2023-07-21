@@ -51,19 +51,13 @@ it up yourself ;)
 # Ubuntu / Debian
 > sudo apt install ffmpeg
 ```
-4. `cd speed_estimation/modules/depth_map`
-5. `git clone https://github.com/ashutosh1807/PixelFormer.git` (make sure that the repository you have cloned is named 
-PixelFormer)
-6. `mv custom_pixelformer/test.py PixelFormer/pixelformer`
-7. `mv custom_pixelformer/utils.py PixelFormer/pixelformer`
-8. `mv custom_pixelformer/load.py PixelFormer/pixelformer`
-9. `mv custom_pixelformer/dataloader.py PixelFormer/pixelformer/dataloaders`
-10. `rm -r custom_pixelformer`
-11. `mkdir PixelFormer/pretrained`
-12. Download the weights for the depth map from
+4. `cd scripts/`
+5. Run `/bin/bash customize_pixelformer.sh`. With this command the pixelformer repository will be cloned and customized so that everything works smoothly.
+6. If you want to clean up the customization scripts run `/bin/bash cleanup.sh`. This step is not manditory. 
+7. Download the weights for the depth map from
    here: https://drive.google.com/file/d/1s7AdfwrV_6-svzfntBJih011u2IGkjf4/view?usp=share_link
-13. Place the weights in that folder: `speed_estimation/modules/depth_map/Pixelformer/pretrained`
-14. Update the paths in `speed_estimation/paths.py`
+8. Place the weights in that folder: `speed_estimation/modules/depth_map/Pixelformer/pretrained`
+9. Update the paths in `speed_estimation/paths.py`
 
 ### Docker Setup
 
