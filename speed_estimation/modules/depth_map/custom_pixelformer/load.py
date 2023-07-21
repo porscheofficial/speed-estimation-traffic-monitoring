@@ -22,7 +22,7 @@ def convert_arg_line_to_args(arg_line):
 parser = argparse.ArgumentParser(
     description="PixelFormer PyTorch implementation.", fromfile_prefix_chars="@"
 )
-parser.convert_arg_line_to_args = convert_arg_line_to_args
+parser.convert_arg_line_to_args = convert_arg_line_to_args  # type:ignore
 
 parser.add_argument("--model_name", type=str, help="model name", default="pixelformer")
 parser.add_argument(
