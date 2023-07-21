@@ -36,7 +36,7 @@ max_depth = 80
 do_kb_crop = True
 min_depth_eval = 1e-3
 max_depth_eval = 80
-checkpoint_path = "modules/depth_map/pixelformer/pretrained/kitti.pth"
+checkpoint_path = "modules/depth_map/PixelFormer/pretrained/kitti.pth"
 # checkpoint_path='modules/depth_map/pixelformer/pretrained/kitti.pth'
 
 args = {

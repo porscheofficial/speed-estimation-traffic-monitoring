@@ -5,7 +5,7 @@ import cv2
 import imutils
 from numpy.typing import NDArray
 
-from .pixelformer import generate_depth_map
+from .PixelFormer.pixelformer.test import generate_depth_map
 
 
 class DepthModel:
