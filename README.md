@@ -95,6 +95,10 @@ As a test dataset to run the estimation on, we provide you with a excerpt of the
 
 The path to the video should be given to `speed_estimation/speed_estimation.py` as argument.
 If you do not give the path as argument adjust the `speed_estimation/paths.py` accordingly.
+To get a visual output of the detections and tracking in the frame, set `enable_visual`.
 
 1. `cd speed_estimation`
-2. `python speed_estimation.py /path/to/session /path/to/video.mp4` or `python speed_estimation.py` (this will use the default paths configured)
+2. `python speed_estimation.py /path/to/session /path/to/video.mp4` or `python speed_estimation.py` (this will use the default paths configured).
+The visual output will be enabled when running the following command `python speed_estimation.py /path/to/session /path/to/video.mp4 true`
+
+During speed analysis the pipline will update the picture `speed_estimation/frames_detected/frame_after_detection`, which gives you an visual impression of what cars are detected and tracked.

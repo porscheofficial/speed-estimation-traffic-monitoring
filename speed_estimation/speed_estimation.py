@@ -81,6 +81,7 @@ def run(
     fps: int = 0,
     max_frames: int = 0,
     custom_object_detection: bool = False,
+    enable_visual: bool = False
 ) -> str:
     """Run the full speed estimation pipeline.
 
@@ -107,6 +108,10 @@ def run(
         If a custom/other object detection should be used, set this parameter to true. If the
         parameter is set to true, the pipeline expects the detection model in
         `speed_estimation/modules/custom_object_detection`. The default detection is a YoloV4 model.
+
+    @param enable_visual:
+        Enable a visual output of the detected and tracked cars. If the flag is disabled the frame
+        speed_estimation/frames_detected/frame_after_detection.jpg will be updated.
 
     @return:
         The string to the log file containing the speed estimates.
@@ -406,7 +411,12 @@ def run(
         cv2.putText(
             frame, f"FPS: {fps}", (7, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, text_color, 2
         )
-        cv2.imwrite("frames_detected/frame_after_detection.jpg", frame)
+
+        if enable_visual:
+            cv2.imshow("farsec", frame)
+            cv2.waitKey(1000)
+        else:
+            cv2.imwrite("frames_detected/frame_after_detection.jpg", frame)
 
         if frame_count % 500 == 0:
             print(
@@ -424,7 +434,7 @@ def run(
     return log_name
 
 
-def main(session_path_local: str, path_to_video: str):
+def main(session_path_local: str, path_to_video: str, enable_visual: bool):
     """Run the speed estimation pipeline."""
     max_frames = FPS * 60 * 20  # fps * sec * min
 
@@ -437,6 +447,7 @@ def main(session_path_local: str, path_to_video: str):
         FPS,
         max_frames=max_frames,
         custom_object_detection=CUSTOM_OBJECT_DETECTION,
+        enable_visual=enable_visual
     )
 
     if log_name is None:
@@ -460,7 +471,13 @@ if __name__ == "__main__":
         help="Path to video",
         default=os.path.join(SESSION_PATH, VIDEO_NAME),
     )
+    parser.add_argument(
+        "enable_visual",
+        nargs="?",
+        help="Enable visual output.",
+        default=False,
+    )
     args = parser.parse_args()
 
     # Run pipeline
-    main(args.session_path_local, args.path_to_video)
+    main(args.session_path_local, args.path_to_video, args.enable_visual)
