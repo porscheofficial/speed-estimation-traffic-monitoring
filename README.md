@@ -53,7 +53,7 @@ it up yourself ;)
 ```
 4. `cd scripts/`
 5. Run `/bin/bash customize_pixelformer.sh`. With this command the pixelformer repository will be cloned and customized so that everything works smoothly.
-6. If you want to clean up the customization scripts run `/bin/bash cleanup.sh`. This step is not manditory. 
+6. If you want to clean up the customization, run `/bin/bash cleanup.sh`. This step is not manditory. 
 7. Download the weights for the depth map from
    here: https://drive.google.com/file/d/1s7AdfwrV_6-svzfntBJih011u2IGkjf4/view?usp=share_link
 8. Place the weights in that folder: `speed_estimation/modules/depth_map/Pixelformer/pretrained`
