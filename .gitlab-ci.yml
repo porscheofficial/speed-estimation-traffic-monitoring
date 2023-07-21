@@ -58,4 +58,4 @@ docstyle:
 safety:
   stage: safety
   script:
-    - safety check
+    - safety check || exit 1
