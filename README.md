@@ -10,9 +10,21 @@ can be changed.
 | Name                    | Description                                                                                                                                                                | Values   |
 |-------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------|
 | fps                     | Default FPS to use, if they can't be detected from the provided video                                                                                                      |  integer |
-| custom_object_detection | Wether to use the custom trained yolov5 model or pretrained yolov4 (default)                                                                                               | boolean  |
+| custom_object_detection | Wether to use the custom trained yolov5 model or pretrained yolov4 (default) | boolean
+| sliding_window_sec                     | Seconds to use for the sliding window, in which the speed es estimated.                                                                                                | integer  |
+| num_tracked_cars                     |Number of cars the pipeline should use to calibrate itself.                                                                                                    | integer |
+| num_gt_events                     |Number of ground truth events the pipeline should use to calibrate itself.                                                                                                    | integer |
+| car_class_id                     | The class the detection model uses to identify a vehicle.      | integer |
+| max_match_distance                     | Maximum distance for that bounding boxes are accepted (from the closest bounding box) | integer |
+| object_detection_min_confidence_score                     |The minimum allowed score with which the model should recognize a vehicle.   | float |
+|  speed_limit            |  Speed limit on the road segment shown in the video (in km/h)                                                                                                              |integer |  
 | avg_frame_count         | Output of meta statistics approach gets written here. Average frames a standard car was taking to drive through the CCTV segment (average tracked over a longer time frame |  float   |
-|  speed_limit            |  Speed limit on the road segment shown in the video (in km/h)                                                                                                              |  integer |
+| use_cpu                     | Wether the CPU should be used or not. If set to false the GPU will be used.                                                                                             | integer |
+                                                                                             
+                                                                                                
+
+
+
 
 The project is split into multiple modules, each handling a part of the total pipeline.
 
@@ -24,7 +36,7 @@ Currently, there are:
 |-|-|-|
 | Car Tracking | modules/object_detection | Contains yolov4 and v5 for detecting cars in a video frame |
 | Depth map | modules/depth_map | Generates a depth map for a provided frame, using Pixelformer or Midas model |
-| Hard Move Detection | modules/shake_detection | Detects if the frame moved |
+| Shake Detection | modules/shake_detection | Detects if the frame moved |
 | Stream-Conversion & Downsampler | modules/streaming | Reads a stream, caps it to 30FPS and provides the frames |
 | Evaluation | modules/evaluation | Compares videos with the provided ground truth |
 
