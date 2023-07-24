@@ -71,7 +71,7 @@ SLIDING_WINDOW_SEC = config.getint("main", "sliding_window_sec")
 FPS = config.getint("main", "fps")
 CUSTOM_OBJECT_DETECTION = config.getboolean("main", "custom_object_detection")
 OBJECT_DETECTION_MIN_CONFIDENCE_SCORE = config.getfloat(
-    "main", "object_detection_min_confidence_score"
+    "tracker", "object_detection_min_confidence_score"
 )
 
 
