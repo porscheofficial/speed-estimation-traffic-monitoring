@@ -148,4 +148,5 @@ speed_estimation/frames_detected/*
 output/*
 !output/.gitkeep
 
-speed_estimation/modules/depth_map/PixelFormer/*
+speed_estimation/modules/depth_map/PixelFormer
+speed_estimation/modules/depth_map/PixelFormer/pixelformer

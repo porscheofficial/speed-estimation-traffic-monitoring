@@ -42,7 +42,6 @@ from get_fps import get_fps
 from modules import ObjectDetectionYoloV4
 from modules import ShakeDetection
 from modules.depth_map.depth_map_utils import DepthModel
-from modules.evaluation.evaluate import plot_absolute_error
 from modules.scaling_factor.scaling_factor_extraction import (
     GeometricModel,
     CameraPoint,
@@ -316,7 +315,7 @@ def run(
             ############################
             # speed estimation
             ############################
-            if frame_count >= fps and frame_count % (15 * fps) == 0:
+            if frame_count >= fps and frame_count % sliding_window == 0:
                 # every x seconds
                 car_count_towards = 0
                 car_count_away = 0
@@ -454,7 +453,8 @@ def main(session_path_local: str, path_to_video: str, enable_visual: bool):
         print("Calibration did not finish, skip evaluation.")
     else:
         # Evaluation
-        plot_absolute_error([log_name], "logs/")
+        # plot_absolute_error([log_name], "logs/")
+        print("Put you evaluation here.")
 
 
 if __name__ == "__main__":
