@@ -76,7 +76,8 @@ def plot_absolute_error(logs: list[str], save_file_path: str = "") -> None:
     After the speed estimation is done, this function will plot the absolut error of the
     predictions.
 
-    This function is designed to operate on the Brno Dataset, as this dataset has a ground truth.
+    This function is designed to operate on the BrnoCompSpeed Dataset, as this dataset has a ground
+    truth.
     If you have a dataset with ground truth in a different format, you can add a custom evaluation
     script.
 
