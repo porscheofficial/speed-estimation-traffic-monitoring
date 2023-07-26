@@ -136,3 +136,24 @@ Liebe L., Sauerwald F., Sawicki S., Schneider M., Schuhmann L., Buz T., Boes P.,
 ```
 @bibtex_ref{}
 ```
+
+## Contributing
+
+The Porsche Open Source Platform is openly developed in the wild and contributions (both internal and external) are highly appreciated.
+See [CONTRIBUTING.md](./CONTRIBUTING.md) on how to get started.
+
+If you have feedback or want to propose a new feature, please [open an issue](https://github.com/porscheofficial/porscheofficial.github.io/issues).
+Thank you! 😊
+
+## Acknowledgements
+
+This project is a joint initiative of [Porsche AG](https://www.porsche.com) and [Porsche Digital](https://www.porsche.digital/). ✨
+
+
+## License
+
+Copyright © 2023 Dr. Ing. h.c. F. Porsche AG
+
+Dr. Ing. h.c. F. Porsche AG publishes the Porsche Open Source Platform software and accompanied documentation (if any) subject to the terms of the [MIT license](./LICENSE.md). All rights not explicitly granted to you under the MIT license remain the sole and exclusive property of Dr. Ing. h.c. F. Porsche AG.
+
+Apart from the software and documentation described above, the texts, images, graphics, animations, video and audio files as well as all other contents on this website are subject to the legal provisions of copyright law and, where applicable, other intellectual property rights. The aforementioned proprietary content of this website may not be duplicated, distributed, reproduced, made publicly accessible or otherwise used without the prior consent of the right holder.
