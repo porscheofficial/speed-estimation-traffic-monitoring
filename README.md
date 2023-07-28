@@ -41,7 +41,7 @@ it up yourself ;)
 # Mac
 > brew install ffmpeg
 # Ubuntu / Debian
-> sudo apt install ffmpeg
+> sudo apt install ffmpeg (if it does not work run this command: sudo apt-get clean ; sudo apt-get update ; sudo apt-get check ; sudo apt-get purge ffmpeg* -y ; sudo apt-get autoremove -y ; sudo apt-get -f satisfy ffmpeg -y)
 ```
 4. `cd scripts/`
 5. Run `/bin/bash customize_pixelformer.sh`. With this command the pixelformer repository will be cloned into the correct folder hierarchy and for this use case customized.
@@ -49,7 +49,9 @@ it up yourself ;)
 7. Download the weights for the depth map from
    here: https://drive.google.com/file/d/1s7AdfwrV_6-svzfntBJih011u2IGkjf4/view?usp=share_link
 8. Place the weights in that folder: `speed_estimation/modules/depth_map/PixelFormer/pretrained`
-9. Update the paths in `speed_estimation/paths.py`
+9. Download the YoloV4 weights from here: https://github.com/AlexeyAB/darknet/releases/download/darknet_yolo_v3_optimal/yolov4.weights
+10. Place the weights in that folder: `speed_estimation/model_weights/`
+11. Update the paths in `speed_estimation/paths.py`yolov4 ,model 
 
 ### Docker Setup
 
