@@ -5,19 +5,19 @@
 ## Structure
 The project is split into multiple modules, each handling a part of the total pipeline.
 
-<img src="images/pipeline.png"  width="30%">
+<img src="images/pipeline.png"  width="40%">
 
 The different modules of this project can be found inside the folder *speed_estimation/modules*
 Currently, there are:
 
-| Module Name | Folder                                  | Description                                                                                                                                                              |
-|-------------|-----------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Depth map   | modules/depth_map                       | Generates a depth map for a provided frame, using a customized version of the [Pixelformer](https://github.com/ashutosh1807/PixelFormer).                                                                           |
-| Evaluation  | modules/evaluation                      | Compares videos with the provided ground truth on the BrnoCompSpeed Dataset.                                                                                             |
-| Car Tracking| modules/object_detection                | Contains yolov4 model for detecting cars in a video frame. If you want to use your own model, place it in the folder `modules/object_detection/custom_object_detection`. |
-| Calibration | modules/scaling_factor                  | Automatically calibrates the pipeline at start and derives a scaling factor.                                                                                             |
-| Shake Detection | modules/shake_detection             | Detects if the frame moved                                                                                                                                               |
-| Stream-Conversion & Downsampler | modules/streaming | Reads a stream, caps it to 30FPS and provides the frames                                                                                                                 |
+| Module Name                     | Folder                   | Description                                                                                                                                                           |
+|---------------------------------|--------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Depth map                       | modules/depth_map        | Generates a depth map for a provided frame, using a customized version of the [Pixelformer](https://github.com/ashutosh1807/PixelFormer).                             |
+| Evaluation                      | modules/evaluation       | Compares videos with the provided ground truth on the BrnoCompSpeed Dataset.                                                                                          |
+| Car Tracking                    | modules/object_detection | Detecting cars in a video frame by with a YOLOv4 model. If you want to use your own model, place it in the folder `modules/object_detection/custom_object_detection`. |
+| Calibration                     | modules/scaling_factor   | Automatically calibrates the pipeline at start and derives a scaling factor.                                                                                          |
+| Shake Detection                 | modules/shake_detection  | Detects if the camera perspective changed. If so a recalibration is required.                                                                                         |
+| Stream-Conversion & Downsampler | modules/streaming        | Reads a stream, caps it to 30FPS and provides the frames.                                                                                                             |
 
 ## Setup
 
@@ -44,14 +44,14 @@ it up yourself ;)
 > sudo apt install ffmpeg (if it does not work run this command: sudo apt-get clean ; sudo apt-get update ; sudo apt-get check ; sudo apt-get purge ffmpeg* -y ; sudo apt-get autoremove -y ; sudo apt-get -f satisfy ffmpeg -y)
 ```
 4. `cd scripts/`
-5. Run `/bin/bash customize_pixelformer.sh`. With this command the pixelformer repository will be cloned into the correct folder hierarchy and for this use case customized.
+5. Run `/bin/bash customize_pixelformer.sh`. With this command the [Pixelformer](https://github.com/ashutosh1807/PixelFormer) repository will be cloned into the correct folder hierarchy. It additionally customizes the code, so that it fits into our pipeline.
 6. If you want to clean up the customization scripts used in step 5, run `/bin/bash cleanup.sh`. This step is not mandatory. 
 7. Download the weights for the depth map from
    here: https://drive.google.com/file/d/1s7AdfwrV_6-svzfntBJih011u2IGkjf4/view?usp=share_link
 8. Place the weights in that folder: `speed_estimation/modules/depth_map/PixelFormer/pretrained`
 9. Download the YoloV4 weights from here: https://github.com/AlexeyAB/darknet/releases/download/darknet_yolo_v3_optimal/yolov4.weights
 10. Place the weights in that folder: `speed_estimation/model_weights/`
-11. Update the paths in `speed_estimation/paths.py`yolov4 ,model 
+11. Update the paths in `speed_estimation/paths.py` (detailed information in Section Configuration).
 
 ### Docker Setup
 
@@ -70,11 +70,11 @@ docker run --rm \
 Replace `$PATH_TO_REPO`, `$PATH_TO_VIDEO_ROOT_FOLDER, "$PATH_TO_SESSION_DIRECTORY"` and `$PATH_TO_VIDEO_FILE_IN_DOCKER` with the paths on your
 machine.
 
-#### Note: This repository has a default configuration (`speed_estimation/config.ini`) that can be adjusted if necessary (see Section Configuration).
+**Note: This repository has a default configuration (`speed_estimation/config.ini`) that can be adjusted if necessary (see Section Configuration).**
 
 
 ## Configuration
-This project comes with a default configuration, which can be adjusted. To do so have a closer look into `speed_estimation/config.ini`
+This project comes with a default configuration, which can be adjusted. To do so, have a closer look into `speed_estimation/config.ini`
 
 | Name                               | Description                                                                                                                                                                 | Values |
 |------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------|
@@ -97,7 +97,7 @@ Additionally, the `speed_estimation/paths.py` can be adjusted.
 | PATH_TO_HAAR_FILE            | Path to the HAAR file required for the object detection model. | string |
 | YOLOV4_WEIGHTS               | Path to the model weights.                                     | string |
 | YOLOV4_CLASSES               | Path to the different classes the model can detect.            | string |
-| YOLOV4_CONFIG                | Path to config file of model.                                  | string |
+| YOLOV4_CONFIG                | Path to config file of the model.                              | string |
 | SESSION_PATH                 | Directory where the video that should be analyzed is stored.   | string |
 | VIDEO_NAME                   | The name of the video that should be analyzed.                 | string |
 | SPEED_ESTIMATION_CONFIG_FILE | Location of the `config.ini` file described above.             | string |
@@ -117,7 +117,8 @@ If you do not give the path as argument adjust the `speed_estimation/paths.py` a
 To get a visual output of the detections and tracking in the frame, set `enable_visual`.
 
 1. `cd speed_estimation`
-2. `python speed_estimation.py /path/to/session /path/to/video.mp4` or `python speed_estimation.py` (this will use the default paths configured).
+2. ```python speed_estimation.py /path/to/session /path/to/video.mp4``` 
+or `python speed_estimation.py` (this will use the default paths configured).
 The visual output will be enabled when running the following command `python speed_estimation.py /path/to/session /path/to/video.mp4 true`
 
 During speed analysis the pipline will update the picture `speed_estimation/frames_detected/frame_after_detection`, which gives you an visual impression of what cars are detected and tracked.
@@ -141,7 +142,7 @@ Liebe L., Sauerwald F., Sawicki S., Schneider M., Schuhmann L., Buz T., Boes P.,
 
 ## Contributing
 
-The Porsche Open Source Platform is openly developed in the wild and contributions (both internal and external) are highly appreciated.
+FARSEC is openly developed in the wild and contributions (both internal and external) are highly appreciated.
 See [CONTRIBUTING.md](./CONTRIBUTING.md) on how to get started.
 
 If you have feedback or want to propose a new feature, please [open an issue](https://github.com/porscheofficial/porscheofficial.github.io/issues).
