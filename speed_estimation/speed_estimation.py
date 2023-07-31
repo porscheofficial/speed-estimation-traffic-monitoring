@@ -40,8 +40,9 @@ from tqdm import tqdm
 
 from get_fps import get_fps
 from modules.depth_map.depth_map_utils import DepthModel
-from modules.object_detection.yolov4.object_detection import \
-    ObjectDetection as ObjectDetectionYoloV4
+from modules.object_detection.yolov4.object_detection import (
+    ObjectDetection as ObjectDetectionYoloV4,
+)
 from modules.scaling_factor.scaling_factor_extraction import (
     GeometricModel,
     CameraPoint,
