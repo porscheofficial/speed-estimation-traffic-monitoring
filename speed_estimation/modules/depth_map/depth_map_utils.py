@@ -1,5 +1,5 @@
 import os
-from typing import Tuple
+from typing import Tuple, List
 
 import cv2
 import imutils
@@ -44,7 +44,7 @@ class DepthModel:
 
         if len(self.memo) > 10:
             # Take the mean over all depth maps
-            depth_maps: list[NDArray] = [self.memo[frame] for frame in self.memo]
+            depth_maps: List[NDArray] = [self.memo[frame] for frame in self.memo]
 
             return sum(depth_maps) / len(depth_maps)  # type: ignore
 
@@ -80,7 +80,7 @@ def get_padding_right(shape: Tuple[int, int, int], height: int = 352) -> int:
     return 1216 - width
 
 
-def resize_input(frame: NDArray) -> NDArray:
+def resize_input(frame):
     """Resize the original frame to fit the depth map prediction input shape.
 
     The depth map prediction only allows images with a width of 1216 pixels and a height of 352
@@ -113,7 +113,7 @@ def resize_input(frame: NDArray) -> NDArray:
     return frame
 
 
-def resize_output(prediction: NDArray, shape: tuple[int, int, int]) -> NDArray:
+def resize_output(prediction: NDArray, shape: Tuple[int, int, int]) -> NDArray:
     """Remove the right padding.
 
     This function removes the right padding that was needed to generate the depth map.
@@ -138,7 +138,7 @@ def resize_output(prediction: NDArray, shape: tuple[int, int, int]) -> NDArray:
 
 def extract_frame(
     video_path: str, output_folder: str, output_file: str, frame_idx: int = 0
-) -> tuple[str, tuple[int, int, int]]:
+) -> Tuple[str, Tuple[int, int, int]]:
     """Extract a specific frame from the video.
 
     This function extracts a frame and its size from the video by using the frame count.

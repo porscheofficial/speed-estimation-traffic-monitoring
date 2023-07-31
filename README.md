@@ -55,8 +55,21 @@ it up yourself ;)
 
 ### Docker Setup
 
+#### Without CUDA (stable)
 0. (Have `docker` installed)
-1. Go to `docker` directory in a terminal
+1. Go through steps 4. - 11. from the local setup, to prepare the repository which we will later on mount into the docker container
+2. Go to `docker` directory in a terminal
+3. `docker build -t farsec:latest .`
+4. Start the docker container with following command: (note that in this case the paths configured in speed_estimation/paths.py will be considered. If you want you can also pass the correct paths as arguments, see Section Run)
+
+```
+docker run --rm -v $PATH_TO_REPO:/storage -v \
+-t farsec:latest python3 /storage/speed_estimation/speed_estimation.py
+```
+
+#### With CUDA (not stable)
+0. (Have `docker` installed)
+1. Go to `docker/cuda` directory in a terminal
 2. Run `docker build .` Assign a tag, if you like.
 3. Run the docker container with the following command:
 

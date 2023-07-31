@@ -8,6 +8,7 @@ import json
 import os
 import re
 import uuid
+from typing import List
 
 import pandas as pd
 import plotly.express as px
@@ -70,7 +71,7 @@ def __generate_aligned_estimations(run_ids, loaded_avg_speeds, ground_truth):
     return truth, estimations, timestamps
 
 
-def plot_absolute_error(logs: list[str], save_file_path: str = "") -> None:
+def plot_absolute_error(logs: List[str], save_file_path: str = "") -> None:
     """Plot the absolut error of the recorded speed.
 
     After the speed estimation is done, this function will plot the absolut error of the

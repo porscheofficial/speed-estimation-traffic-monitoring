@@ -1,6 +1,5 @@
 from dataclasses import dataclass
-from typing import Dict, List
-from typing import NamedTuple
+from typing import Dict, List, NamedTuple, Tuple
 
 import numpy as np
 from modules.depth_map.depth_map_utils import DepthModel
@@ -83,8 +82,8 @@ class GroundTruthEvent(NamedTuple):
         a reasonable value for the ground truth length of a car.
     """
 
-    coords1: tuple
-    coords2: tuple
+    coords1: Tuple
+    coords2: Tuple
     distance: float
 
 
@@ -251,7 +250,7 @@ class GeometricModel:
 
 def offline_scaling_factor_estimation_from_least_squares(
     geometric_model: GeometricModel,
-    ground_truths: list,
+    ground_truths: List,
 ) -> float:
     """Get the scaling factor that should be applied for the speed estimation.
 
@@ -329,7 +328,7 @@ def __online_scaling_factor_estimation_from_least_squares(stream_of_events):
 
 def get_ground_truth_events(
     tracking_boxes: Dict[int, List[TrackingBox]]
-) -> list[GroundTruthEvent]:
+) -> List[GroundTruthEvent]:
     """Get ground truth events to calculate the scaling factor.
 
     The method takes tracking boxes as input and derives two points with the corresponding distance

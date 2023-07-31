@@ -11,6 +11,7 @@ import argparse
 import math
 import subprocess as sp
 import time
+from typing import Tuple
 
 import cv2
 import numpy
@@ -70,7 +71,7 @@ class StreamHandler:
 
         return next_frame
 
-    def __get_video_stream_from_url(self) -> tuple[sp.Popen, int, int]:
+    def __get_video_stream_from_url(self) -> Tuple[sp.Popen, int, int]:
         """Retrieve a video stream from the given url.
 
         @param url:

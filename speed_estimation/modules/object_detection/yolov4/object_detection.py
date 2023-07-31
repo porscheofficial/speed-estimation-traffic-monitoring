@@ -1,3 +1,5 @@
+from typing import List, Tuple
+
 import cv2
 import numpy as np
 from paths import YOLOV4_WEIGHTS, YOLOV4_CLASSES, YOLOV4_CONFIG
@@ -36,7 +38,7 @@ class ObjectDetection:
             size=(self.image_size, self.image_size), scale=1 / 255
         )
 
-    def load_class_names(self, classes_path: str = YOLOV4_CLASSES) -> list[str]:
+    def load_class_names(self, classes_path: str = YOLOV4_CLASSES) -> List[str]:
         """Get all classes the model can classify in an image.
 
         @param classes_path: The path to the classes.txt file
@@ -55,7 +57,7 @@ class ObjectDetection:
 
     def detect(
         self, frame: np.ndarray
-    ) -> tuple[np.ndarray, np.ndarray, list[np.ndarray]]:
+    ) -> Tuple[np.ndarray, np.ndarray, List[np.ndarray]]:
         """Detect cars in frame and put bounding boxes around.
 
         This function detects all cars in the frame and puts 2D bounding boxes around.

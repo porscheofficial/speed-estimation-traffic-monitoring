@@ -39,15 +39,16 @@ import torch
 from tqdm import tqdm
 
 from get_fps import get_fps
-from modules import ObjectDetectionYoloV4
-from modules import ShakeDetection
 from modules.depth_map.depth_map_utils import DepthModel
+from modules.object_detection.yolov4.object_detection import \
+    ObjectDetection as ObjectDetectionYoloV4
 from modules.scaling_factor.scaling_factor_extraction import (
     GeometricModel,
     CameraPoint,
     get_ground_truth_events,
     offline_scaling_factor_estimation_from_least_squares,
 )
+from modules.shake_detection.shake_detection import ShakeDetection
 from paths import SESSION_PATH, VIDEO_NAME
 from utils.speed_estimation import (
     Direction,
