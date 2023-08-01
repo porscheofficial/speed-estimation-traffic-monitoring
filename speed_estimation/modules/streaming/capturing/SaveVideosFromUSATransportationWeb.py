@@ -1,11 +1,26 @@
-# SaveVideosFromUSATransportationWeb
+"""Saves videos from USA transportation web.
+
+This file can be used to download videos from the USA transportation web.
+"""
+
 from csv import reader
 
 import cv2 as cv
 import ffmpeg
 
 
-def download_video(input_url, t=180):  # save video for 3 minutes
+def download_video(input_url: str, t: int = 180):
+    """Download video.
+
+    Download a video from the given url.
+
+    @param input_url:
+        Url to the video that should be downloaded.
+    @param t:
+        Duration of the video to be saved.
+    @return:
+        None.
+    """
     output_path = f"{input_url.split('/')[-2]}.mp4"
     stream = ffmpeg.input(input_url)
     stream = ffmpeg.output(stream, filename=output_path, t=t, loglevel="quiet")
