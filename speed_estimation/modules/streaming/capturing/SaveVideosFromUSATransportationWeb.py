@@ -1,6 +1,7 @@
-"""Saves videos from USA transportation web.
+"""Helper file.
 
-This file can be used to download videos from the USA transportation web.
+NOTE: THIS FILE WAS USED AS A HELPER FILE DURING DEVELOPMENT OF THE PIPELINE.
+IT IS NOT INTEGRATED WITHIN THE PIPELINE.
 """
 
 from csv import reader
