@@ -1,11 +1,11 @@
 # SaveVideosFromUSATransportationWeb
 from csv import reader
+
 import cv2 as cv
 import ffmpeg
 
 
 def download_video(input_url, t=180):  # save video for 3 minutes
-
     output_path = f"{input_url.split('/')[-2]}.mp4"
     stream = ffmpeg.input(input_url)
     stream = ffmpeg.output(stream, filename=output_path, t=t, loglevel="quiet")

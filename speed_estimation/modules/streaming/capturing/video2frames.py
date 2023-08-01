@@ -1,6 +1,7 @@
-import cv2
-import os
 import glob
+import os
+
+import cv2
 
 videoPath = "/Users/p393919/Documents/os/HamptonRoads/*.mp4"
 videos = glob.glob(videoPath)
@@ -8,7 +9,6 @@ videos = glob.glob(videoPath)
 j = 0
 
 for video in sorted(videos):
-
     fileName = os.path.basename(video)
     fileName = os.path.splitext(fileName)[0]
 
