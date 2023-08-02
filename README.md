@@ -24,10 +24,7 @@ Currently, there are:
 Running the code can be done in two ways:
 
 1. Locally
-2. Docker (with CUDA support)
-
-The advantage of the Docker container is that it supports CUDA acceleration out of the box. Locally, you'll have to set
-it up yourself ;)
+2. Docker (with and without CUDA support)
 
 ### Local Setup
 
@@ -55,23 +52,26 @@ it up yourself ;)
 
 ### Docker Setup
 
-#### Without CUDA (stable)
+#### Without CUDA
 0. (Have `docker` installed)
-1. Go through steps 4. - 11. from the local setup, to prepare the repository which we will later on mount into the docker container
-2. Go to `docker` directory in a terminal
+1. Go through steps 4. - 11. from the [local setup](#local-setup), to prepare the repository which will later be mounted into the docker container.
+2. Go to `docker` directory in a terminal.
 3. `docker build -t farsec:latest .`
-4. Start the docker container with following command: (note that in this case the paths configured in speed_estimation/paths.py will be considered. If you want you can also pass the correct paths as arguments, see Section Run)
+4. Start the docker container with following command: (note that in this case the paths configured in speed_estimation/paths.py will be considered. If you want you can also pass the correct paths as arguments, as described [here](#run))
 
 ```
 docker run --rm -v $PATH_TO_REPO:/storage -v \
 -t farsec:latest python3 /storage/speed_estimation/speed_estimation.py
 ```
 
-#### With CUDA (not stable)
+#### With CUDA
+**Note: We used this setup on an Nvidia GeForce RTX 3090 with Cuda 11.4. It can happen that this setup needs some modifications to fit your exact GPU setup.**
+
 0. (Have `docker` installed)
-1. Go to `docker/cuda` directory in a terminal
-2. Run `docker build .` Assign a tag, if you like.
-3. Run the docker container with the following command:
+1. Go through steps 4. - 11. from the [local setup](#local-setup), to prepare the repository which will later be mounted into the docker container.
+2. Go to `docker/cuda` directory in a terminal.
+3. Run `docker build .` Assign a tag, if you like.
+4. Run the docker container with the following command:
 
 ```
 docker run --rm \
@@ -134,7 +134,7 @@ To get a visual output of the detections and tracking in the frame, set `enable_
 or `python speed_estimation.py` (this will use the default paths configured).
 The visual output will be enabled when running the following command `python speed_estimation.py /path/to/session /path/to/video.mp4 true`
 
-During speed analysis the pipline will update the picture `speed_estimation/frames_detected/frame_after_detection`, which gives you an visual impression of what cars are detected and tracked.
+During speed analysis the pipline will update the picture `speed_estimation/frames_detected/frame_after_detection`, which gives you visual impression of what cars are detected and tracked.
 
 ## Evaluation
 
