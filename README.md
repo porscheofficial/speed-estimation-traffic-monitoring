@@ -83,7 +83,7 @@ docker run --rm \
 Replace `$PATH_TO_REPO`, `$PATH_TO_VIDEO_ROOT_FOLDER, "$PATH_TO_SESSION_DIRECTORY"` and `$PATH_TO_VIDEO_FILE_IN_DOCKER` with the paths on your
 machine.
 
-**Note: This repository has a default configuration (`speed_estimation/config.ini`) that can be adjusted if necessary (see Section Configuration).**
+**Note: This repository has a default configuration (`speed_estimation/config.ini`) that can be adjusted if necessary (see Section [Configuration](#configuration)).**
 
 
 ## Configuration
@@ -117,11 +117,15 @@ Additionally, the `speed_estimation/paths.py` can be adjusted.
 
 ## Dataset
 
-As a test dataset to run the estimation on, we provide you with an excerpt of the BrnoCompSpeed Dataset.
-To get the full dataset, please contact {isochor,herout,ijuranek}@fit.vutbr.cz (see https://github.com/JakubSochor/BrnoCompSpeed).
+As a test dataset, we provide you a short video (`datasets/video.mp4`). This video is just to validate if the pipeline starts to run and your setup works fine.
+It is too short for a sophisticated calibration, so do not wonder if the speed estimates are not correct.
 
-1. Download the whole folder from here: https://1drv.ms/u/s!AmCOHF26iIAQgf1ladUQOKtY0an0dg?e=wa1iZX
-2. Go to `speed_estimation/paths.py` and adjust the `session_path` accordingly
+We utilized the Brno CompSpeed dataset, which provides ground truth information for each car. We used this dataset to evaluate the performance of our pipeline.
+Please contact {isochor,herout,ijuranek}@fit.vutbr.cz (see https://github.com/JakubSochor/BrnoCompSpeed) to receive a download link for the dataset.
+
+**The pipline does also work with other videos and datasets, what means that you do not necessarily use the Brno CompSpeed dataset.**
+
+1. Store the video(s) in `datasets`. If you store them somewhere else adjust the `session_path` in `speed_estimation/paths.py` accordingly
 
 ## Run
 
@@ -134,7 +138,7 @@ To get a visual output of the detections and tracking in the frame, set `enable_
 or `python speed_estimation.py` (this will use the default paths configured).
 The visual output will be enabled when running the following command `python speed_estimation.py /path/to/session /path/to/video.mp4 true`
 
-During speed analysis the pipline will update the picture `speed_estimation/frames_detected/frame_after_detection`, which gives you visual impression of what cars are detected and tracked.
+During speed analysis the pipline will update the picture `speed_estimation/frames_detected/frame_after_detection`, which gives you visual impression of what cars are detected and tracked even if you run the pipeline on a headless system.
 
 ## Evaluation
 
