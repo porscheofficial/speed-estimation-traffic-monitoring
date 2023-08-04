@@ -99,7 +99,7 @@ types-tabulate==0.9.0.2
 typing-extensions==4.4.0
 urllib3==1.26.13
 virtualenv==20.23.1
-werkzeug==2.2.2
+werkzeug==2.2.3
 wrapt==1.14.1
 yapf==0.40.1
 zipp==3.15.0
