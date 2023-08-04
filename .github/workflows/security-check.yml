@@ -1,0 +1,46 @@
+name: Security Check
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  security_check:
+    name: Security Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install Miniconda
+        run: |
+          wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+          bash Miniconda3-latest-Linux-x86_64.sh -b -p $HOME/miniconda
+          export PATH="$HOME/miniconda/bin:$PATH"
+          hash -r
+          echo "source /home/runner/miniconda/etc/profile.d/conda.sh" >> /home/runner/.bashrc
+          source /home/runner/.bashrc
+
+      - name: Create Conda Environment
+        run: conda env create -f environment.yml
+      
+      - name: Debug
+        run: conda info --envs
+
+      - name: Activate env and Check for Security Issues
+        run: |
+          source /home/runner/miniconda/bin/activate /usr/share/miniconda/envs/farsec
+          conda info --envs
+          which python
+          pip show safety
+          safety check
