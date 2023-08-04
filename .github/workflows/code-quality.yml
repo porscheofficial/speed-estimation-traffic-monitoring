@@ -1,4 +1,4 @@
-name: Python CI
+name: Code Quality
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
       - main
 
 jobs:
-  build:
+  check:
     runs-on: ubuntu-latest
 
     env:
