@@ -17,7 +17,7 @@ Currently, there are:
 | Car Tracking                    | modules/object_detection | Detecting cars in a video frame by with a YOLOv4 model. If you want to use your own model, place it in the folder `modules/object_detection/custom_object_detection`. |
 | Calibration                     | modules/scaling_factor   | Automatically calibrates the pipeline at start and derives a scaling factor.                                                                                          |
 | Shake Detection                 | modules/shake_detection  | Detects if the camera perspective changed. If so a recalibration is required.                                                                                         |
-| Stream-Conversion & Downsampler | modules/streaming        | Reads a stream, caps it to 30FPS and provides the frames.                                                                                                             |
+| Stream-Conversion & Downsampler | modules/streaming        | Reads a stream, caps it to 30 FPS and provides the frames.                                                                                                            |
 
 ## Setup
 
@@ -65,7 +65,7 @@ docker run --rm -v $PATH_TO_REPO:/storage -v \
 ```
 
 #### With CUDA
-**Note: We used this setup on an Nvidia GeForce RTX 3090 with Cuda 11.4. It can happen that this setup needs some modifications to fit your exact GPU setup.**
+**Note: We used this setup on an Nvidia GeForce RTX 3090 with Cuda 11.4. It can happen that this setup needs some modifications to fit your individual setup.**
 
 0. (Have `docker` installed)
 1. Go through steps 4. - 11. from the [local setup](#local-setup), to prepare the repository which will later be mounted into the docker container.
@@ -117,15 +117,15 @@ Additionally, the `speed_estimation/paths.py` can be adjusted.
 
 ## Dataset
 
-As a test dataset, we provide you a short video (`datasets/video.mp4`). This video is just to validate if the pipeline starts to run and your setup works fine.
+As a test dataset, we provide you a short video which can be downloaded [here](https://1drv.ms/v/s!AmCOHF26iIAQgoMCR84erISOLHrnmw?e=SO0UVW) and placed in this directory: `datasets/`. This video is just to validate if the pipeline starts to run and your setup works fine.
 It is too short for a sophisticated calibration, so do not wonder if the speed estimates are not correct.
 
-We utilized the Brno CompSpeed dataset, which provides ground truth information for each car. We used this dataset to evaluate the performance of our pipeline.
+As a sophisticated dataset, we utilized the Brno CompSpeed dataset, which provides ground truth information for each car. We used this dataset to evaluate the performance of our pipeline.
 Please contact {isochor,herout,ijuranek}@fit.vutbr.cz (see https://github.com/JakubSochor/BrnoCompSpeed) to receive a download link for the dataset.
 
-**The pipline does also work with other videos and datasets, what means that you do not necessarily use the Brno CompSpeed dataset.**
+**The pipline does also work with other videos and datasets, what means that you do not necessarily use the Brno CompSpeed dataset, but your own ones.**
 
-1. Store the video(s) in `datasets`. If you store them somewhere else adjust the `session_path` in `speed_estimation/paths.py` accordingly
+1. Store the video(s) in `datasets`. If you store them somewhere else adjust the `SESSION_PATH` and `VIDEO_NAME` in `speed_estimation/paths.py` accordingly
 
 ## Run
 
@@ -151,7 +151,8 @@ Feel free to extend the module to fit your requirements.
 
 Please consider citing our paper if you use our code in your project.
 
-Liebe L., Sauerwald F., Sawicki S., Schneider M., Schuhmann L., Buz T., Boes P., Ahmadov A. (2023). ["FARSEC: A Reproducible Framework for Automatic Real-Time Vehicle Speed Estimation Using Traffic Camera"] (https://arxiv.org/abs/XXXXX). arXiv preprint arXiv:XXXXXXX
+Liebe L., Sauerwald F., Sawicki S., Schneider M., Schuhmann L., Buz T., Boes P., Ahmadov A. (2023). **[A Self-Calibrating End-to-End Pipeline for Real-Time Speed Estimation for
+Traffic Monitoring](https://arxiv.org/abs/XXXXX)**. arXiv preprint arXiv:XXXXXXX
 
 ```
 @bibtex_ref{}
@@ -162,7 +163,7 @@ Liebe L., Sauerwald F., Sawicki S., Schneider M., Schuhmann L., Buz T., Boes P.,
 FARSEC is openly developed in the wild and contributions (both internal and external) are highly appreciated.
 See [CONTRIBUTING.md](./CONTRIBUTING.md) on how to get started.
 
-If you have feedback or want to propose a new feature, please [open an issue](https://github.com/porscheofficial/porscheofficial.github.io/issues).
+If you have feedback or want to propose a new feature, please [open an issue](https://github.com/porscheofficial/speed-estimation-traffic-monitoring/issues).
 Thank you! 😊
 
 ## Acknowledgements

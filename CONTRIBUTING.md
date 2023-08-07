@@ -6,8 +6,8 @@ Thanks for your interest in contributing to FARSEC :thumbsup: :thumbsup:
 
 Found an issue on the website or have an idea how to improve?
 
-1. Check if your issue or idea has already been reported: [See Issues](XXX)
-2. Create an issue, but don't forget to provide a test case or even a live example: [Create Issue](XXX)
+1. Check if your issue or idea has already been reported: [See Issues](https://github.com/porscheofficial/speed-estimation-traffic-monitoring/issues)
+2. Create an issue, but don't forget to provide a test case or even a live example: [Create Issue](https://github.com/porscheofficial/speed-estimation-traffic-monitoring/issues/new)
 
 Make sure to also check the documentation on how to set up a local development environment and run the required tests: [See Documentation](README.md)
 
@@ -15,7 +15,7 @@ Make sure to also check the documentation on how to set up a local development e
 
 Want to contribute to the project? That's awesome!
 
-1. Let's start with a [fork of the project](XXX)
+1. Let's start with a [fork of the project](https://github.com/porscheofficial/speed-estimation-traffic-monitoring/fork)
 
 2. Clone your fork:
 
