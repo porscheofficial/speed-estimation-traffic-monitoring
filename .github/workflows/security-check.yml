@@ -33,14 +33,8 @@ jobs:
 
       - name: Create Conda Environment
         run: conda env create -f environment.yml
-      
-      - name: Debug
-        run: conda info --envs
 
       - name: Activate env and Check for Security Issues
         run: |
           source /home/runner/miniconda/bin/activate /usr/share/miniconda/envs/farsec
-          conda info --envs
-          which python
-          pip show safety
           safety check
