@@ -38,3 +38,7 @@ jobs:
         run: |
           source /home/runner/miniconda/bin/activate /usr/share/miniconda/envs/farsec
           safety check
+
+      - name: Cleanup
+        run: |
+          rm -f Miniconda3-latest-Linux-x86_64.sh

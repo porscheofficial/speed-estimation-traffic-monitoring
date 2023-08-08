@@ -54,24 +54,32 @@ jobs:
       
       - name: Run black
         run: |
-          black . --exclude="((?:logs|datasets|output|PixelFormer|frames_detected|model_weights|venv|yolov[0-9]))" --check --verbose --diff --color
+          black . --exclude="((?:logs|datasets|output|PixelFormer|frames_detected|model_weights|venv|yolov[0-9]))" --check --verbose --diff --color >> black_errors.txt || exit 1
 
       - name: Run pylint
         run: |
-          pylint --exit-zero --output-format=text --disable=E0401,R0914,R1702,R1735,R0912,R0915,R0913,R0903 --ignore-patterns="((?:logs|datasets|output|PixelFormer|frames_detected|model_weights|venv|yolov[0-9]))" . 2> pylint.txt || exit 1
-
-      - name: Publish pylint report
-        if: always()
-        uses: actions/upload-artifact@v2
-        with:
-          name: pylint-report
-          path: pylint.txt
+          pylint --exit-zero --output-format=text --disable=E0401,R0914,R1702,R1735,R0912,R0915,R0913,R0903 --ignore-patterns="((?:logs|datasets|output|PixelFormer|frames_detected|model_weights|venv|yolov[0-9]))" . >> pylint_errors.txt || exit 1
 
       - name: Run pydocstyle
         run: |
-          pydocstyle --ignore-self-only-init --ignore=D100,D104,D213,D203,D404 --match-dir='^(?:(?!logs|datasets|output|PixelFormer|frames_detected|model_weights|custom_pixelformer|notebooks|venv|yolov[0-9]).)*$' .
+          pydocstyle --ignore-self-only-init --ignore=D100,D104,D213,D203,D404 --match-dir='^(?:(?!logs|datasets|output|PixelFormer|frames_detected|model_weights|custom_pixelformer|notebooks|venv|yolov[0-9]).)*$' . >> pydocstyle_errors.txt || exit 1
 
       - name: Run mypy
         run: |
           cd .. 
-          mypy --exclude="((?:logs|datasets|output|PixelFormer|frames_detected|model_weights|venv|yolov[0-9]))" --ignore-missing-imports -p speed-estimation-traffic-monitoring
+          mypy --exclude="((?:logs|datasets|output|PixelFormer|frames_detected|model_weights|venv|yolov[0-9]))" --ignore-missing-imports -p speed-estimation-traffic-monitoring >> mypy_errors.txt || exit 1
+
+      - name: Upload error artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: code-quality-errors
+          path: |
+            black_errors.txt
+            pylint_errors.txt
+            pydocstyle_errors.txt
+            /home/runner/work/speed-estimation-traffic-monitoring/mypy_errors.txt
+
+      - name: Cleanup virtual environment
+        run: |
+          deactivate || true
+          rm -rf venv

@@ -57,6 +57,7 @@ from utils.speed_estimation import (
     Car,
     calculate_car_direction,
 )
+from modules.evaluation.evaluate import plot_absolute_error
 
 config = configparser.ConfigParser()
 config.read("config.ini")
@@ -437,7 +438,7 @@ def run(
 
 def main(session_path_local: str, path_to_video: str, enable_visual: bool):
     """Run the speed estimation pipeline."""
-    max_frames = FPS * 60 * 20  # fps * sec * min
+    max_frames = 1000  # fps * sec * min
 
     print(session_path_local)
     print(path_to_video)

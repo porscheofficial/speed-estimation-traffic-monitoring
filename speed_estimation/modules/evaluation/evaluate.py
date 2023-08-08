@@ -137,9 +137,9 @@ def plot_absolute_error(logs: List[str], save_file_path: str = "") -> None:
 
 def main():
     """Run the evaluation scripts."""
-    arr = ["speed_estimation/logs/xyz.log"]
+    arr = ["../../logs/xyz.log"]
 
-    plot_absolute_error(arr, "logs/")
+    plot_absolute_error(arr, "../../logs/")
 
 
 if __name__ == "__main__":
