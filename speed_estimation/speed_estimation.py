@@ -438,7 +438,7 @@ def run(
 
 def main(session_path_local: str, path_to_video: str, enable_visual: bool):
     """Run the speed estimation pipeline."""
-    max_frames = 1000  # fps * sec * min
+    max_frames = FPS * 60 * 20  # fps * sec * min
 
     print(session_path_local)
     print(path_to_video)
@@ -457,7 +457,7 @@ def main(session_path_local: str, path_to_video: str, enable_visual: bool):
     else:
         # Evaluation
         # plot_absolute_error([log_name], "logs/")
-        print("Put you evaluation here.")
+        print("Put your evaluation here.")
 
 
 if __name__ == "__main__":
