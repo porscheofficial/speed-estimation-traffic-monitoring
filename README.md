@@ -103,6 +103,33 @@ This project comes with a default configuration, which can be adjusted. To do so
 | avg_frame_count                    | Output of meta statistics approach gets written here. Average frames a standard car was taking to drive through the CCTV segment (average tracked over a longer time frame). | float  |
 | use_cpu                            | Wether the CPU should be used or not. If set to false the GPU will be used.                                                                                                 | integer |
 
+The default configuration in `speed_estimation/config.ini` matches the demo video we have linked in Section [Dataset](#dataset). If you are using the BrnoCompSpeed dataset and wanna reproduce our results, you can use the configuration we have used:
+
+```
+[main]
+fps = 50
+custom_object_detection = False
+sliding_window_sec = 60
+
+[calibration]
+num_tracked_cars = 400
+num_gt_events = 50
+
+[tracker]
+car_class_id = 2
+; Maximum distance for that bounding boxes are accepted (from the closest bounding box)
+max_match_distance = 50
+object_detection_min_confidence_score = 0.1
+
+[analyzer]
+speed_limit = 80
+avg_frame_count = 35.142857142857146
+
+[device]
+use_cpu = 0
+```
+
+
 Additionally, the `speed_estimation/paths.py` can be adjusted.
 
 | Name                         | Description                                                    | Values |
@@ -117,8 +144,8 @@ Additionally, the `speed_estimation/paths.py` can be adjusted.
 
 ## Dataset
 
-As a test dataset, we provide you a short video which can be downloaded [here](https://1drv.ms/v/s!AmCOHF26iIAQgoMCR84erISOLHrnmw?e=SO0UVW) and placed in this directory: `datasets/`. This video is just to validate if the pipeline starts to run and your setup works fine.
-It is too short for a sophisticated calibration, so do not wonder if the speed estimates are not correct.
+As a test dataset, we provide you a short video which can be downloaded [here](https://www.pexels.com/video/aerial-view-of-flow-of-traffic-in-the-highway-3078508/), rename it to `video.mp4` and placed in this directory: `datasets/`. This video is just to validate if the pipeline starts to run and your setup works fine.
+It is too short for a sophisticated calibration, so do not wonder if the speed estimates are not overly correct.
 
 As a sophisticated dataset, we utilized the Brno CompSpeed dataset, which provides ground truth information for each car. We used this dataset to evaluate the performance of our pipeline.
 Please contact {isochor,herout,ijuranek}@fit.vutbr.cz (see https://github.com/JakubSochor/BrnoCompSpeed) to receive a download link for the dataset.
