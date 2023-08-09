@@ -10,7 +10,7 @@ YOLOV4_WEIGHTS: str = "model_weights/yolov4.weights"
 YOLOV4_CLASSES: str = "model_weights/classes.txt"
 YOLOV4_CONFIG: str = "model_weights/yolov4.cfg"
 
-# Path to the directory where the video is located. Note that per default the
+# Path to the directory where the video is located.
 SESSION_PATH: str = "../datasets"
 VIDEO_NAME: str = "video.mp4"
 
