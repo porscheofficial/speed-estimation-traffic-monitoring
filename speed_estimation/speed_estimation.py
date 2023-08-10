@@ -463,19 +463,22 @@ def main(session_path_local: str, path_to_video: str, enable_visual: bool):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "session_path_local",
+        "-s",
+        "--session_path_local",
         nargs="?",
         help="Path to session (e.g., the directory where the video is stored)",
         default=SESSION_PATH,
     )
     parser.add_argument(
-        "path_to_video",
+        "-p",
+        "--path_to_video",
         nargs="?",
         help="Path to video",
         default=os.path.join(SESSION_PATH, VIDEO_NAME),
     )
     parser.add_argument(
-        "enable_visual",
+        "-v",
+        "--enable_visual",
         nargs="?",
         help="Enable visual output.",
         default=False,
