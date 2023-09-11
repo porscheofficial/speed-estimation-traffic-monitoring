@@ -4,7 +4,7 @@ channels:
 dependencies:
   - bzip2=1.0.8
   - ca-certificates=2023.05.30
-  - certifi=2023.5.7
+  - certifi=2023.7.22
   - libffi=3.4.2
   - mypy=0.981
   - ncurses=6.3
