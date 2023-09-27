@@ -179,10 +179,17 @@ Feel free to extend the module to fit your requirements.
 Please consider citing our paper if you use our code in your project.
 
 Liebe L., Sauerwald F., Sawicki S., Schneider M., Schuhmann L., Buz T., Boes P., Ahmadov A. (2023). **[A Self-Calibrating End-to-End Pipeline for Real-Time Speed Estimation for
-Traffic Monitoring](https://arxiv.org/abs/XXXXX)**. arXiv preprint arXiv:XXXXXXX
+Traffic Monitoring](https://arxiv.org/abs/2309.14468)**. arXiv preprint arXiv:2309.14468
 
 ```
-@bibtex_ref{}
+@misc{liebe2023farsec,
+      title={FARSEC: A Reproducible Framework for Automatic Real-Time Vehicle Speed Estimation Using Traffic Cameras}, 
+      author={Lucas Liebe and Franz Sauerwald and Sylwester Sawicki and Matthias Schneider and Leo Schuhmann and Tolga Buz and Paul Boes and Ahmad Ahmadov and Gerard de Melo},
+      year={2023},
+      eprint={2309.14468},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV}
+}
 ```
 
 ## Contributing
