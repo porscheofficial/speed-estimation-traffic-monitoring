@@ -178,7 +178,7 @@ Feel free to extend the module to fit your requirements.
 
 Please consider citing our paper if you use our code in your project.
 
-Liebe L., Sauerwald F., Sawicki S., Schneider M., Schuhmann L., Buz T., Boes P., Ahmadov A. (2023). **[A Self-Calibrating End-to-End Pipeline for Real-Time Speed Estimation for
+Liebe, L., Sauerwald, F., Sawicki, S., Schneider, M., Schuhmann, L., Buz, T., Boes, P., Ahmadov, A., de Melo, G. (2023). **[A Self-Calibrating End-to-End Pipeline for Real-Time Speed Estimation for
 Traffic Monitoring](https://arxiv.org/abs/2309.14468)**. arXiv preprint arXiv:2309.14468
 
 ```
