@@ -9,7 +9,7 @@ dependencies:
   - mypy=0.981
   - ncurses=6.3
   - openssl=1.1.1u
-  - pip=22.3.1
+  - pip=23.3
   - psutil=5.9.0
   - python=3.10.8
   - readline=8.2
@@ -40,7 +40,7 @@ dependencies:
       - dparse==0.6.3
       - filelock==3.12.2
       - flatbuffers==23.1.21
-      - fonttools==4.38.0
+      - fonttools==4.43.0
       - fsspec==2023.6.0
       - gast==0.4.0
       - google-auth==2.15.0
@@ -127,9 +127,9 @@ dependencies:
       - types-setuptools==68.0.0.1
       - types-tabulate==0.9.0.2
       - typing-extensions==4.4.0
-      - urllib3==1.26.17
+      - urllib3==1.26.18
       - virtualenv==20.23.1
-      - werkzeug==2.2.3
+      - werkzeug==2.3.8
       - wrapt==1.14.1
       - yapf==0.40.1
       - zipp==3.15.0
