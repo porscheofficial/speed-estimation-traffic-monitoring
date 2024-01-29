@@ -7,6 +7,7 @@ per default operates on videos you have to replace the loading of the video with
 
 NOTE: This module is work in progress and not integrated into the speed estimation pipeline yet.
 """
+
 import argparse
 import math
 import subprocess as sp
