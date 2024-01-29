@@ -49,6 +49,7 @@ Running the code can be done in two ways:
 9. Download the YoloV4 weights from here: https://github.com/AlexeyAB/darknet/releases/download/darknet_yolo_v3_optimal/yolov4.weights
 10. Place the weights in that folder: `speed_estimation/model_weights/`
 11. Update the paths in `speed_estimation/paths.py` (detailed information in Section Configuration).
+12. Activate the pre-commit hook: `pre-commit install` (the hook will then be installed in this directory `.git/hooks/pre-commit`)
 
 ### Docker Setup
 
