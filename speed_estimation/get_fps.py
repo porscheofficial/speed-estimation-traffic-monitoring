@@ -4,6 +4,7 @@ This module holds functions to derive the frames per second (fps) from the video
 should be analyzed.
 This module will only be used if the FPS are not defined in speed_estimation/config.ini
 """
+
 import time
 
 import cv2

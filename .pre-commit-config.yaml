@@ -10,7 +10,7 @@ repos:
     rev: v1.4.1
     hooks:
     - id: mypy
-      args: ["--exclude=\"((?:logs|datasets|output|frames_detected|model_weights|venv|yolov[0-9]))\"", "--ignore-missing-imports"]
+      args: ["--exclude=\"((?:logs|datasets|output|PixelFormer|frames_detected|model_weights|venv|yolov[0-9]))\"", "--ignore-missing-imports"]
 
   - repo: local
     hooks:

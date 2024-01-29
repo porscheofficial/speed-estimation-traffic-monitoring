@@ -21,6 +21,7 @@ tracking the vehicles and distinguish them.
 6. As soon as the calibration is done, do the speed estimation based on the scaling factor and the
 detected bounding boxes for the vehicles.
 """
+
 import argparse
 import configparser
 import json
